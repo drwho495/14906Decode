@@ -1,0 +1,2 @@
+this is the package containing the hardware classes like SimpleServo or a similar class for controlling motors, this does NOT contain any code
+relating to the functions of the 14906 robots themselves. this just contains fancy classes with custom pidf controllers for positon and velocity.
