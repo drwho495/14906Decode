@@ -20,6 +20,10 @@ public class RobotManager {
         shooterSubsystem.setLinearTeleop(opMode);
     }
 
+    public OpModeStates getState() {
+        return currentState;
+    }
+
     public void initialiseHardware() {
         // hardware is inited here
 
