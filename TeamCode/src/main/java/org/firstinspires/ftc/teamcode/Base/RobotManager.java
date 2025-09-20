@@ -12,12 +12,14 @@ public class RobotManager {
 
     private OpModeStates currentState = OpModeStates.IDLE;
     private OpModeOptions managerOptions = new OpModeOptions();
+    private LinearOpMode opMode;
 
     // do NOT add a constructor to any of the subsystems!
     private ShooterSubsystem shooterSubsystem = new ShooterSubsystem();
 
-    public RobotManager(LinearOpMode opMode) {
-        shooterSubsystem.setLinearTeleop(opMode);
+    public RobotManager(LinearOpMode newOpMode) {
+        opMode = newOpMode;
+        shooterSubsystem.setLinearTeleop(newOpMode);
     }
 
     public OpModeStates getState() {
@@ -41,6 +43,8 @@ public class RobotManager {
     }
 
     public void update() {
+        if (!opMode.opModeIsActive() || opMode.isStopRequested()) return;
+
         switch (currentState) {
             case IDLE:
 
