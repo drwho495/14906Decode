@@ -8,4 +8,5 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 public abstract class Subsystem {
     public abstract void setLinearTeleop(LinearOpMode opMode);
     public abstract void update();
+    public abstract void initialiseHardware();
 }

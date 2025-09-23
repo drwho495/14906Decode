@@ -10,8 +10,8 @@ public class ShooterSubsystem extends Subsystem {
         thisOpMode = newOpMode;
     }
 
-    // cannot be abstracted because of differing method arguments (?)
-    public void setHardware() {
+    @Override
+    public void initialiseHardware() {
 
     }
 
