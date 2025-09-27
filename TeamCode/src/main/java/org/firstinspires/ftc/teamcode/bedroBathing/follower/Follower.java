@@ -500,7 +500,7 @@ public class Follower {
                     limitDrivePowers();
 
                     for (int i = 0; i < motors.size(); i++) {
-                        motors.get(i).setPower(drivePowers[i] * (13.0 / voltage));
+                        motors.get(i).setPower(drivePowers[i]);
                     }
                 } else {
                     if (isBusy) {
@@ -515,7 +515,7 @@ public class Follower {
                         limitDrivePowers();
 
                         for (int i = 0; i < motors.size(); i++) {
-                            motors.get(i).setPower(drivePowers[i] * (12.0 / voltage));
+                            motors.get(i).setPower(drivePowers[i]);
                         }
                     }
                     if (currentPath.isAtParametricEnd()) {

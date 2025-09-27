@@ -137,20 +137,20 @@ package org.firstinspires.ftc.teamcode.bedroBathing.localization.localizers;// <
 //      */
 //     @Override
 //     public void setStartPose(Pose setStart) {
-//         setPose(odoOffset);
+//         setMirroredPose(odoOffset);
 //     }
 
 //     /**
 //      * This sets the current pose estimate. Changing this should just change the robot's current
 //      * pose estimate, not anything to do with the start pose.
 //      *
-//      * @param setPose the new current pose estimate
+//      * @param setMirroredPose the new current pose estimate
 //      */
 //     @Override
-//     public void setPose(Pose setPose) {
+//     public void setMirroredPose(Pose setMirroredPose) {
 //         resetPinpoint();
 //         odo.update();
-//         odoOffset = setPose;
+//         odoOffset = setMirroredPose;
 //     }
 
 //     /**
@@ -345,7 +345,7 @@ package org.firstinspires.ftc.teamcode.bedroBathing.localization.localizers;// <
 // //
 // //    /**
 // //     * This sets the start pose. Since nobody should be using this after the robot has begun moving,
-// //     * and due to issues with the PinpointLocalizer, this is functionally the same as setPose(Pose).
+// //     * and due to issues with the PinpointLocalizer, this is functionally the same as setMirroredPose(Pose).
 // //     *
 // //     * @param setStart the new start pose
 // //     */
@@ -358,11 +358,11 @@ package org.firstinspires.ftc.teamcode.bedroBathing.localization.localizers;// <
 // //     * This sets the current pose estimate. Changing this should just change the robot's current
 // //     * pose estimate, not anything to do with the start pose.
 // //     *
-// //     * @param setPose the new current pose estimate
+// //     * @param setMirroredPose the new current pose estimate
 // //     */
 // //    @Override
-// //    public void setPose(Pose setPose) {
-// //        odo.setPosition(new Pose2D(DistanceUnit.INCH, setPose.getX(), setPose.getY(), AngleUnit.RADIANS, setPose.getHeading()));
+// //    public void setMirroredPose(Pose setMirroredPose) {
+// //        odo.setPosition(new Pose2D(DistanceUnit.INCH, setMirroredPose.getX(), setMirroredPose.getY(), AngleUnit.RADIANS, setMirroredPose.getHeading()));
 // //    }
 // //
 // //    /**

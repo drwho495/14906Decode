@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.TeleOps;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -7,6 +7,7 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Gamepad;
 
 import org.firstinspires.ftc.teamcode.Base.OpModeStates;
+import org.firstinspires.ftc.teamcode.Base.Parameters;
 import org.firstinspires.ftc.teamcode.Base.RobotManager;
 import org.firstinspires.ftc.teamcode.bedroBathing.follower.Follower;
 import org.firstinspires.ftc.teamcode.bedroBathing.tuning.FollowerConstants;
@@ -29,6 +30,8 @@ public class MainTeleop extends LinearOpMode {
     private DcMotorEx rightFront;
     private DcMotorEx rightRear;
 
+    private double shooterVelocity = Parameters.SHOOTER_DEFAULT_RPM;
+
     @Override
     public void runOpMode() throws InterruptedException {
         RobotManager robot = new RobotManager(this);
@@ -36,6 +39,9 @@ public class MainTeleop extends LinearOpMode {
         robot.initialiseHardware();
 
         waitForStart();
+
+        robot.tryPowerOnShooter();
+        robot.tryPrimeShoot();
 
         leftFront = hardwareMap.get(DcMotorEx.class, FollowerConstants.leftFrontMotorName);
         leftRear = hardwareMap.get(DcMotorEx.class, FollowerConstants.leftRearMotorName);
@@ -60,10 +66,12 @@ public class MainTeleop extends LinearOpMode {
             currentGamepad1.copy(gamepad1);
             currentGamepad2.copy(gamepad2);
 
+            robot.trySetCustomVelocity(shooterVelocity);
+
             if (canDrive) {
-                follower.setTeleOpMovementVectors(-gamepad1.left_stick_y,
-                        -gamepad1.left_stick_x,
-                        gamepad1.right_stick_x,
+                follower.setTeleOpMovementVectors(gamepad1.left_stick_y,
+                        gamepad1.left_stick_x,
+                        -gamepad1.right_stick_x,
                         false);
             }
 
@@ -75,7 +83,6 @@ public class MainTeleop extends LinearOpMode {
                 case INTAKE_SCORE:
                     if (currentGamepad1.right_bumper && !lastGamepad1.right_bumper) {
                         robot.tryClawToggle();
-                    } else if (currentGamepad1.right_bumper) {
                     }
 
                     if (currentGamepad1.left_bumper && !lastGamepad1.left_bumper) {
@@ -85,11 +92,42 @@ public class MainTeleop extends LinearOpMode {
                             robot.tryCancelTransfer();
                         }
                     }
+
+                    if (currentGamepad1.dpad_up && !lastGamepad1.dpad_up) {
+                        robot.tryToggleShooter();
+                    }
+
+                    if (currentGamepad1.a && !lastGamepad1.a) {
+                        robot.tryToggleGate();
+                    }
+
+                    if (currentGamepad1.dpad_down && !lastGamepad1.dpad_down) {
+                        shooterVelocity = Parameters.SHOOTER_DEFAULT_RPM;
+                    }
+
+                    if (currentGamepad1.left_trigger > .1) {
+                        robot.tryWristHold();
+                    } else {
+                        robot.tryWristDown();
+                    }
+
+                    if (currentGamepad1.right_trigger > .1) {
+                        robot.tryShootElement();
+                    } else {
+                        robot.tryPrimeShoot();
+                    }
+
+                    if (currentGamepad1.dpad_left && !lastGamepad1.dpad_left) {
+                        shooterVelocity -= 100;
+                    } else if (currentGamepad1.dpad_right && !lastGamepad1.dpad_right) {
+                        shooterVelocity += 100;
+                    }
                     break;
                 case PARK:
                     break;
             }
 
+            telemetry.addData("Target RPM: ", shooterVelocity);
             telemetry.addData("state: ", robot.getState());
 
             robot.update();

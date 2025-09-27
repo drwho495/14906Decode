@@ -518,4 +518,16 @@ public class Path {
     public double[][] getDashboardDrawingPoints() {
         return curve.getDashboardDrawingPoints();
     }
+
+    public double getHeadingEndTValue() {
+        return linearInterpolationEndTime;
+    }
+
+    public boolean usingTangentialHeading() {
+        return isTangentHeadingInterpolation;
+    }
+
+    public boolean getReversed() {
+        return followTangentReversed;
+    }
 }

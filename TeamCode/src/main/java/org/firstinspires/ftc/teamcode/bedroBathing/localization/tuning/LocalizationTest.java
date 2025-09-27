@@ -80,7 +80,7 @@ public class LocalizationTest extends OpMode {
 
         poseUpdater.update();
 
-//        poseUpdater.setPose(new Pose(10,10,0));
+//        poseUpdater.setMirroredPose(new Pose(10,10,0));
 //        poseUpdater.setStartingPose(new Pose(10,10,0));
 
 //        distanceOne = hardwareMap.get(Rev2mDistanceSensor.class, "distanceOne");

@@ -166,11 +166,11 @@ package org.firstinspires.ftc.teamcode.bedroBathing.localization.localizers;//pa
 //     * This sets the current pose estimate. Changing this should just change the robot's current
 //     * pose estimate, not anything to do with the start pose.
 //     *
-//     * @param setPose the new current pose estimate
+//     * @param setMirroredPose the new current pose estimate
 //     */
 //    @Override
-//    public void setPose(Pose setPose) {
-//        displacementPose = MathFunctions.subtractPoses(setPose, startPose);
+//    public void setMirroredPose(Pose setMirroredPose) {
+//        displacementPose = MathFunctions.subtractPoses(setMirroredPose, startPose);
 //        resetEncoders();
 //    }
 //

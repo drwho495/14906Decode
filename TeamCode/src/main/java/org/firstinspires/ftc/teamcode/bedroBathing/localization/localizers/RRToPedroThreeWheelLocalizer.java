@@ -91,11 +91,11 @@ package org.firstinspires.ftc.teamcode.bedroBathing.localization.localizers;//pa
 //    /**
 //     * This sets the current pose estimate. This has no effect on the start pose.
 //     *
-//     * @param setPose the new current pose estimate
+//     * @param setMirroredPose the new current pose estimate
 //     */
 //    @Override
-//    public void setPose(Pose setPose) {
-//        localizer.setPoseEstimate(new Pose2d(setPose.getX(), setPose.getY(), setPose.getHeading()));
+//    public void setMirroredPose(Pose setMirroredPose) {
+//        localizer.setPoseEstimate(new Pose2d(setMirroredPose.getX(), setMirroredPose.getY(), setMirroredPose.getHeading()));
 //    }
 //
 //    /**
