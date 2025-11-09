@@ -96,6 +96,8 @@ public class Follower {
     private boolean reachedParametricPathEnd;
     private boolean holdPositionAtEnd;
     private boolean teleopDrive;
+    private boolean autoHeadingControl = false;
+    private double teleopHeadingGoal = 0;
 
     private double maxPower = 1;
     private double oldMaxPower = 1;
@@ -471,6 +473,25 @@ public class Follower {
     }
 
     /**
+     * This tells the robot whether the driver should control the heading or not.
+     */
+    public void setAutoHeadingState(boolean set) {
+        autoHeadingControl = set;
+    }
+
+    public boolean getAutoHeadingState() {
+        return autoHeadingControl;
+    }
+
+    /**
+     * This tells the robot what heading to turn too
+     * when automatic heading control for teleop driving is enabled.
+     */
+    public void setTeleopHeadingGoal(double newGoal) {
+        teleopHeadingGoal = newGoal;
+    }
+
+    /**
      * Calls an update to the PoseUpdater, which updates the robot's current position estimate.
      */
     public void updatePose() {
@@ -552,9 +573,15 @@ public class Follower {
             velocities.add(poseUpdater.getVelocity());
             velocities.remove(velocities.get(velocities.size() - 1));
 
+            Vector localHeadingVector = teleopHeadingVector;
+
+            if (autoHeadingControl) {
+                localHeadingVector = MathFunctions.scalarMultiplyVector(getHeadingVector(teleopHeadingGoal), holdPointHeadingScaling);
+            }
+
             calculateAveragedVelocityAndAcceleration();
 
-            drivePowers = driveVectorScaler.getDrivePowers(getCentripetalForceCorrection(), teleopHeadingVector, teleopDriveVector, poseUpdater.getPose().getHeading());
+            drivePowers = driveVectorScaler.getDrivePowers(getCentripetalForceCorrection(), localHeadingVector, teleopDriveVector, poseUpdater.getPose().getHeading());
 
             limitDrivePowers();
 
@@ -838,6 +865,19 @@ public class Follower {
         }
         headingPIDF.updateError(headingError);
         headingVector = new Vector(MathFunctions.clamp(headingPIDF.runPIDF() + headingPIDFFeedForward * MathFunctions.getTurnDirection(poseUpdater.getPose().getHeading(), currentPath.getClosestPointHeadingGoal()), -1, 1), poseUpdater.getPose().getHeading());
+        return MathFunctions.copyVector(headingVector);
+    }
+
+    public Vector getHeadingVector(double headingGoal) {
+        if (!useHeading) return new Vector();
+        headingError = MathFunctions.getTurnDirection(poseUpdater.getPose().getHeading(), headingGoal) * MathFunctions.getSmallestAngleDifference(poseUpdater.getPose().getHeading(), headingGoal);
+        if (Math.abs(headingError) < headingPIDFSwitch && useSecondaryHeadingPID) {
+            secondaryHeadingPIDF.updateError(headingError);
+            headingVector = new Vector(MathFunctions.clamp(secondaryHeadingPIDF.runPIDF() + secondaryHeadingPIDFFeedForward * MathFunctions.getTurnDirection(poseUpdater.getPose().getHeading(), headingGoal), -1, 1), poseUpdater.getPose().getHeading());
+            return MathFunctions.copyVector(headingVector);
+        }
+        headingPIDF.updateError(headingError);
+        headingVector = new Vector(MathFunctions.clamp(headingPIDF.runPIDF() + headingPIDFFeedForward * MathFunctions.getTurnDirection(poseUpdater.getPose().getHeading(), headingGoal), -1, 1), poseUpdater.getPose().getHeading());
         return MathFunctions.copyVector(headingVector);
     }
 

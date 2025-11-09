@@ -16,14 +16,14 @@ import org.firstinspires.ftc.teamcode.bedroBathing.pathGeneration.Vector;
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 
-public class AutoManager {
+public class PedroManager {
     private final Follower follower;
     private final LinearOpMode opMode;
     private Runnable updateRunnable = null;
-    private final Vector mirrorPlanePos = new Vector();
-    private final Vector mirrorPlaneNormal = new Vector();
+    private Vector mirrorPlanePos = new Vector();
+    private Vector mirrorPlaneNormal = new Vector();
 
-    public AutoManager(Follower newFollower, LinearOpMode newOpMode) {
+    public PedroManager(Follower newFollower, LinearOpMode newOpMode) {
         follower = newFollower;
         opMode = newOpMode;
     }
@@ -93,14 +93,9 @@ public class AutoManager {
         }
     }
 
-    public void setMirrorPlane(Pose plane) {
-        mirrorPlanePos.setOrthogonalComponents(plane.getX(), plane.getY());
-
-        // convert to normal
-        double cos = Math.cos(plane.getHeading());
-        double sin = Math.sin(plane.getHeading());
-
-        mirrorPlaneNormal.setOrthogonalComponents(cos, sin);
+    public void setMirrorPlane(Vector newMirrorPlanePos, Vector newMirrorPlaneNormal) {
+        mirrorPlanePos = newMirrorPlanePos;
+        mirrorPlaneNormal = newMirrorPlaneNormal;
     }
 
     public Pose getMirroredPose() {
@@ -130,5 +125,9 @@ public class AutoManager {
             if (updateRunnable != null) updateRunnable.run();
             follower.update();
         }
+    }
+
+    public static double getHeadingToPoint(Pose targetPos, Pose currentPos) {
+        return (Math.atan2(targetPos.getY() - currentPos.getY(), targetPos.getX() - currentPos.getX()) + Math.toRadians(180));
     }
 }

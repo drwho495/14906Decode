@@ -54,6 +54,10 @@ public class ShooterSubsystem extends Subsystem {
         return leftShooterMotor.atVelocity() && rightShooterMotor.atVelocity();
     }
 
+    public Double[] getVelocities() {
+        return new Double[]{leftShooterMotor.getVelocity() / velocityMultiplier, rightShooterMotor.getVelocity() / velocityMultiplier};
+    }
+
     public void powerOff() {
         powerOff = true;
     }
@@ -92,7 +96,7 @@ public class ShooterSubsystem extends Subsystem {
             rightShooterMotor.setVelo(0);
         } else {
             leftShooterMotor.setVelo(motorVelo * velocityMultiplier);
-            rightShooterMotor.setVelo(motorVelo * velocityMultiplier);
+            rightShooterMotor.setVelo((motorVelo * velocityMultiplier) + 5);
         }
 
         leftShooterMotor.update();

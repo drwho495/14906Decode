@@ -4,9 +4,10 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.Gamepad;
 
-import org.firstinspires.ftc.teamcode.Base.AutoManager;
+import org.firstinspires.ftc.teamcode.Base.PedroManager;
 import org.firstinspires.ftc.teamcode.Base.OpModeStates;
-import org.firstinspires.ftc.teamcode.Base.RobotManager;
+import org.firstinspires.ftc.teamcode.Base.Parameters;
+import org.firstinspires.ftc.teamcode.Base.SubsystemManager;
 import org.firstinspires.ftc.teamcode.bedroBathing.follower.Follower;
 import org.firstinspires.ftc.teamcode.bedroBathing.localization.Pose;
 import org.firstinspires.ftc.teamcode.bedroBathing.pathGeneration.BezierCurve;
@@ -22,12 +23,11 @@ enum CloseAutoStartPos {
 
 @Autonomous(name = "Close Zone Auto V1", group = "0", preselectTeleOp = "0: Main Teleop")
 public class CloseAutoV1 extends LinearOpMode {
-    private AutoManager auto;
+    private PedroManager auto;
     private Follower follower;
-    private RobotManager robot;
+    private SubsystemManager robot;
     private CloseAutoStartPos autoStartPos = CloseAutoStartPos.ON_WALL_FACING_TOWARDS_GOAL;
     private boolean isBlue = true;
-    private final Pose startPose = new Pose(0, -35, Math.toRadians(90));
     private Gamepad lastGamepad1 = new Gamepad();
     private Gamepad currentGamepad1 = new Gamepad();
 
@@ -40,7 +40,7 @@ public class CloseAutoV1 extends LinearOpMode {
                         .addPath(
                                 new Path(
                                         new BezierLine(
-                                                new Point(startPose),
+                                                new Point(auto.getMirroredPose()),
                                                 new Point(10, 8)
                                         )
                                 )
@@ -98,15 +98,13 @@ public class CloseAutoV1 extends LinearOpMode {
         follower = new Follower(this.hardwareMap);
         follower.setMaxPower(1);
 
-        auto = new AutoManager(follower, this);
-        robot = new RobotManager(this);
+        auto = new PedroManager(follower, this);
+        robot = new SubsystemManager(this);
 
         robot.initialiseHardware();
 
         auto.setUpdateMethod(() -> {
-
             robot.update();
-//            telemetry.update();
         });
 
 
@@ -131,7 +129,7 @@ public class CloseAutoV1 extends LinearOpMode {
         waitForStart();
 
         if (isBlue) {
-            auto.setMirrorPlane(startPose);
+            auto.setMirrorPlane(Parameters.MID_PLANE_POS, Parameters.MID_PLANE_NORMAL);
         }
 
         robot.tryCloseGate();

@@ -31,6 +31,10 @@ public class ComplexMotor {
         this.thisMotor.setMotorEnable();
     }
 
+    public double getVelocity() {
+        return thisMotor.getVelocity(AngleUnit.DEGREES);
+    }
+
     public void useCustomVeloPIDLoop(boolean newUseCustomVelo) {
         useCustomVelo = newUseCustomVelo;
     }

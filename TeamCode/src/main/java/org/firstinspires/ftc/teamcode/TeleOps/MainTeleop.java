@@ -8,8 +8,10 @@ import com.qualcomm.robotcore.hardware.Gamepad;
 
 import org.firstinspires.ftc.teamcode.Base.OpModeStates;
 import org.firstinspires.ftc.teamcode.Base.Parameters;
-import org.firstinspires.ftc.teamcode.Base.RobotManager;
+import org.firstinspires.ftc.teamcode.Base.PedroManager;
+import org.firstinspires.ftc.teamcode.Base.SubsystemManager;
 import org.firstinspires.ftc.teamcode.bedroBathing.follower.Follower;
+import org.firstinspires.ftc.teamcode.bedroBathing.localization.Pose;
 import org.firstinspires.ftc.teamcode.bedroBathing.tuning.FollowerConstants;
 
 // use 0 to get this file teleop program at the top of the list on the dhub
@@ -34,7 +36,7 @@ public class MainTeleop extends LinearOpMode {
 
     @Override
     public void runOpMode() throws InterruptedException {
-        RobotManager robot = new RobotManager(this);
+        SubsystemManager robot = new SubsystemManager(this);
         Follower follower = new Follower(this.hardwareMap);
         robot.initialiseHardware();
 
@@ -54,14 +56,21 @@ public class MainTeleop extends LinearOpMode {
         rightFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         follower.startTeleopDrive();
-        follower.resetIMU();
+        follower.setAutoHeadingState(true);
+
+        if (!Parameters.AUTO_PROGRAM_RUN) {
+            follower.setPose(new Pose(0, 0, Math.toRadians(45))); // the starting position on the wall of the goal
+        }
 
         robot.setState(OpModeStates.INTAKE_SCORE);
         robot.tryClawGrab();
 
         while (opModeIsActive() && !isStopRequested()) {
+            Pose robotPose = follower.getPose();
+
             lastGamepad1.copy(currentGamepad1);
             lastGamepad2.copy(currentGamepad2);
+
 
             currentGamepad1.copy(gamepad1);
             currentGamepad2.copy(gamepad2);
@@ -81,11 +90,22 @@ public class MainTeleop extends LinearOpMode {
                 case IDLE:
                     break;
                 case INTAKE_SCORE:
+                    follower.setTeleopHeadingGoal(PedroManager.getHeadingToPoint(Parameters.RED_SHOOTER_GOAL, robotPose));
+
+                    telemetry.addData("auto heading goal: ", Math.toDegrees(PedroManager.getHeadingToPoint(Parameters.RED_SHOOTER_GOAL, robotPose)));
+                    telemetry.addData("current heading: ", Math.toDegrees(robotPose.getHeading()));
+                    telemetry.addData("pose x: ", robotPose.getX());
+                    telemetry.addData("pose y: ", robotPose.getY());
+
+                    if (currentGamepad1.right_stick_button && !lastGamepad1.right_stick_button) {
+                        follower.setAutoHeadingState(!follower.getAutoHeadingState());
+                    }
+
                     if (currentGamepad1.right_bumper && !lastGamepad1.right_bumper) {
                         robot.tryClawToggle();
                     }
 
-                    if (currentGamepad1.left_bumper && !lastGamepad1.left_bumper) {
+                    if (currentGamepad1.left_bumper && !lastGamepad1.left_bumper && currentGamepad2.right_trigger < .1) {
                         if (!robot.isTransfering()) {
                             robot.tryTransfer();
                         } else {
@@ -128,6 +148,8 @@ public class MainTeleop extends LinearOpMode {
             }
 
             telemetry.addData("Target RPM: ", shooterVelocity);
+            telemetry.addData("Shooter 1 RPM: ", robot.getShooterVelocities()[0]);
+            telemetry.addData("Shooter 2 RPM: ", robot.getShooterVelocities()[1]);
             telemetry.addData("state: ", robot.getState());
 
             robot.update();

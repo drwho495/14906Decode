@@ -4,15 +4,12 @@ package org.firstinspires.ftc.teamcode.Base;
 // the hardware is inited in the subsystem files
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.Base.Helpers.Scheduler;
 import org.firstinspires.ftc.teamcode.Base.Subsystems.IntakeSubsystem;
 import org.firstinspires.ftc.teamcode.Base.Subsystems.ShooterSubsystem;
 
-import java.util.concurrent.TimeUnit;
-
-public class RobotManager {
+public class SubsystemManager {
     // hardware is defined here
 
     private OpModeStates currentState = OpModeStates.IDLE;
@@ -38,7 +35,7 @@ public class RobotManager {
     private ShooterSubsystem shooterSubsystem = new ShooterSubsystem();
     private IntakeSubsystem intakeSubsystem = new IntakeSubsystem();
 
-    public RobotManager(LinearOpMode newOpMode) {
+    public SubsystemManager(LinearOpMode newOpMode) {
         opMode = newOpMode;
         shooterSubsystem.setLinearTeleop(this.opMode);
         intakeSubsystem.setLinearTeleop(this.opMode);
@@ -278,5 +275,9 @@ public class RobotManager {
 
         shooterSubsystem.update();
         intakeSubsystem.update();
+    }
+
+    public Double[] getShooterVelocities() {
+        return shooterSubsystem.getVelocities();
     }
 }

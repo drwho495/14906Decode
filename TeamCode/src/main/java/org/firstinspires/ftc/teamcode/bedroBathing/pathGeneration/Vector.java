@@ -94,13 +94,15 @@ public class Vector {
      * @param xComponent sets the x component of this Vector.
      * @param yComponent sets the y component of this Vector.
      */
-    public void setOrthogonalComponents(double xComponent, double yComponent) {
+    public Vector setOrthogonalComponents(double xComponent, double yComponent) {
         double[] polarComponents;
         this.xComponent = xComponent;
         this.yComponent = yComponent;
         polarComponents = Point.cartesianToPolar(xComponent, yComponent);
         magnitude = polarComponents[0];
         theta = polarComponents[1];
+
+        return this;
     }
 
     /**
