@@ -1,443 +1,225 @@
-package org.firstinspires.ftc.teamcode.bedroBathing.localization.localizers;// <<<<<<< tinkerfest-bot
-// package org.firstinspires.ftc.teamcode.pedroPathing.localization.localizers;
+ package org.firstinspires.ftc.teamcode.bedroBathing.localization.localizers;
 
 
-// import com.qualcomm.robotcore.hardware.HardwareMap;
+ import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
+ import com.qualcomm.robotcore.hardware.HardwareMap;
 
-// import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-// import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-// import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
-// import org.firstinspires.ftc.teamcode.Misc.GoBildaPinpointDriver;
-// import org.firstinspires.ftc.teamcode.pedroPathing.localization.Localizer;
-// import org.firstinspires.ftc.teamcode.pedroPathing.localization.Pose;
-// import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.MathFunctions;
-// import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.Vector;
+ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+ import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
+ import org.firstinspires.ftc.robotcore.external.navigation.UnnormalizedAngleUnit;
+ import org.firstinspires.ftc.teamcode.bedroBathing.localization.Localizer;
+ import org.firstinspires.ftc.teamcode.bedroBathing.localization.Pose;
+ import org.firstinspires.ftc.teamcode.bedroBathing.pathGeneration.MathFunctions;
+ import org.firstinspires.ftc.teamcode.bedroBathing.pathGeneration.Vector;
 
-// /**
-//  * This is the Pinpoint class. This class extends the Localizer superclass and is a
-//  * localizer that uses the two wheel odometry set up with the IMU to have more accurate heading
-//  * readings. The diagram below, which is modified from Road Runner, shows a typical set up.
-//  * <p>
-//  * The view is from the top of the robot looking downwards.
-//  * <p>
-//  * left on robot is the y positive direction
-//  * <p>
-//  * forward on robot is the x positive direction
-//  * <p>
-//  * /--------------\
-//  * |     ____     |
-//  * |     ----     |
-//  * | ||           |
-//  * | ||           |  ----> left (y positive)
-//  * |              |
-//  * |              |
-//  * \--------------/
-//  * |
-//  * |
-//  * V
-//  * forward (x positive)
-//  * With the pinpoint your readings will be used in mm
-//  * to use inches ensure to divide your mm value by 25.4
-//  *
-//  * @author Logan Nash
-//  * @author Havish Sripada 12808 - RevAmped Robotics
-//  * @author Ethan Doak - Gobilda
-//  * @version 1.0, 10/2/2024
-//  */
-// public class PinpointLocalizer extends Localizer {
-//     private HardwareMap hardwareMap;
-//     private Pose startPose = new Pose(0,0,0);
-//     private GoBildaPinpointDriver odo;
-//     private double previousHeading;
-//     private double totalHeading;
-//     private Pose odoOffset = new Pose(0,0,0);
+ /**
+  * This is the Pinpoint class. This class extends the Localizer superclass and is a
+  * localizer that uses the two wheel odometry set up with the IMU to have more accurate heading
+  * readings. The diagram below, which is modified from Road Runner, shows a typical set up.
+  * <p>
+  * The view is from the top of the robot looking downwards.
+  * <p>
+  * left on robot is the y positive direction
+  * <p>
+  * forward on robot is the x positive direction
+  * <p>
+  * /--------------\
+  * |     ____     |
+  * |     ----     |
+  * | ||           |
+  * | ||           |  ----> left (y positive)
+  * |              |
+  * |              |
+  * \--------------/
+  * |
+  * |
+  * V
+  * forward (x positive)
+  * With the pinpoint your readings will be used in mm
+  * to use inches ensure to divide your mm value by 25.4
+  *
+  * @author Logan Nash
+  * @author Havish Sripada 12808 - RevAmped Robotics
+  * @author Ethan Doak - Gobilda
+  * @version 1.0, 10/2/2024
+  */
+ public class PinpointLocalizer extends Localizer {
+     private HardwareMap hardwareMap;
+     private Pose startPose = new Pose(0,0,0);
+     private GoBildaPinpointDriver odo;
+     private double previousHeading;
+     private double totalHeading;
+     private Pose odoOffset = new Pose(0,0,0);
 
-//     /**
-//      * This creates a new PinpointLocalizer from a HardwareMap, with a starting Pose at (0,0)
-//      * facing 0 heading.
-//      *
-//      * @param map the HardwareMap
-//      */
-//     public PinpointLocalizer(HardwareMap map) {
-//         this(map, new Pose());
-//     }
+     /**
+      * This creates a new PinpointLocalizer from a HardwareMap, with a starting Pose at (0,0)
+      * facing 0 heading.
+      *
+      * @param map the HardwareMap
+      */
+     public PinpointLocalizer(HardwareMap map) {
+         this(map, new Pose());
+     }
 
-//     /**
-//      * This creates a new PinpointLocalizer from a HardwareMap and a Pose, with the Pose
-//      * specifying the starting pose of the localizer.
-//      *
-//      * @param map          the HardwareMap
-//      * @param setStartPose the Pose to start from
-//      */
-//     public PinpointLocalizer(HardwareMap map, Pose setStartPose) {
-//         hardwareMap = map;
-//         // TODO: replace this with your Pinpoint port
-//         odo = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
+     /**
+      * This creates a new PinpointLocalizer from a HardwareMap and a Pose, with the Pose
+      * specifying the starting pose of the localizer.
+      *
+      * @param map          the HardwareMap
+      * @param setStartPose the Pose to start from
+      */
+     public PinpointLocalizer(HardwareMap map, Pose setStartPose) {
+         hardwareMap = map;
+         // TODO: replace this with your Pinpoint port
+         odo = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
 
-//         //This uses mm, to use inches divide these numbers by 25.4
-//         odo.setOffsets(6 * 25.4, -6 * 25.4); //these are tuned for 3110-0002-0001 Product Insight #1
-//         //TODO: If you find that the gobilda Yaw Scaling is incorrect you can edit this here
-//         //  odo.setYawScalar(1.0);
-//         //TODO: Set your encoder resolution here, I have the Gobilda Odometry products already included.
-//         //TODO: If you would like to use your own odometry pods input the ticks per mm in the commented part below
-//         odo.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_SWINGARM_POD);
-// //        odo.setEncoderResolution(13.26291192);
-//         //TODO: Set encoder directions
-//         odo.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.REVERSED);
+         //This uses mm, to use inches divide these numbers by 25.4
+         odo.setOffsets(6 * 25.4, -6 * 25.4, DistanceUnit.INCH); //these are tuned for 3110-0002-0001 Product Insight #1
+         //TODO: If you find that the gobilda Yaw Scaling is incorrect you can edit this here
+         //  odo.setYawScalar(1.0);
+         //TODO: Set your encoder resolution here, I have the Gobilda Odometry products already included.
+         //TODO: If you would like to use your own odometry pods input the ticks per mm in the commented part below
+         odo.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_SWINGARM_POD);
+ //        odo.setEncoderResolution(13.26291192);
+         //TODO: Set encoder directions
+         odo.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.REVERSED);
 
-//         odo.resetPosAndIMU();
+         odo.resetPosAndIMU();
 
-//         setStartPose(setStartPose);
-//         totalHeading = 0;
-//         previousHeading = startPose.getHeading();
+         setStartPose(setStartPose);
+         totalHeading = 0;
+         previousHeading = startPose.getHeading();
 
-//         resetPinpoint();
-//     }
+         resetPinpoint();
+     }
 
-//     /**
-//      * This returns the current pose estimate.
-//      *
-//      * @return returns the current pose estimate as a Pose
-//      */
+     /**
+      * This returns the current pose estimate.
+      *
+      * @return returns the current pose estimate as a Pose
+      */
+     @Override
+     public Pose getPose() {
+         Pose2D pose = odo.getPosition();
+         return new Pose(pose.getX(DistanceUnit.INCH) + odoOffset.getX(), pose.getY(DistanceUnit.INCH) + odoOffset.getX(), pose.getHeading(AngleUnit.RADIANS) + odoOffset.getHeading());
+     }
+
+     /**
+      * This returns the current velocity estimate.
+      *
+      * @return returns the current velocity estimate as a Pose
+      */
+     @Override
+     public Pose getVelocity() {
+         return new Pose(odo.getVelX(DistanceUnit.INCH), odo.getVelY(DistanceUnit.INCH), odo.getHeadingVelocity(UnnormalizedAngleUnit.RADIANS));
+     }
+
+     /**
+      * This returns the current velocity estimate.
+      *
+      * @return returns the current velocity estimate as a Vector
+      */
+     @Override
+     public Vector getVelocityVector() {
+         Vector returnVector = new Vector();
+         returnVector.setOrthogonalComponents(odo.getVelX(DistanceUnit.INCH), odo.getVelY(DistanceUnit.INCH));
+         return returnVector;
+     }
+
+     /**
+      * This sets the start pose. Changing the start pose should move the robot as if all its
+      * previous movements were displacing it from its new start pose.
+      *
+      * @param setStart the new start pose
+      */
+     @Override
+     public void setStartPose(Pose setStart) {
+         setMirroredPose(odoOffset);
+     }
+
+     @Override
+     public void setPose(Pose setPose) {
+        odo.setPosition(new Pose2D(DistanceUnit.INCH, setPose.getX(), setPose.getY(), AngleUnit.RADIANS, setPose.getHeading()));
+     }
+
+     /**
+      * This sets the current pose estimate. Changing this should just change the robot's current
+      * pose estimate, not anything to do with the start pose.
+      *
+      * @param setMirroredPose the new current pose estimate
+      */
 //     @Override
-//     public Pose getPose() {
-//         Pose2D pose = odo.getPosition();
-//         return new Pose(pose.getX(DistanceUnit.INCH) + odoOffset.getX(), pose.getY(DistanceUnit.INCH) + odoOffset.getX(), pose.getHeading(AngleUnit.RADIANS) + odoOffset.getHeading());
-//     }
+     public void setMirroredPose(Pose setMirroredPose) {
+         resetPinpoint();
+         odo.update();
+         odoOffset = setMirroredPose;
+     }
 
-//     /**
-//      * This returns the current velocity estimate.
-//      *
-//      * @return returns the current velocity estimate as a Pose
-//      */
-//     @Override
-//     public Pose getVelocity() {
-//         Pose2D pose = odo.getVelocity();
-//         return new Pose(pose.getX(DistanceUnit.INCH), pose.getY(DistanceUnit.INCH), pose.getHeading(AngleUnit.RADIANS));
-//     }
+     /**
+      * This updates the total heading of the robot. The Pinpoint handles all other updates itself.
+      */
+     @Override
+     public void update() {
+         odo.update();
+         totalHeading += MathFunctions.getSmallestAngleDifference(odo.getHeading(AngleUnit.RADIANS), previousHeading);
+         previousHeading = odo.getHeading(AngleUnit.RADIANS);
+     }
 
-//     /**
-//      * This returns the current velocity estimate.
-//      *
-//      * @return returns the current velocity estimate as a Vector
-//      */
-//     @Override
-//     public Vector getVelocityVector() {
-//         Pose2D pose = odo.getVelocity();
-//         Vector returnVector = new Vector();
-//         returnVector.setOrthogonalComponents(pose.getX(DistanceUnit.INCH), pose.getY(DistanceUnit.INCH));
-//         return returnVector;
-//     }
+     /**
+      * This returns how far the robot has turned in radians, in a number not clamped between 0 and
+      * 2 * pi radians. This is used for some tuning things and nothing actually within the following.
+      *
+      * @return returns how far the robot has turned in total, in radians.
+      */
+     @Override
+     public double getTotalHeading() {
+         return totalHeading;
+     }
 
-//     /**
-//      * This sets the start pose. Changing the start pose should move the robot as if all its
-//      * previous movements were displacing it from its new start pose.
-//      *
-//      * @param setStart the new start pose
-//      */
-//     @Override
-//     public void setStartPose(Pose setStart) {
-//         setMirroredPose(odoOffset);
-//     }
+     /**
+      * This returns the Y encoder value as none of the odometry tuners are required for this localizer
+      *
+      * @return returns the Y encoder value
+      */
+     @Override
+     public double getForwardMultiplier() {
+         return odo.getEncoderY();
+     }
 
-//     /**
-//      * This sets the current pose estimate. Changing this should just change the robot's current
-//      * pose estimate, not anything to do with the start pose.
-//      *
-//      * @param setMirroredPose the new current pose estimate
-//      */
-//     @Override
-//     public void setMirroredPose(Pose setMirroredPose) {
-//         resetPinpoint();
-//         odo.update();
-//         odoOffset = setMirroredPose;
-//     }
+     /**
+      * This returns the X encoder value as none of the odometry tuners are required for this localizer
+      *
+      * @return returns the X encoder value
+      */
+     @Override
+     public double getLateralMultiplier() {
+         return odo.getEncoderX();
+     }
 
-//     /**
-//      * This updates the total heading of the robot. The Pinpoint handles all other updates itself.
-//      */
-//     @Override
-//     public void update() {
-//         odo.update();
-//         totalHeading += MathFunctions.getSmallestAngleDifference(odo.getHeading(), previousHeading);
-//         previousHeading = odo.getHeading();
-//     }
+     /**
+      * This returns either the factory tuned yaw scalar or the yaw scalar tuned by yourself.
+      *
+      * @return returns the yaw scalar
+      */
+     @Override
+     public double getTurningMultiplier() {
+         return odo.getYawScalar();
+     }
 
-//     /**
-//      * This returns how far the robot has turned in radians, in a number not clamped between 0 and
-//      * 2 * pi radians. This is used for some tuning things and nothing actually within the following.
-//      *
-//      * @return returns how far the robot has turned in total, in radians.
-//      */
-//     @Override
-//     public double getTotalHeading() {
-//         return totalHeading;
-//     }
+     /**
+      * This resets the IMU.
+      */
+     @Override
+     public void resetIMU() {
+         odo.recalibrateIMU();
+         odo.setHeading(0, AngleUnit.RADIANS);
+     }
 
-//     /**
-//      * This returns the Y encoder value as none of the odometry tuners are required for this localizer
-//      *
-//      * @return returns the Y encoder value
-//      */
-//     @Override
-//     public double getForwardMultiplier() {
-//         return odo.getEncoderY();
-//     }
-
-//     /**
-//      * This returns the X encoder value as none of the odometry tuners are required for this localizer
-//      *
-//      * @return returns the X encoder value
-//      */
-//     @Override
-//     public double getLateralMultiplier() {
-//         return odo.getEncoderX();
-//     }
-
-//     /**
-//      * This returns either the factory tuned yaw scalar or the yaw scalar tuned by yourself.
-//      *
-//      * @return returns the yaw scalar
-//      */
-//     @Override
-//     public double getTurningMultiplier() {
-//         return odo.getYawScalar();
-//     }
-
-//     /**
-//      * This resets the IMU.
-//      */
-//     @Override
-//     public void resetIMU() {
-//         odo.recalibrateIMU();
-//     }
-
-//     /**
-//      * This resets the OTOS.
-//      */
-//     public void resetPinpoint() {
-//         odo.resetPosAndIMU();
-//     }
-// }
-// =======
-// package org.firstinspires.ftc.teamcode.pedroPathing.localization.localizers;//package org.firstinspires.ftc.teamcode.pedroPathing.localization.localizers;
-// //
-// //
-// //import com.qualcomm.robotcore.hardware.HardwareMap;
-// //
-// //import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-// //import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-// //import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
-// //import org.firstinspires.ftc.teamcode.pedroPathing.localization.GoBildaPinpointDriver;
-// //import org.firstinspires.ftc.teamcode.pedroPathing.localization.Localizer;
-// //import org.firstinspires.ftc.teamcode.pedroPathing.localization.Pose;
-// //import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.MathFunctions;
-// //import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.Vector;
-// //
-// ///**
-// // * This is the Pinpoint class. This class extends the Localizer superclass and is a
-// // * localizer that uses the two wheel odometry set up with the IMU to have more accurate heading
-// // * readings. The diagram below, which is modified from Road Runner, shows a typical set up.
-// // *
-// // * The view is from the top of the robot looking downwards.
-// // *
-// // * left on robot is the y positive direction
-// // *
-// // * forward on robot is the x positive direction
-// // *
-// // *                    forward (x positive)
-// // *                                △
-// // *                                |
-// // *                                |
-// // *                         /--------------\
-// // *                         |              |
-// // *                         |              |
-// // *                         |           || |
-// // *  left (y positive) <--- |           || |
-// // *                         |     ____     |
-// // *                         |     ----     |
-// // *                         \--------------/
-// // * With the pinpoint your readings will be used in mm
-// // * to use inches ensure to divide your mm value by 25.4
-// // * @author Logan Nash
-// // * @author Havish Sripada 12808 - RevAmped Robotics
-// // * @author Ethan Doak - Gobilda
-// // * @version 1.0, 10/2/2024
-// // */
-// //public class PinpointLocalizer extends Localizer {
-// //    private HardwareMap hardwareMap;
-// //    private GoBildaPinpointDriver odo;
-// //    private double previousHeading;
-// //    private double totalHeading;
-// //
-// //    /**
-// //     * This creates a new PinpointLocalizer from a HardwareMap, with a starting Pose at (0,0)
-// //     * facing 0 heading.
-// //     *
-// //     * @param map the HardwareMap
-// //     */
-// //    public PinpointLocalizer(HardwareMap map){ this(map, new Pose());}
-// //
-// //    /**
-// //     * This creates a new PinpointLocalizer from a HardwareMap and a Pose, with the Pose
-// //     * specifying the starting pose of the localizer.
-// //     *
-// //     * @param map the HardwareMap
-// //     * @param setStartPose the Pose to start from
-// //     */
-// //    public PinpointLocalizer(HardwareMap map, Pose setStartPose){
-// //        hardwareMap = map;
-// //        // TODO: replace this with your Pinpoint port
-// //        odo = hardwareMap.get(GoBildaPinpointDriver.class,"odo");
-// //
-// //        //This uses mm, to use inches divide these numbers by 25.4
-// //        odo.setOffsets(-84.0, -168.0); //these are tuned for 3110-0002-0001 Product Insight #1
-// //        //TODO: If you find that the gobilda Yaw Scaling is incorrect you can edit this here
-// //      //  odo.setYawScalar(1.0);
-// //        //TODO: Set your encoder resolution here, I have the Gobilda Odometry products already included.
-// //        //TODO: If you would like to use your own odometry pods input the ticks per mm in the commented part below
-// //        odo.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
-// //        //odo.setEncoderResolution(13.26291192);
-// //        //TODO: Set encoder directions
-// //        odo.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.FORWARD);
-// //
-// //        resetPinpoint();;
-
-// //        setStartPose(setStartPose);
-// //        totalHeading = 0;
-// //        previousHeading = setStartPose.getHeading();
-// //    }
-// //
-// //    /**
-// //     * This returns the current pose estimate.
-// //     *
-// //     * @return returns the current pose estimate as a Pose
-// //     */
-// //    @Override
-// //    public Pose getPose() {
-// //        Pose2D rawPose = odo.getPosition();
-// //        return new Pose(rawPose.getX(DistanceUnit.INCH), rawPose.getY(DistanceUnit.INCH), rawPose.getHeading(AngleUnit.RADIANS));
-// //    }
-// //
-// //    /**
-// //     * This returns the current velocity estimate.
-// //     *
-// //     * @return returns the current velocity estimate as a Pose
-// //     */
-// //    @Override
-// //    public Pose getVelocity() {
-// //        Pose2D pose = odo.getVelocity();
-// //        return new Pose(pose.getX(DistanceUnit.INCH), pose.getY(DistanceUnit.INCH), odo.getHeadingVelocity());
-// //    }
-// //
-// //    /**
-// //     * This returns the current velocity estimate.
-// //     *
-// //     * @return returns the current velocity estimate as a Vector
-// //     */
-// //    @Override
-// //    public Vector getVelocityVector() {
-// //        Pose2D pose = odo.getVelocity();
-// //        Vector returnVector = new Vector();
-// //        returnVector.setOrthogonalComponents(pose.getX(DistanceUnit.INCH), pose.getY(DistanceUnit.INCH));
-// //        return returnVector;
-// //    }
-// //
-// //    /**
-// //     * This sets the start pose. Since nobody should be using this after the robot has begun moving,
-// //     * and due to issues with the PinpointLocalizer, this is functionally the same as setMirroredPose(Pose).
-// //     *
-// //     * @param setStart the new start pose
-// //     */
-// //    @Override
-// //    public void setStartPose(Pose setStart) {
-// //        odo.setPosition(new Pose2D(DistanceUnit.INCH, setStart.getX(), setStart.getY(), AngleUnit.RADIANS, setStart.getHeading()));
-// //    }
-// //
-// //    /**
-// //     * This sets the current pose estimate. Changing this should just change the robot's current
-// //     * pose estimate, not anything to do with the start pose.
-// //     *
-// //     * @param setMirroredPose the new current pose estimate
-// //     */
-// //    @Override
-// //    public void setMirroredPose(Pose setMirroredPose) {
-// //        odo.setPosition(new Pose2D(DistanceUnit.INCH, setMirroredPose.getX(), setMirroredPose.getY(), AngleUnit.RADIANS, setMirroredPose.getHeading()));
-// //    }
-// //
-// //    /**
-// //     * This updates the total heading of the robot. The Pinpoint handles all other updates itself.
-// //     */
-// //    @Override
-// //    public void update() {
-// //        odo.update();
-// //        totalHeading += MathFunctions.getSmallestAngleDifference(MathFunctions.normalizeAngle(odo.getHeading()), previousHeading);
-// //        previousHeading = MathFunctions.normalizeAngle(odo.getHeading());
-// //    }
-// //
-// //    /**
-// //     * This returns how far the robot has turned in radians, in a number not clamped between 0 and
-// //     * 2 * pi radians. This is used for some tuning things and nothing actually within the following.
-// //     *
-// //     * @return returns how far the robot has turned in total, in radians.
-// //     */
-// //    @Override
-// //    public double getTotalHeading() {
-// //        return totalHeading;
-// //    }
-// //
-// //    /**
-// //     * This returns the Y encoder value as none of the odometry tuners are required for this localizer
-// //     * @return returns the Y encoder value
-// //     */
-// //    @Override
-// //    public double getForwardMultiplier() {
-// //        return odo.getEncoderY();
-// //    }
-// //
-// //    /**
-// //     * This returns the X encoder value as none of the odometry tuners are required for this localizer
-// //     * @return returns the X encoder value
-// //     */
-// //    @Override
-// //    public double getLateralMultiplier() {
-// //        return odo.getEncoderX();
-// //    }
-// //
-// //    /**
-// //     * This returns either the factory tuned yaw scalar or the yaw scalar tuned by yourself.
-// //     * @return returns the yaw scalar
-// //     */
-// //    @Override
-// //    public double getTurningMultiplier() {
-// //        return odo.getYawScalar();
-// //    }
-// //
-// //    /**
-// //     * This resets the IMU. Note: This does not change the estimated heading orientation.
-// //     */
-// //    @Override
-// //    public void resetIMU() throws InterruptedException {
-// //        odo.recalibrateIMU();
-// //
-// //        try {
-// //            Thread.sleep(300);
-// //        } catch (InterruptedException e) {
-// //            throw new RuntimeException(e);
-// //        }
-// //    }
-// //
-// //    /**
-// //     * This resets the pinpoint.
-// //     */
-// //    private void resetPinpoint() {
-// //        odo.resetPosAndIMU();
-// //
-// //        try {
-// //            Thread.sleep(300);
-// //        } catch (InterruptedException e) {
-// //            throw new RuntimeException(e);
-// //        }
-// //    }
-// //}
-// >>>>>>> main
+     /**
+      * This resets the OTOS.
+      */
+     public void resetPinpoint() {
+         odo.resetPosAndIMU();
+     }
+ }

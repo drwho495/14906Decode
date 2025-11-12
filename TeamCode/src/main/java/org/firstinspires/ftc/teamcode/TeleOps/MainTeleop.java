@@ -43,7 +43,6 @@ public class MainTeleop extends LinearOpMode {
         waitForStart();
 
         robot.tryPowerOnShooter();
-        robot.tryPrimeShoot();
 
         leftFront = hardwareMap.get(DcMotorEx.class, FollowerConstants.leftFrontMotorName);
         leftRear = hardwareMap.get(DcMotorEx.class, FollowerConstants.leftRearMotorName);
@@ -56,14 +55,14 @@ public class MainTeleop extends LinearOpMode {
         rightFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         follower.startTeleopDrive();
-        follower.setAutoHeadingState(true);
+        follower.setAutoHeadingState(false);
 
         if (!Parameters.AUTO_PROGRAM_RUN) {
             follower.setPose(new Pose(0, 0, Math.toRadians(45))); // the starting position on the wall of the goal
         }
 
         robot.setState(OpModeStates.INTAKE_SCORE);
-        robot.tryClawGrab();
+        robot.trySetHoodServoPos(Parameters.HOOD_SERVO_DOWN);
 
         while (opModeIsActive() && !isStopRequested()) {
             Pose robotPose = follower.getPose();
@@ -75,16 +74,14 @@ public class MainTeleop extends LinearOpMode {
             currentGamepad1.copy(gamepad1);
             currentGamepad2.copy(gamepad2);
 
-            robot.trySetCustomVelocity(shooterVelocity);
-
             if (canDrive) {
                 follower.setTeleOpMovementVectors(gamepad1.left_stick_y,
                         gamepad1.left_stick_x,
-                        -gamepad1.right_stick_x,
-                        false);
+                        gamepad1.right_stick_x,
+                        false );
             }
 
-            if (gamepad1.options) follower.resetIMU();
+            if (gamepad1.optionsWasPressed()) follower.resetIMU();
 
             switch (robot.getState()) {
                 case IDLE:
@@ -97,50 +94,44 @@ public class MainTeleop extends LinearOpMode {
                     telemetry.addData("pose x: ", robotPose.getX());
                     telemetry.addData("pose y: ", robotPose.getY());
 
+                    if (currentGamepad1.right_trigger > .1) {
+                        robot.trySetIntakePower(currentGamepad1.right_trigger);
+                    } else if (currentGamepad1.left_trigger > .1) {
+                        robot.trySetIntakePower(-currentGamepad1.left_trigger);
+                    } else {
+                        robot.tryPowerOffIntake();
+                    }
+
+                    if (currentGamepad1.left_bumper) {
+                        robot.tryStartShootElement();
+                    } else {
+                        robot.tryStopShootElement();
+                    }
+
+                    if (currentGamepad1.dpadRightWasPressed() || currentGamepad2.dpadRightWasPressed()) {
+                        shooterVelocity += 100;
+                        robot.trySetShooterVelocity(shooterVelocity);
+                    }
+
+                    if (currentGamepad1.dpadLeftWasPressed() || currentGamepad2.dpadLeftWasPressed()) {
+                        shooterVelocity -= 100;
+                        robot.trySetShooterVelocity(shooterVelocity);
+                    }
+
+                    if (currentGamepad2.rightBumperWasPressed()) {
+                        robot.tryPowerOnShooter();
+                    } else if (currentGamepad2.rightBumperWasReleased()) {
+                        robot.tryPowerOffShooter();
+                    }
+
+                    if (currentGamepad1.aWasPressed()) {
+                        robot.trySetHoodServoPos(Parameters.HOOD_SERVO_DOWN);
+                    } else if (currentGamepad1.bWasPressed()) {
+                        robot.trySetHoodServoPos(Parameters.HOOD_SERVO_FAR);
+                    }
+
                     if (currentGamepad1.right_stick_button && !lastGamepad1.right_stick_button) {
                         follower.setAutoHeadingState(!follower.getAutoHeadingState());
-                    }
-
-                    if (currentGamepad1.right_bumper && !lastGamepad1.right_bumper) {
-                        robot.tryClawToggle();
-                    }
-
-                    if (currentGamepad1.left_bumper && !lastGamepad1.left_bumper && currentGamepad2.right_trigger < .1) {
-                        if (!robot.isTransfering()) {
-                            robot.tryTransfer();
-                        } else {
-                            robot.tryCancelTransfer();
-                        }
-                    }
-
-                    if (currentGamepad1.dpad_up && !lastGamepad1.dpad_up) {
-                        robot.tryToggleShooter();
-                    }
-
-                    if (currentGamepad1.a && !lastGamepad1.a) {
-                        robot.tryToggleGate();
-                    }
-
-                    if (currentGamepad1.dpad_down && !lastGamepad1.dpad_down) {
-                        shooterVelocity = Parameters.SHOOTER_DEFAULT_RPM;
-                    }
-
-                    if (currentGamepad1.left_trigger > .1) {
-                        robot.tryWristHold();
-                    } else {
-                        robot.tryWristDown();
-                    }
-
-                    if (currentGamepad1.right_trigger > .1) {
-                        robot.tryShootElement();
-                    } else {
-                        robot.tryPrimeShoot();
-                    }
-
-                    if (currentGamepad1.dpad_left && !lastGamepad1.dpad_left) {
-                        shooterVelocity -= 100;
-                    } else if (currentGamepad1.dpad_right && !lastGamepad1.dpad_right) {
-                        shooterVelocity += 100;
                     }
                     break;
                 case PARK:

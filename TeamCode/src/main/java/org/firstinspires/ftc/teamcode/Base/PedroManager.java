@@ -75,9 +75,6 @@ public class PedroManager {
                     mirroredPath.setZeroPowerAccelerationMultiplier(mirroredPath.getZeroPowerAccelerationMultiplier());
 
                     newPath.addPath(mirroredPath);
-                    opMode.telemetry.addData("path is not null, size: ", newPath.build().size());
-                } else {
-                    opMode.telemetry.addLine("path is null");
                 }
             }
         }

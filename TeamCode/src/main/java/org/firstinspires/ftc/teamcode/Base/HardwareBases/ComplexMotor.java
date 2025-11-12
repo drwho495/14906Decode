@@ -8,6 +8,7 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.teamcode.Base.Helpers.PIDFController;
 import org.firstinspires.ftc.teamcode.bedroBathing.localization.Pose;
 import org.firstinspires.ftc.teamcode.bedroBathing.pathGeneration.Vector;
@@ -27,8 +28,12 @@ public class ComplexMotor {
 
         this.thisMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         this.thisMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        this.thisMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        this.thisMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         this.thisMotor.setMotorEnable();
+    }
+
+    public void disableEncoder() {
+        this.thisMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
     }
 
     public double getVelocity() {
@@ -74,6 +79,10 @@ public class ComplexMotor {
             thisMotor.setPower(motorPower);
         }
 
+    }
+
+    public double getCurrent() {
+        return thisMotor.getCurrent(CurrentUnit.AMPS);
     }
 
     public void setPower(double power) {
