@@ -53,6 +53,8 @@ public class IntakeSubsystem extends Subsystem {
         if (!thisOpMode.opModeIsActive() || thisOpMode.isStopRequested()) return;
 
         intakeMotor.setMode(ComplexMotorModes.RAW_POWER);
+        intakeMotor.enableBrake();
+        intakeMotor.setEncoderState(false);
         intakeMotor.setPower(intakePower);
         intakeMotor.update();
     }

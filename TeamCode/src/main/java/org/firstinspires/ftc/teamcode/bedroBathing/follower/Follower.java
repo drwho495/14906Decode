@@ -97,7 +97,7 @@ public class Follower {
     private boolean holdPositionAtEnd;
     private boolean teleopDrive;
     private boolean autoHeadingControl = false;
-    private double teleopHeadingGoal = 0;
+    public double teleopHeadingGoal = 0;
 
     private double maxPower = 1;
     private double oldMaxPower = 1;
@@ -472,6 +472,10 @@ public class Follower {
         teleopDrive = true;
     }
 
+    public boolean teleopDriveEnabled() {
+        return teleopDrive;
+    }
+
     /**
      * This tells the robot whether the driver should control the heading or not.
      */
@@ -521,7 +525,7 @@ public class Follower {
                     limitDrivePowers();
 
                     for (int i = 0; i < motors.size(); i++) {
-                        motors.get(i).setPower(drivePowers[i]);
+                        motors.get(i).setPower(drivePowers[i] * (12 / voltage));
                     }
                 } else {
                     if (isBusy) {
@@ -536,7 +540,7 @@ public class Follower {
                         limitDrivePowers();
 
                         for (int i = 0; i < motors.size(); i++) {
-                            motors.get(i).setPower(drivePowers[i]);
+                            motors.get(i).setPower(drivePowers[i] * (12 / voltage));
                         }
                     }
                     if (currentPath.isAtParametricEnd()) {
@@ -576,17 +580,17 @@ public class Follower {
             Vector localHeadingVector = teleopHeadingVector;
 
             if (autoHeadingControl) {
-                localHeadingVector = MathFunctions.scalarMultiplyVector(getHeadingVector(teleopHeadingGoal), holdPointHeadingScaling);
+                localHeadingVector = getHeadingVector(teleopHeadingGoal);
             }
 
             calculateAveragedVelocityAndAcceleration();
 
-            drivePowers = driveVectorScaler.getDrivePowers(getCentripetalForceCorrection(), localHeadingVector, teleopDriveVector, poseUpdater.getPose().getHeading());
+            drivePowers = driveVectorScaler.getDrivePowers(new Vector(), localHeadingVector, teleopDriveVector, poseUpdater.getPose().getHeading());
 
             limitDrivePowers();
 
             for (int i = 0; i < motors.size(); i++) {
-                motors.get(i).setPower(drivePowers[i]);
+                motors.get(i).setPower(drivePowers[i]); // do NOT apply voltage correction to this!
             }
         }
     }

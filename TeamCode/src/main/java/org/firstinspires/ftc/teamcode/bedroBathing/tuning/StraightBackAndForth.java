@@ -54,6 +54,11 @@ public class StraightBackAndForth extends OpMode {
 
 
         follower.followPath(forwards);
+        try {
+            follower.resetIMU();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
 
         telemetryA = new MultipleTelemetry(this.telemetry, FtcDashboard.getInstance().getTelemetry());
         telemetryA.addLine("This will run the robot in a straight line going " + DISTANCE

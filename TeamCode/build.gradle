@@ -36,18 +36,6 @@ buildscript {
     }
 }
 
-dependencies {
-    implementation project(':FtcRobotController')
-
-    implementation("dev.frozenmilk.sinister:Sloth:0.2.4")
-
-    implementation "com.acmerobotics.roadrunner:ftc:0.1.14"
-    implementation "com.acmerobotics.roadrunner:core:1.0.0"
-    implementation "com.acmerobotics.roadrunner:actions:1.0.0"
-    implementation "com.acmerobotics.dashboard:dashboard:0.4.16"
-}
-
-
 repositories {
     mavenCentral()
 
@@ -58,4 +46,19 @@ repositories {
     maven {
         url = 'https://maven.brott.dev/'
     }
+}
+
+dependencies {
+    implementation project(':FtcRobotController')
+
+    implementation("dev.frozenmilk.sinister:Sloth:0.2.4")
+
+    implementation("com.acmerobotics.roadrunner:ftc:0.1.14") {
+        exclude group: "com.acmerobotics.dashboard"
+    }
+    implementation ("com.acmerobotics.roadrunner:actions:1.0.0"){
+        exclude group: "com.acmerobotics.dashboard"
+    }
+    implementation "com.acmerobotics.roadrunner:core:1.0.0"
+    implementation("com.acmerobotics.slothboard:dashboard")
 }

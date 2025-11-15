@@ -28,15 +28,15 @@ public class FollowerConstants {
     public static String leftRearMotorName = "motorLR";
     public static String rightFrontMotorName = "motorRF";
     public static String rightRearMotorName = "motorRR";
-    public static DcMotorSimple.Direction leftFrontMotorDirection = DcMotorSimple.Direction.FORWARD;
-    public static DcMotorSimple.Direction rightFrontMotorDirection = DcMotorSimple.Direction.FORWARD;
-    public static DcMotorSimple.Direction leftRearMotorDirection = DcMotorSimple.Direction.FORWARD;
-    public static DcMotorSimple.Direction rightRearMotorDirection = DcMotorSimple.Direction.REVERSE;
+    public static DcMotorSimple.Direction leftFrontMotorDirection = DcMotorSimple.Direction.REVERSE;
+    public static DcMotorSimple.Direction rightFrontMotorDirection = DcMotorSimple.Direction.REVERSE;
+    public static DcMotorSimple.Direction leftRearMotorDirection = DcMotorSimple.Direction.REVERSE;
+    public static DcMotorSimple.Direction rightRearMotorDirection = DcMotorSimple.Direction.FORWARD;
 
     // This section is for setting the actual drive vector for the front left wheel, if the robot
     // is facing a heading of 0 radians with the wheel centered at (0,0)
-    private static double xMovement = 76.8965;
-    private static double yMovement = 62.8258;
+    private static double xMovement = 78.2744;
+    private static double yMovement = 66.9288;
     private static double[] convertToPolar = Point.cartesianToPolar(xMovement, -yMovement);
     public static Vector frontLeftVector = MathFunctions.normalizeVector(new Vector(convertToPolar[0], convertToPolar[1]));
 
@@ -61,9 +61,9 @@ public class FollowerConstants {
 
     // Heading error PIDF coefficients
     public static CustomPIDFCoefficients headingPIDFCoefficients = new CustomPIDFCoefficients(
-            1.2,
-            2,
-            0.3,
+            .8,
+            0,
+            0.01,
             0);
 
     // Feed forward constant added on to the heading PIDF
@@ -88,7 +88,7 @@ public class FollowerConstants {
 
 
     // Mass of robot in kilograms
-    public static double mass = 7;
+    public static double mass = 10.8;
 
     // Centripetal force to power scaling
     public static double centripetalScaling = 0.00025;
@@ -96,11 +96,11 @@ public class FollowerConstants {
 
     // Acceleration of the drivetrain when power is cut in inches/second^2 (should be negative)
     // if not negative, then the robot thinks that its going to go faster under 0 power
-    public static double forwardZeroPowerAcceleration = -29.92;
+    public static double forwardZeroPowerAcceleration = -33.4116;
 
     // Acceleration of the drivetrain when power is cut in inches/second^2 (should be negative)
     // if not negative, then the robot thinks that its going to go faster under 0 power
-    public static double lateralZeroPowerAcceleration = -81.3948;
+    public static double lateralZeroPowerAcceleration = -68.9847;
 
     // A multiplier for the zero power acceleration to change the speed the robot decelerates at
     // the end of paths.
@@ -159,7 +159,7 @@ public class FollowerConstants {
 
     // These activate / deactivate the secondary PIDs. These take over at errors under a set limit for
     // the translational, heading, and drive PIDs.
-    public static boolean useSecondaryTranslationalPID = false;
+    public static boolean useSecondaryTranslationalPID = true;
     public static boolean useSecondaryHeadingPID = false;
     public static boolean useSecondaryDrivePID = false;
 
@@ -191,7 +191,7 @@ public class FollowerConstants {
 
     // Secondary heading error PIDF coefficients
     public static CustomPIDFCoefficients secondaryHeadingPIDFCoefficients = new CustomPIDFCoefficients(
-            3,
+            1.5,
             0,
             0,
             0);

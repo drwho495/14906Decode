@@ -4,13 +4,11 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.Gamepad;
+import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.teamcode.Base.OpModeStates;
 import org.firstinspires.ftc.teamcode.Base.Parameters;
-import org.firstinspires.ftc.teamcode.Base.PedroManager;
-import org.firstinspires.ftc.teamcode.Base.SubsystemManager;
-import org.firstinspires.ftc.teamcode.bedroBathing.follower.Follower;
+import org.firstinspires.ftc.teamcode.Base.RobotManager;
 import org.firstinspires.ftc.teamcode.bedroBathing.localization.Pose;
 import org.firstinspires.ftc.teamcode.bedroBathing.tuning.FollowerConstants;
 
@@ -21,10 +19,6 @@ public class MainTeleop extends LinearOpMode {
     // this is because we might not be able to control that variable when we set the state
     // (callbacks with pedro pathing)
 
-    private Gamepad lastGamepad1 = new Gamepad();
-    private Gamepad lastGamepad2 = new Gamepad();
-    private Gamepad currentGamepad1 = new Gamepad();
-    private Gamepad currentGamepad2 = new Gamepad();
     private boolean canDrive = true;
 
     private DcMotorEx leftFront;
@@ -36,13 +30,13 @@ public class MainTeleop extends LinearOpMode {
 
     @Override
     public void runOpMode() throws InterruptedException {
-        SubsystemManager robot = new SubsystemManager(this);
-        Follower follower = new Follower(this.hardwareMap);
+        RobotManager robot = new RobotManager(this);
         robot.initialiseHardware();
+        robot.initialisePedroPathing();
 
         waitForStart();
 
-        robot.tryPowerOnShooter();
+        robot.tryPowerOffShooter();
 
         leftFront = hardwareMap.get(DcMotorEx.class, FollowerConstants.leftFrontMotorName);
         leftRear = hardwareMap.get(DcMotorEx.class, FollowerConstants.leftRearMotorName);
@@ -54,85 +48,88 @@ public class MainTeleop extends LinearOpMode {
         rightRear.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rightFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        follower.startTeleopDrive();
-        follower.setAutoHeadingState(false);
+        robot.tryDisableAutoHeading();
 
-        if (!Parameters.AUTO_PROGRAM_RUN) {
-            follower.setPose(new Pose(0, 0, Math.toRadians(45))); // the starting position on the wall of the goal
+        if (!Parameters.AUTO_PROGRAM_HAS_RUN) {
+            robot.setPose(new Pose(0, 0, Math.toRadians(0)));
+        } else {
+            robot.setPose(Parameters.AUTO_PROGRAM_END_POSITION);
         }
 
         robot.setState(OpModeStates.INTAKE_SCORE);
         robot.trySetHoodServoPos(Parameters.HOOD_SERVO_DOWN);
 
         while (opModeIsActive() && !isStopRequested()) {
-            Pose robotPose = follower.getPose();
-
-            lastGamepad1.copy(currentGamepad1);
-            lastGamepad2.copy(currentGamepad2);
-
-
-            currentGamepad1.copy(gamepad1);
-            currentGamepad2.copy(gamepad2);
+            Pose robotPose = robot.getPose();
 
             if (canDrive) {
-                follower.setTeleOpMovementVectors(gamepad1.left_stick_y,
-                        gamepad1.left_stick_x,
-                        gamepad1.right_stick_x,
-                        false );
+                robot.trySetDrivePowers(-gamepad1.left_stick_y,
+                        -gamepad1.left_stick_x,
+                        -gamepad1.right_stick_x,
+                        true);
             }
 
-            if (gamepad1.optionsWasPressed()) follower.resetIMU();
+            if (gamepad1.optionsWasPressed()) {
+                robotPose.setHeading(0);
+
+                robot.setPose(robotPose);
+            };
+            if (gamepad1.psWasPressed()) robot.setPose(Parameters.RED_CLOSE_START);
 
             switch (robot.getState()) {
                 case IDLE:
                     break;
                 case INTAKE_SCORE:
-                    follower.setTeleopHeadingGoal(PedroManager.getHeadingToPoint(Parameters.RED_SHOOTER_GOAL, robotPose));
+                    robot.tryUseGoalAimHeading();
 
-                    telemetry.addData("auto heading goal: ", Math.toDegrees(PedroManager.getHeadingToPoint(Parameters.RED_SHOOTER_GOAL, robotPose)));
+                    telemetry.addData("auto heading goal: ", Math.toDegrees(robot.getHeadingToGoal()));
                     telemetry.addData("current heading: ", Math.toDegrees(robotPose.getHeading()));
                     telemetry.addData("pose x: ", robotPose.getX());
                     telemetry.addData("pose y: ", robotPose.getY());
 
-                    if (currentGamepad1.right_trigger > .1) {
-                        robot.trySetIntakePower(currentGamepad1.right_trigger);
-                    } else if (currentGamepad1.left_trigger > .1) {
-                        robot.trySetIntakePower(-currentGamepad1.left_trigger);
+                    if (gamepad1.right_trigger > .1) {
+                        robot.trySetIntakePower(gamepad1.right_trigger);
+                    } else if (gamepad1.left_trigger > .1) {
+                        robot.trySetIntakePower(-gamepad1.left_trigger);
                     } else {
                         robot.tryPowerOffIntake();
                     }
 
-                    if (currentGamepad1.left_bumper) {
+                    if (gamepad1.leftBumperWasPressed()) {
                         robot.tryStartShootElement();
-                    } else {
+                    } else if (gamepad1.leftBumperWasReleased()) {
                         robot.tryStopShootElement();
                     }
 
-                    if (currentGamepad1.dpadRightWasPressed() || currentGamepad2.dpadRightWasPressed()) {
+                    if (gamepad1.dpadRightWasPressed() || gamepad2.dpadRightWasPressed()) {
                         shooterVelocity += 100;
-                        robot.trySetShooterVelocity(shooterVelocity);
                     }
 
-                    if (currentGamepad1.dpadLeftWasPressed() || currentGamepad2.dpadLeftWasPressed()) {
+                    if (gamepad1.dpadLeftWasPressed() || gamepad2.dpadLeftWasPressed()) {
                         shooterVelocity -= 100;
-                        robot.trySetShooterVelocity(shooterVelocity);
                     }
 
-                    if (currentGamepad2.rightBumperWasPressed()) {
+                    shooterVelocity = Range.clip(shooterVelocity, 0, 6000);
+
+                    if ((gamepad2.getGamepadId() != -1 && gamepad2.rightBumperWasPressed()) || (!robot.isShooterOn() && gamepad1.dpadUpWasPressed())) {
                         robot.tryPowerOnShooter();
-                    } else if (currentGamepad2.rightBumperWasReleased()) {
+                    } else if ((gamepad2.getGamepadId() != -1 && gamepad2.rightBumperWasReleased()) || (robot.isShooterOn() && gamepad1.dpadUpWasPressed())) {
                         robot.tryPowerOffShooter();
                     }
 
-                    if (currentGamepad1.aWasPressed()) {
+                    if (gamepad1.rightBumperWasPressed()) {
+                        robot.tryEnableAutoHeading();
+                    } else if (gamepad1.rightBumperWasReleased()) {
+                        robot.tryDisableAutoHeading();
+                    }
+
+                    if (gamepad1.aWasPressed()) {
                         robot.trySetHoodServoPos(Parameters.HOOD_SERVO_DOWN);
-                    } else if (currentGamepad1.bWasPressed()) {
+                    } else if (gamepad1.bWasPressed()) {
                         robot.trySetHoodServoPos(Parameters.HOOD_SERVO_FAR);
                     }
 
-                    if (currentGamepad1.right_stick_button && !lastGamepad1.right_stick_button) {
-                        follower.setAutoHeadingState(!follower.getAutoHeadingState());
-                    }
+                    robot.trySetShooterVelocity(shooterVelocity);
                     break;
                 case PARK:
                     break;
@@ -144,7 +141,6 @@ public class MainTeleop extends LinearOpMode {
             telemetry.addData("state: ", robot.getState());
 
             robot.update();
-            follower.update();
             telemetry.update();
         }
     }

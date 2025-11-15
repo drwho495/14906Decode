@@ -17,7 +17,7 @@ public class ShooterSubsystem extends Subsystem {
     private ComplexServo fingerServo;
     private ComplexServo hoodServo;
 
-    private double motorVelo = 2400;
+    private double motorVelo = Parameters.SHOOTER_DEFAULT_RPM;
     private boolean powerOff = true;
     private double fingerServoPos = Parameters.FINGER_SERVO_OPEN;
     private double hoodServoPos = Parameters.HOOD_SERVO_DOWN;
@@ -34,13 +34,22 @@ public class ShooterSubsystem extends Subsystem {
         shooterMotor1 = new ComplexMotor("shooterMotor1", thisOpMode);
         shooterMotor2 = new ComplexMotor("shooterMotor2", thisOpMode);
 
+        shooterMotor1.enableFloat();
+        shooterMotor1.setEncoderState(true);
+        shooterMotor1.resetEncoder();
         shooterMotor1.setMode(ComplexMotorModes.USE_VELOCITY_PID);
         shooterMotor1.setReversed(true);
+
+        shooterMotor2.enableFloat();
+        shooterMotor2.setEncoderState(true);
+        shooterMotor2.resetEncoder();
         shooterMotor2.setMode(ComplexMotorModes.USE_VELOCITY_PID);
         shooterMotor2.setReversed(false);
 
         shooterMotor1.useCustomVeloPIDLoop(false);
         shooterMotor2.useCustomVeloPIDLoop(false);
+
+
 
         fingerServo = new ComplexServo(thisOpMode.hardwareMap, "fingerServo", 0, 180, AngleUnit.DEGREES);
         fingerServo.setInverted(true);
@@ -106,5 +115,9 @@ public class ShooterSubsystem extends Subsystem {
 
         shooterMotor1.update();
         shooterMotor2.update();
+    }
+
+    public boolean isPoweredOn() {
+        return !powerOff;
     }
 }

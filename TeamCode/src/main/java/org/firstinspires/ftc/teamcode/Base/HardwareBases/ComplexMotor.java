@@ -25,15 +25,19 @@ public class ComplexMotor {
     public ComplexMotor(String hwName, LinearOpMode newOpMode) {
         opMode = newOpMode;
         this.thisMotor = this.opMode.hardwareMap.get(DcMotorEx.class, hwName);
-
-        this.thisMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        this.thisMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        this.thisMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         this.thisMotor.setMotorEnable();
     }
 
-    public void disableEncoder() {
-        this.thisMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+    public void enableBrake() {
+        this.thisMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+    }
+
+    public void enableFloat() {
+        this.thisMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+    }
+
+    public void setEncoderState(boolean use) {
+        this.thisMotor.setMode(use ? DcMotor.RunMode.RUN_USING_ENCODER : DcMotor.RunMode.RUN_WITHOUT_ENCODER);
     }
 
     public double getVelocity() {
@@ -57,8 +61,10 @@ public class ComplexMotor {
     }
 
     public void resetEncoder() {
+        DcMotor.RunMode oldState = this.thisMotor.getMode();
+
         this.thisMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        this.thisMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        this.thisMotor.setMode(oldState);
     }
 
     public void setReversed(boolean reversed) {
