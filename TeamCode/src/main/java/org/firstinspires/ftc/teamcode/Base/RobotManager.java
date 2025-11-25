@@ -11,7 +11,9 @@ import org.firstinspires.ftc.teamcode.Base.Subsystems.ShooterSubsystem;
 import org.firstinspires.ftc.teamcode.bedroBathing.follower.Follower;
 import org.firstinspires.ftc.teamcode.bedroBathing.localization.Pose;
 import org.firstinspires.ftc.teamcode.bedroBathing.pathGeneration.PathBuilder;
+import org.firstinspires.ftc.teamcode.bedroBathing.pathGeneration.Point;
 
+import java.lang.annotation.ElementType;
 import java.util.concurrent.TimeUnit;
 
 public class RobotManager {
@@ -22,6 +24,8 @@ public class RobotManager {
     private LinearOpMode opMode;
     private Follower follower = null;
     private AllianceSides side = Parameters.LAST_ALLIANCE_SIDE;
+    private double autoTimeout = -1;
+    private ElapsedTime autoTimer = new ElapsedTime();
 
     private boolean isShooting = false;
     private final boolean hoodServoManual = true;
@@ -182,15 +186,97 @@ public class RobotManager {
 
         while (follower.isBusy() && !opMode.isStopRequested() && opMode.opModeIsActive()) {
             opMode.telemetry.addData("Robot Heading: ", Math.toDegrees(follower.getPose().getHeading()));
+            opMode.telemetry.addData("Alliance Side: ", side == AllianceSides.BLUE ? "Blue" : "Red");
             opMode.telemetry.update();
+
+            if (autoTimeout > 0 && autoTimer.time(TimeUnit.MILLISECONDS) > autoTimeout) {
+                follower.breakFollowing();
+                break;
+            }
 
             update();
             follower.update();
         }
+
+        autoTimeout = -1;
     }
 
     public void tryRunBlocking(PathBuilder path) {
         if (!follower.isBusy()) internalRunPath(path, true);
+    }
+
+    /*
+     * This will get a copy of the inputted pose that will/won't be mirrored
+     * depending on the robot's alliance
+     */
+    public Pose getFixedPose(Pose pose) {
+        if (side == AllianceSides.RED) {
+            return pose; // no mirroring is needed
+        } else {
+            return pose.getMirroredCopy();
+        }
+    }
+
+    /*
+     * This will get a copy of the inputted x, y and heading values that will/won't be mirrored
+     * depending on the robot's alliance
+     */
+    public Pose getFixedPose(double x, double y, double heading) {
+        Pose builtPose = new Pose(x, y, heading);
+
+        if (side == AllianceSides.RED) {
+            return builtPose; // no mirroring is needed
+        } else {
+            return builtPose.getMirroredCopy();
+        }
+    }
+
+    /*
+     * This will get a copy of the inputted heading (in degrees!) value that will/won't be mirrored
+     * depending on the robot's alliance
+     */
+    public double getFixedHeading(double heading) {
+        if (side == AllianceSides.RED) {
+            return Math.toRadians(heading); // no mirroring is needed
+        } else {
+            return new Pose(0, 0, Math.toRadians(heading)).getMirroredCopy().getHeading();
+        }
+    }
+
+    /*
+     * This will get a copy of the inputted point that will/won't be mirrored
+     * depending on the robot's alliance
+     */
+    public Point getFixedPoint(Point point) {
+        if (side == AllianceSides.RED) {
+            return point; // no mirroring is needed
+        } else {
+            return new Point(new Pose(point.getX(), point.getY()).getMirroredCopy());
+        }
+    }
+
+    /*
+     * This will get a copy of the inputted pose that will/won't be mirrored
+     * depending on the robot's alliance
+     */
+    public Point getFixedPoint(Pose pose) {
+        if (side == AllianceSides.RED) {
+            return new Point(pose); // no mirroring is needed
+        } else {
+            return new Point(pose.getMirroredCopy());
+        }
+    }
+
+    /*
+     * This will get a copy of the inputted x and y values that will/won't be mirrored
+     * depending on the robot's alliance
+     */
+    public Point getFixedPoint(double x, double y) {
+        if (side == AllianceSides.RED) {
+            return new Point(x, y, Point.CARTESIAN); // no mirroring is needed
+        } else {
+            return new Point(new Pose(x, y).getMirroredCopy());
+        }
     }
 
     public void tryRunBlocking(PathBuilder path, boolean correctAfterFinished) {
@@ -204,6 +290,11 @@ public class RobotManager {
             update();
             follower.update();
         }
+    }
+
+    public void addPathTimeout(double timeout) {
+        autoTimeout = timeout;
+        autoTimer.reset();
     }
 
     public double getHeadingToGoal() {
@@ -231,8 +322,18 @@ public class RobotManager {
 
             case INTAKE_SCORE:
                 if (isShooting) {
+                    intakeSubsystem.disableAutoDisableTransfer();
+
+                    intakeSubsystem.setPowerLimits(1, .7);
                     shooterSubsystem.openFinger();
                 } else {
+                    if (intakeSubsystem.getIntakePower() > 0) {
+                        intakeSubsystem.enableAutoDisableTransfer();
+                    } else if (intakeSubsystem.getIntakePower() < 0) {
+                        intakeSubsystem.disableAutoDisableTransfer();
+                    }
+
+                    intakeSubsystem.setPowerLimits(1, 1);
                     shooterSubsystem.closeFinger();
                 }
 

@@ -24,7 +24,9 @@ public class AutoV1 extends LinearOpMode {
     private RobotManager robot;
     private AutoStartPos autoStartPos = AutoStartPos.ON_WALL_FACING_TOWARDS_GOAL;
     private boolean clearGate = true;
-    private boolean grabFromHumanPlayer = true;
+    private boolean invertedGrabOrder = false;
+    private boolean clearAfterLine2 = false;
+    private boolean grabFromHumanPlayer = false;
 
     // 0 is the line furthest from the goal
     private void intakeFromTape(double number) {
@@ -48,26 +50,42 @@ public class AutoV1 extends LinearOpMode {
             intakeEndX = 6;
         }
 
-        robot.tryRunBlocking(new PathBuilder()
-                        .addPath(new Path(
-                                new BezierLine(
-                                        new Point(robotPose),
-                                        new Point(intakeStart)
-                                )
-                        ))
-                        .setLinearHeadingInterpolation(robotPose.getHeading(), 0)
-                        .setPathEndTValueConstraint(.95)
-                        .setZeroPowerAccelerationMultiplier(10)
-                , number == 2);
+        if (number != 2) {
+            robot.tryRunBlocking(new PathBuilder()
+                            .addPath(new Path(
+                                    new BezierLine(
+                                            new Point(robotPose),
+                                            robot.getFixedPoint(intakeStart)
+                                    )
+                            ))
+                            .setLinearHeadingInterpolation(robotPose.getHeading(), robot.getFixedHeading(0))
+                            .setPathEndTValueConstraint(.95)
+                            .setZeroPowerAccelerationMultiplier(10)
+                    , number == 2);
+        } else {
+            robot.tryRunBlocking(new PathBuilder()
+                            .addPath(new Path(
+                                    new BezierCurve(
+                                            new Point(robotPose),
+                                            robot.getFixedPoint(-40, -35),
+                                            robot.getFixedPoint(intakeStart)
+                                    )
+                            ))
+                            .setLinearHeadingInterpolation(robotPose.getHeading(), robot.getFixedHeading(0))
+                            .setPathEndTValueConstraint(.95)
+                            .setZeroPowerAccelerationMultiplier(10)
+                    , number == 2);
+        }
 
         if (number == 2) robot.safeSleep(150);
 
+        robot.addPathTimeout(4000);
         robot.trySetMaxPower(.5);
         robot.tryRunBlocking(new PathBuilder()
                         .addPath(new Path(
                                 new BezierLine(
-                                        new Point(intakeStart),
-                                        new Point(intakeEndX, intakeStart.getY(), Point.CARTESIAN)
+                                        robot.getFixedPoint(intakeStart),
+                                        robot.getFixedPoint(intakeEndX, intakeStart.getY())
                                 )
                         ))
                         .setPathEndTValueConstraint(.95)
@@ -77,23 +95,27 @@ public class AutoV1 extends LinearOpMode {
         robot.safeSleep(150);
         robot.tryPowerOffIntake();
 
-        if (number == 1 && clearGate) {
+        if ((number == 1 && !clearAfterLine2 || number == 2 && clearAfterLine2) && clearGate) {
             robotPose = robot.getPose();
+            Pose mirroredRobotPose = robot.getFixedPose(robotPose);
 
-            robot.trySetMaxPower(.8);
+            double pushHeading = robot.getFixedHeading(15);
+            if (clearAfterLine2) pushHeading = robot.getFixedHeading(-25);
+
+            robot.trySetMaxPower(.85);
+            robot.addPathTimeout(2250);
             robot.tryRunBlocking(new PathBuilder()
                             .addPath(new Path(
                                     new BezierCurve(
                                             new Point(robotPose),
-                                            new Point(robotPose.getX() - 20, robotPose.getY() - 15, Point.CARTESIAN),
-                                            new Point(8.5, -60)
+                                            // for this, we need to mirror the robot pose, make the transformation, then mirror it back
+                                            // if we don't, the robot will drive forward closer to the scoring wall instead of away from it
+                                            robot.getFixedPoint(mirroredRobotPose.getX() - 20, mirroredRobotPose.getY() - 15),
+                                            robot.getFixedPoint(8.5, clearAfterLine2 ? -58 :-60)
                                     )
                             ))
-                            .addTemporalCallback(4, () -> {
-                                robot.tryBreakFollowing();
-                            })
-                            .setLinearHeadingInterpolation(robotPose.getHeading(), Math.toRadians(15))
-                            .setPathEndTValueConstraint(.92)
+                            .setLinearHeadingInterpolation(robotPose.getHeading(), pushHeading)
+                            .setPathEndTValueConstraint(.95)
                             .setZeroPowerAccelerationMultiplier(5)
                     , false);
 
@@ -115,10 +137,10 @@ public class AutoV1 extends LinearOpMode {
                         .addPath(new Path(
                                 new BezierLine(
                                         new Point(robotPose),
-                                        new Point(12, -95)
+                                        new Point(10, -95)
                                 )
                         ))
-                        .setLinearHeadingInterpolation(robotPose.getHeading(), Math.toRadians(318))
+                        .setLinearHeadingInterpolation(robotPose.getHeading(), robot.getFixedHeading(318))
                         .setPathEndTValueConstraint(.92)
                         .setZeroPowerAccelerationMultiplier(5)
                 , false);
@@ -129,14 +151,14 @@ public class AutoV1 extends LinearOpMode {
         robot.tryRunBlocking(new PathBuilder()
                         .addPath(new Path(
                                 new BezierCurve(
-                                        new Point(12, -95),
-                                        new Point(12, -117)
+                                        new Point(10, -95),
+                                        new Point(10, -117)
                                 )
                         ))
                         .addTemporalCallback(2, () -> {
                             robot.tryBreakFollowing();
                         })
-                        .setConstantHeadingInterpolation(Math.toRadians(318))
+                        .setConstantHeadingInterpolation(robot.getFixedHeading(318))
                         .setPathEndTValueConstraint(.9)
                         .setZeroPowerAccelerationMultiplier(7)
                 , false);
@@ -148,11 +170,11 @@ public class AutoV1 extends LinearOpMode {
         robot.tryRunBlocking(new PathBuilder()
                         .addPath(new Path(
                                 new BezierCurve(
-                                        new Point(12, -117),
-                                        new Point(-16, -115)
+                                        robot.getFixedPoint(10, -117),
+                                        robot.getFixedPoint(-16, -115)
                                 )
                         ))
-                        .setLinearHeadingInterpolation(Math.toRadians(318), 0)
+                        .setLinearHeadingInterpolation(robot.getFixedHeading(318), robot.getFixedHeading(0))
                         .setPathEndTValueConstraint(.92)
                         .setZeroPowerAccelerationMultiplier(7)
                 , true);
@@ -161,34 +183,56 @@ public class AutoV1 extends LinearOpMode {
     }
 
     private void shootBalls(double cycleNumber) {
-        Pose shootingPosition = new Pose(-31, -48, Math.toRadians(230));
+        Pose shootingPosition = robot.getFixedPose(-31, -48, Math.toRadians(230));
         Pose robotPose = robot.getPose();
 
         robot.tryPowerOffIntake();
         robot.tryPowerOnShooter();
-        robot.trySetShooterVelocity(4300);
-        robot.trySetHoodServoPos(45);
+        robot.trySetShooterVelocity(4400);
+        robot.trySetHoodServoPos(Parameters.HOOD_SERVO_FAR);
         robot.trySetMaxPower(1);
 
         if (cycleNumber == 0) {
-            robot.tryRunBlocking(new PathBuilder()
-                            .addPath(new Path(
-                                    new BezierLine(
-                                            new Point(robotPose),
-                                            new Point(shootingPosition)
-                                    )
-                            ))
-                            .setLinearHeadingInterpolation(Math.toRadians(220), shootingPosition.getHeading())
-                            .setPathEndTValueConstraint(.95)
-                            .setPathEndVelocityConstraint(1)
-                            .setZeroPowerAccelerationMultiplier(6)
-                    , true);
+            if(robot.getAllianceSide() == AllianceSides.RED) {
+                robot.tryRunBlocking(new PathBuilder()
+                                .addPath(new Path(
+                                        new BezierLine(
+                                                new Point(robotPose),
+                                                new Point(shootingPosition)
+                                        )
+                                ))
+                                .setLinearHeadingInterpolation(robot.getFixedHeading(220), shootingPosition.getHeading())
+                                .setPathEndTValueConstraint(.95)
+                                .setPathEndVelocityConstraint(1)
+                                .setZeroPowerAccelerationMultiplier(6)
+                        , true);
+            } else if(robot.getAllianceSide() == AllianceSides.BLUE) {
+                robot.tryRunBlocking(new PathBuilder()
+                                .addPath(new Path(
+                                        new BezierCurve(
+                                                new Point(robotPose),
+                                                robot.getFixedPoint(-10, -15),
+                                                new Point(shootingPosition)
+                                        )
+                                ))
+                                .setLinearHeadingInterpolation(robot.getFixedHeading(220), shootingPosition.getHeading())
+                                .setPathEndTValueConstraint(.95)
+                                .setPathEndVelocityConstraint(1)
+                                .setZeroPowerAccelerationMultiplier(6)
+                        , true);
+            }
         } else if (cycleNumber >= 1) {
+            double yOffset = -15;
+
+            if ((clearAfterLine2 && invertedGrabOrder && cycleNumber == 1)) {
+                yOffset = 25;
+            }
+
             robot.tryRunBlocking(new PathBuilder()
                             .addPath(new Path(
                                     new BezierCurve(
                                             new Point(robotPose),
-                                            new Point(-20, robotPose.getY() - 15),
+                                            robot.getFixedPoint(-20, robotPose.getY() + yOffset),
                                             new Point(shootingPosition)
                                     )
                             ))
@@ -199,15 +243,15 @@ public class AutoV1 extends LinearOpMode {
                     , true);
         }
 
-        robot.safeSleep(650);
+        robot.safeSleep(500);
 
         robot.tryStartShootElement();
 
         robot.trySetIntakePower(1);
-        robot.safeSleep(350);
+//        robot.safeSleep(350);
 
-        robot.trySetHoodServoPos(65);
-        robot.safeSleep(1200 - 350);
+//        robot.trySetHoodServoPos(65);
+        robot.safeSleep(1000);
 
         robot.tryStopShootElement();
         robot.tryStopShootElement();
@@ -223,10 +267,10 @@ public class AutoV1 extends LinearOpMode {
                         .addPath(new Path(
                                 new BezierLine(
                                         new Point(robotPose),
-                                        new Point(-25, -75)
+                                        robot.getFixedPoint(-25, -75)
                                 )
                         ))
-                        .setLinearHeadingInterpolation(robotPose.getHeading(), 0)
+                        .setLinearHeadingInterpolation(robotPose.getHeading(), robot.getFixedHeading(0))
                         .setPathEndTValueConstraint(.98)
                         .setPathEndVelocityConstraint(1)
                         .setZeroPowerAccelerationMultiplier(5)
@@ -276,11 +320,11 @@ public class AutoV1 extends LinearOpMode {
         robot.setPose(robot.getAllianceSide() == AllianceSides.RED ? Parameters.RED_CLOSE_START : Parameters.BLUE_CLOSE_START);
 
         shootBalls(0);
-        intakeFromTape(0);
+        intakeFromTape(invertedGrabOrder ? 2 : 0);
         shootBalls(1);
         intakeFromTape(1);
         shootBalls(2);
-        intakeFromTape(2);
+        intakeFromTape(invertedGrabOrder ? 0 : 2);
 
         if (clearGate) shootBalls(3);
 

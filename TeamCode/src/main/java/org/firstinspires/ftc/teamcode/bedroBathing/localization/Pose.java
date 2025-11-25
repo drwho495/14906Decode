@@ -115,35 +115,8 @@ public class Pose {
         return returnVector;
     }
 
-    public Pose getMirroredCopy(Vector planePosition, Vector planeNormal) {
-        // empty plane, ignore it. (not using the magnitude because i dont trust it)
-        if ((planeNormal.getXComponent() + planeNormal.getYComponent() == 0)) {
-            return this;
-        }
-
-        double movedX = x - planePosition.getXComponent();
-        double movedY = y - planePosition.getYComponent();
-
-        // first normalize the plane (we aren't using the MathFunction method because it takes Vector(s))
-        planeNormal = MathFunctions.normalizeVector(planeNormal);
-
-        double dot = movedX * planeNormal.getXComponent() + movedY * planeNormal.getYComponent();
-        double mirroredX = movedX - 2 * dot * planeNormal.getXComponent();
-        double mirroredY = movedY - 2 * dot * planeNormal.getYComponent();
-
-        mirroredX += planePosition.getXComponent();
-        mirroredY += planePosition.getYComponent();
-
-        double mirroredHeadingX = Math.cos(heading);
-        double mirroredHeadingY = Math.sin(heading);
-
-        double headingDot = mirroredHeadingX * planeNormal.getXComponent() + mirroredHeadingY * planeNormal.getYComponent();
-        double rotatedHeadingX = mirroredHeadingX - 2 * headingDot * planeNormal.getXComponent();
-        double rotatedHeadingY = mirroredHeadingY - 2 * headingDot * planeNormal.getYComponent();
-
-        double mirroredHeading = Math.atan2(rotatedHeadingY, rotatedHeadingX);
-
-        return new Pose(mirroredX, mirroredY, mirroredHeading);
+    public Pose getMirroredCopy() {
+        return new Pose(-93 - getX(), getY(), MathFunctions.normalizeAngle(Math.PI - getHeading()));
     }
 
     /**

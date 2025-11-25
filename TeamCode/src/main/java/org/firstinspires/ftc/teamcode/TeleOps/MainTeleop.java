@@ -57,7 +57,7 @@ public class MainTeleop extends LinearOpMode {
         }
 
         robot.setState(OpModeStates.INTAKE_SCORE);
-        robot.trySetHoodServoPos(Parameters.HOOD_SERVO_DOWN);
+        robot.trySetHoodServoPos(Parameters.HOOD_SERVO_DEFAULT);
 
         while (opModeIsActive() && !isStopRequested()) {
             Pose robotPose = robot.getPose();
