@@ -49,7 +49,11 @@ public class ComplexMotor {
     }
 
     public void setVelocityPIDFCoefficients(double p, double i, double d, double f) {
-        velocityController.setPIDF(p, i, d, f);
+        if (useCustomVelo) {
+            velocityController.setPIDF(p, i, d, f);
+        } else {
+            thisMotor.setVelocityPIDFCoefficients(p, i, d, f);
+        }
     }
 
     public void setMode(ComplexMotorModes newMode) {

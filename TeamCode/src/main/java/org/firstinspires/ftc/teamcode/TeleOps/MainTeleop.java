@@ -4,6 +4,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.teamcode.Base.OpModeStates;
@@ -11,6 +12,8 @@ import org.firstinspires.ftc.teamcode.Base.Parameters;
 import org.firstinspires.ftc.teamcode.Base.RobotManager;
 import org.firstinspires.ftc.teamcode.bedroBathing.localization.Pose;
 import org.firstinspires.ftc.teamcode.bedroBathing.tuning.FollowerConstants;
+
+import java.util.concurrent.TimeUnit;
 
 // use 0 to get this file teleop program at the top of the list on the dhub
 @TeleOp(name = "0: Main Teleop", group = "0")
@@ -25,6 +28,7 @@ public class MainTeleop extends LinearOpMode {
     private DcMotorEx leftRear;
     private DcMotorEx rightFront;
     private DcMotorEx rightRear;
+    private final ElapsedTime timer = new ElapsedTime();
 
     private double shooterVelocity = Parameters.SHOOTER_DEFAULT_RPM;
 
@@ -139,6 +143,9 @@ public class MainTeleop extends LinearOpMode {
             telemetry.addData("Shooter 1 RPM: ", robot.getShooterVelocities()[0]);
             telemetry.addData("Shooter 2 RPM: ", robot.getShooterVelocities()[1]);
             telemetry.addData("state: ", robot.getState());
+            telemetry.addData("loop time: ", timer.time(TimeUnit.MILLISECONDS));
+
+            timer.reset();
 
             robot.update();
             telemetry.update();

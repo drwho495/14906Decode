@@ -49,7 +49,8 @@ public class ShooterSubsystem extends Subsystem {
         shooterMotor1.useCustomVeloPIDLoop(false);
         shooterMotor2.useCustomVeloPIDLoop(false);
 
-
+        shooterMotor1.setVelocityPIDFCoefficients(6, 2.8, 0, 0);
+        shooterMotor2.setVelocityPIDFCoefficients(6, 2.8, 0, 0);
 
         fingerServo = new ComplexServo(thisOpMode.hardwareMap, "fingerServo", 0, 180, AngleUnit.DEGREES);
         fingerServo.setInverted(true);
