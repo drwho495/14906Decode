@@ -1,6 +1,8 @@
 package org.firstinspires.ftc.teamcode.Base.Subsystems;
 
+import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
@@ -10,12 +12,22 @@ import org.firstinspires.ftc.teamcode.Base.HardwareBases.ComplexServo;
 import org.firstinspires.ftc.teamcode.Base.Parameters;
 import org.firstinspires.ftc.teamcode.bedroBathing.localization.Pose;
 
+@Config
 public class ShooterSubsystem extends Subsystem {
     private LinearOpMode thisOpMode = null;
     private ComplexMotor shooterMotor1;
     private ComplexMotor shooterMotor2;
     private ComplexServo fingerServo;
     private ComplexServo hoodServo;
+
+    public static double lP = .003;
+    public static double lI = 0;
+    public static double lD = 0;
+
+    public static double sP = .00001;
+    public static double sI = 0;
+    public static double sD = 0;
+    public static double PIDSwitch = 2;
 
     private double motorVelo = Parameters.SHOOTER_DEFAULT_RPM;
     private boolean powerOff = true;
@@ -40,16 +52,10 @@ public class ShooterSubsystem extends Subsystem {
         shooterMotor1.setMode(ComplexMotorModes.USE_VELOCITY_PID);
         shooterMotor1.setReversed(true);
 
-        shooterMotor2.enableFloat();
-        shooterMotor2.setEncoderState(true);
-        shooterMotor2.resetEncoder();
-        shooterMotor2.setMode(ComplexMotorModes.USE_VELOCITY_PID);
         shooterMotor2.setReversed(false);
 
-        shooterMotor1.useCustomVeloPIDLoop(false);
-        shooterMotor2.useCustomVeloPIDLoop(false);
-
-
+        shooterMotor1.useCustomVeloPIDLoop(true);
+        shooterMotor1.addChildMotor(shooterMotor2);
 
         fingerServo = new ComplexServo(thisOpMode.hardwareMap, "fingerServo", 0, 180, AngleUnit.DEGREES);
         fingerServo.setInverted(true);
@@ -82,6 +88,10 @@ public class ShooterSubsystem extends Subsystem {
         hoodServoPos = Range.clip(setPos, Parameters.HOOD_SERVO_DOWN, Parameters.HOOD_SERVO_UP);
     }
 
+    public void addMotorLink(ComplexMotor childMotor) {
+
+    }
+
     public void powerOff() {
         powerOff = true;
     }
@@ -103,11 +113,16 @@ public class ShooterSubsystem extends Subsystem {
         if (!thisOpMode.opModeIsActive() || thisOpMode.isStopRequested()) return;
 
         if (powerOff) {
-            shooterMotor1.setVelo(0);
-            shooterMotor2.setVelo(0);
+            shooterMotor1.setVelocity(0);
+            shooterMotor2.setVelocity(0);
         } else {
-            shooterMotor1.setVelo(motorVelo * velocityMultiplier);
-            shooterMotor2.setVelo(motorVelo * velocityMultiplier);
+            if (Math.abs(shooterMotor1.getVelocity() - motorVelo) < PIDSwitch) {
+                shooterMotor1.setVelocityPIDFCoefficients(sP, sI, sD, 0);
+            } else {
+                shooterMotor1.setVelocityPIDFCoefficients(lP, lI, lD, 0);
+            }
+
+            shooterMotor1.setVelocity(motorVelo * velocityMultiplier);
         }
 
         fingerServo.turnToAngle(fingerServoPos);

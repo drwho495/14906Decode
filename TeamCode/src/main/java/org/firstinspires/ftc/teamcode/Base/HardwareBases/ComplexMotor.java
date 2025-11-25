@@ -10,8 +10,6 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.teamcode.Base.Helpers.PIDFController;
-import org.firstinspires.ftc.teamcode.bedroBathing.localization.Pose;
-import org.firstinspires.ftc.teamcode.bedroBathing.pathGeneration.Vector;
 
 public class ComplexMotor {
     private LinearOpMode opMode;
@@ -19,8 +17,10 @@ public class ComplexMotor {
     private ComplexMotorModes currentMode = ComplexMotorModes.RAW_POWER;
     private double motorPower = 0;
     private double targetVelo = 0;
-    private PIDFController velocityController = new PIDFController(0, 0, 0, 0);
+    private final PIDFController velocityController = new PIDFController(0, 0, 0, 0);
     private boolean useCustomVelo = true;
+    private ComplexMotor childMotor = null;
+    protected boolean isThisChild = false;
 
     public ComplexMotor(String hwName, LinearOpMode newOpMode) {
         opMode = newOpMode;
@@ -28,12 +28,38 @@ public class ComplexMotor {
         this.thisMotor.setMotorEnable();
     }
 
+    public void addChildMotor(ComplexMotor newChildMotor) {
+        this.childMotor = newChildMotor;
+        this.childMotor.setMode(ComplexMotorModes.RAW_POWER);
+        this.childMotor.setEncoderState(false);
+        this.childMotor.isThisChild = true;
+        isThisChild = false;
+
+        if (thisMotor.getZeroPowerBehavior() == DcMotor.ZeroPowerBehavior.BRAKE) {
+            this.childMotor.enableBrake();
+        } else {
+            this.childMotor.enableFloat();
+        }
+    }
+
+    public DcMotorEx getMotor() {
+        return thisMotor;
+    }
+
     public void enableBrake() {
         this.thisMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        if (this.childMotor != null) {
+            this.childMotor.enableBrake();
+        }
     }
 
     public void enableFloat() {
         this.thisMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+
+        if (this.childMotor != null) {
+            this.childMotor.enableFloat();
+        }
     }
 
     public void setEncoderState(boolean use) {
@@ -56,7 +82,7 @@ public class ComplexMotor {
         currentMode = newMode;
     }
 
-    public void setVelo(double newVelo) {
+    public void setVelocity(double newVelo) {
         targetVelo = newVelo;
     }
 
@@ -72,12 +98,19 @@ public class ComplexMotor {
     }
 
     public void update() {
+        if (isThisChild) return;
+
         if (currentMode == ComplexMotorModes.USE_VELOCITY_PID) {
             if (useCustomVelo) {
                 velocityController.setSetPoint(targetVelo);
                 motorPower = velocityController.calculate(thisMotor.getVelocity(AngleUnit.DEGREES));
 
+                if (targetVelo == 0) motorPower = 0; // simple override
+
+                opMode.telemetry.addData("pid motor power: ", motorPower);
+
                 thisMotor.setPower(motorPower);
+                if (childMotor != null) childMotor.setPower(motorPower);
             } else {
                 thisMotor.setVelocity(targetVelo, AngleUnit.DEGREES);
             }
