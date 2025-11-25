@@ -91,8 +91,12 @@ public class ShooterSubsystem extends Subsystem {
         powerOff = false;
     }
 
-    public void setCustomVelocity(double newVelo) {
+    public void setVelocity(double newVelo) {
         motorVelo = newVelo;
+    }
+
+    public double getTargetVelocity() {
+        return motorVelo;
     }
 
     public void toggleShooterPower() {
@@ -120,5 +124,9 @@ public class ShooterSubsystem extends Subsystem {
 
     public boolean isPoweredOn() {
         return !powerOff;
+    }
+
+    public double getHoodAngle() {
+        return hoodServoPos;
     }
 }

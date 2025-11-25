@@ -30,8 +30,8 @@ public class AutoV1 extends LinearOpMode {
 
     // 0 is the line furthest from the goal
     private void intakeFromTape(double number) {
-        robot.tryStopShootElement();
-        robot.trySetIntakePower(1);
+        robot.stopShootElement();
+        robot.setIntakePower(1);
         robot.update();
 
         Pose robotPose = robot.getPose();
@@ -51,7 +51,7 @@ public class AutoV1 extends LinearOpMode {
         }
 
         if (number != 2) {
-            robot.tryRunBlocking(new PathBuilder()
+            robot.runBlocking(new PathBuilder()
                             .addPath(new Path(
                                     new BezierLine(
                                             new Point(robotPose),
@@ -63,7 +63,7 @@ public class AutoV1 extends LinearOpMode {
                             .setZeroPowerAccelerationMultiplier(10)
                     , number == 2);
         } else {
-            robot.tryRunBlocking(new PathBuilder()
+            robot.runBlocking(new PathBuilder()
                             .addPath(new Path(
                                     new BezierCurve(
                                             new Point(robotPose),
@@ -80,8 +80,8 @@ public class AutoV1 extends LinearOpMode {
         if (number == 2) robot.safeSleep(150);
 
         robot.addPathTimeout(4000);
-        robot.trySetMaxPower(.5);
-        robot.tryRunBlocking(new PathBuilder()
+        robot.setMaxFollowerPower(.5);
+        robot.runBlocking(new PathBuilder()
                         .addPath(new Path(
                                 new BezierLine(
                                         robot.getFixedPoint(intakeStart),
@@ -93,7 +93,7 @@ public class AutoV1 extends LinearOpMode {
                 , true);
 
         robot.safeSleep(150);
-        robot.tryPowerOffIntake();
+        robot.powerOffIntake();
 
         if ((number == 1 && !clearAfterLine2 || number == 2 && clearAfterLine2) && clearGate) {
             robotPose = robot.getPose();
@@ -102,9 +102,9 @@ public class AutoV1 extends LinearOpMode {
             double pushHeading = robot.getFixedHeading(15);
             if (clearAfterLine2) pushHeading = robot.getFixedHeading(-25);
 
-            robot.trySetMaxPower(.85);
+            robot.setMaxFollowerPower(.85);
             robot.addPathTimeout(2250);
-            robot.tryRunBlocking(new PathBuilder()
+            robot.runBlocking(new PathBuilder()
                             .addPath(new Path(
                                     new BezierCurve(
                                             new Point(robotPose),
@@ -122,18 +122,18 @@ public class AutoV1 extends LinearOpMode {
             robot.safeSleep(200);
         }
 
-        robot.trySetMaxPower(1);
+        robot.setMaxFollowerPower(1);
     }
 
     private void intakeFromHumanPlayer() {
         Pose robotPose = robot.getPose();
 
-        robot.tryStopShootElement();
-        robot.trySetIntakePower(1);
-        robot.trySetMaxPower(1);
+        robot.stopShootElement();
+        robot.setIntakePower(1);
+        robot.setMaxFollowerPower(1);
         robot.update();
 
-        robot.tryRunBlocking(new PathBuilder()
+        robot.runBlocking(new PathBuilder()
                         .addPath(new Path(
                                 new BezierLine(
                                         new Point(robotPose),
@@ -146,9 +146,9 @@ public class AutoV1 extends LinearOpMode {
                 , false);
 
         robot.safeSleep(75);
-        robot.trySetMaxPower(.5);
+        robot.setMaxFollowerPower(.5);
 
-        robot.tryRunBlocking(new PathBuilder()
+        robot.runBlocking(new PathBuilder()
                         .addPath(new Path(
                                 new BezierCurve(
                                         new Point(10, -95),
@@ -156,7 +156,7 @@ public class AutoV1 extends LinearOpMode {
                                 )
                         ))
                         .addTemporalCallback(2, () -> {
-                            robot.tryBreakFollowing();
+                            robot.breakFollowing();
                         })
                         .setConstantHeadingInterpolation(robot.getFixedHeading(318))
                         .setPathEndTValueConstraint(.9)
@@ -164,10 +164,10 @@ public class AutoV1 extends LinearOpMode {
                 , false);
 
         robot.safeSleep(500);
-        robot.tryPowerOffIntake();
-        robot.trySetMaxPower(1);
+        robot.powerOffIntake();
+        robot.setMaxFollowerPower(1);
 
-        robot.tryRunBlocking(new PathBuilder()
+        robot.runBlocking(new PathBuilder()
                         .addPath(new Path(
                                 new BezierCurve(
                                         robot.getFixedPoint(10, -117),
@@ -186,15 +186,15 @@ public class AutoV1 extends LinearOpMode {
         Pose shootingPosition = robot.getFixedPose(-31, -48, Math.toRadians(230));
         Pose robotPose = robot.getPose();
 
-        robot.tryPowerOffIntake();
-        robot.tryPowerOnShooter();
-        robot.trySetShooterVelocity(4400);
-        robot.trySetHoodServoPos(Parameters.HOOD_SERVO_FAR);
-        robot.trySetMaxPower(1);
+        robot.powerOffIntake();
+        robot.powerOnShooter();
+        robot.setShooterVelocity(4400);
+        robot.setHoodServoPos(Parameters.HOOD_SERVO_FAR);
+        robot.setMaxFollowerPower(1);
 
         if (cycleNumber == 0) {
             if(robot.getAllianceSide() == AllianceSides.RED) {
-                robot.tryRunBlocking(new PathBuilder()
+                robot.runBlocking(new PathBuilder()
                                 .addPath(new Path(
                                         new BezierLine(
                                                 new Point(robotPose),
@@ -207,7 +207,7 @@ public class AutoV1 extends LinearOpMode {
                                 .setZeroPowerAccelerationMultiplier(6)
                         , true);
             } else if(robot.getAllianceSide() == AllianceSides.BLUE) {
-                robot.tryRunBlocking(new PathBuilder()
+                robot.runBlocking(new PathBuilder()
                                 .addPath(new Path(
                                         new BezierCurve(
                                                 new Point(robotPose),
@@ -228,7 +228,7 @@ public class AutoV1 extends LinearOpMode {
                 yOffset = 25;
             }
 
-            robot.tryRunBlocking(new PathBuilder()
+            robot.runBlocking(new PathBuilder()
                             .addPath(new Path(
                                     new BezierCurve(
                                             new Point(robotPose),
@@ -245,16 +245,16 @@ public class AutoV1 extends LinearOpMode {
 
         robot.safeSleep(500);
 
-        robot.tryStartShootElement();
+        robot.startShootElement();
 
-        robot.trySetIntakePower(1);
+        robot.setIntakePower(1);
 //        robot.safeSleep(350);
 
-//        robot.trySetHoodServoPos(65);
+//        robot.setHoodServoPos(65);
         robot.safeSleep(1000);
 
-        robot.tryStopShootElement();
-        robot.tryStopShootElement();
+        robot.stopShootElement();
+        robot.stopShootElement();
         robot.safeSleep(50);
 
         robot.update();
@@ -263,7 +263,7 @@ public class AutoV1 extends LinearOpMode {
     private void park() {
         Pose robotPose = robot.getPose();
 
-        robot.tryRunBlocking(new PathBuilder()
+        robot.runBlocking(new PathBuilder()
                         .addPath(new Path(
                                 new BezierLine(
                                         new Point(robotPose),
@@ -284,12 +284,11 @@ public class AutoV1 extends LinearOpMode {
         robot = new RobotManager(this);
 
         robot.setState(OpModeStates.INTAKE_SCORE);
-        robot.initialiseHardware();
-        robot.initialisePedroPathing();
-        robot.tryResetIMU();
+        robot.initialise();
+        robot.resetIMU();
 
         while (opModeInInit()) {
-            robot.tryPowerOffShooter();
+            robot.powerOffShooter();
 
             if (gamepad1.aWasPressed()) {
                 robot.setAllianceSide(robot.getAllianceSide() == AllianceSides.BLUE ? AllianceSides.RED : AllianceSides.BLUE);
@@ -328,7 +327,7 @@ public class AutoV1 extends LinearOpMode {
 
         if (clearGate) shootBalls(3);
 
-        robot.tryPowerOffShooter();
+        robot.powerOffShooter();
 
         if (grabFromHumanPlayer && clearGate)
             intakeFromHumanPlayer();

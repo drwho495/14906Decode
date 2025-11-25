@@ -11,6 +11,7 @@ import com.qualcomm.robotcore.hardware.Servo.Direction;
 import com.qualcomm.robotcore.hardware.ServoImplEx;
 import com.qualcomm.robotcore.util.Range;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.teamcode.Base.Helpers.HardwareUtils;
 
 public class ComplexServo {
     private ServoImplEx servo;
@@ -55,7 +56,7 @@ public class ComplexServo {
     }
 
     public void setPosition(double position) {
-        this.servo.setPosition(Range.clip(position, 0.0, 1.0));
+        HardwareUtils.optimizeMethod(Range.clip(position, 0.0, 1.0), servo, servo::setPosition);
     }
 
     public void setRange(double min, double max, AngleUnit angleUnit) {

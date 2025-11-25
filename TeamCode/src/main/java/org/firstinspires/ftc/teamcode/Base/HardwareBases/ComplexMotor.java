@@ -9,18 +9,18 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
+import org.firstinspires.ftc.teamcode.Base.Helpers.HardwareUtils;
 import org.firstinspires.ftc.teamcode.Base.Helpers.PIDFController;
-import org.firstinspires.ftc.teamcode.bedroBathing.localization.Pose;
-import org.firstinspires.ftc.teamcode.bedroBathing.pathGeneration.Vector;
 
 public class ComplexMotor {
     private LinearOpMode opMode;
     private DcMotorEx thisMotor = null;
     private ComplexMotorModes currentMode = ComplexMotorModes.RAW_POWER;
     private double motorPower = 0;
-    private double targetVelo = 0;
-    private PIDFController velocityController = new PIDFController(0, 0, 0, 0);
-    private boolean useCustomVelo = true;
+    private double targetVelocity = 0;
+    private double currentVelocity;
+    private final PIDFController velocityController = new PIDFController(0, 0, 0, 0);
+    private boolean useCustomVelocity = true;
 
     public ComplexMotor(String hwName, LinearOpMode newOpMode) {
         opMode = newOpMode;
@@ -41,15 +41,15 @@ public class ComplexMotor {
     }
 
     public double getVelocity() {
-        return thisMotor.getVelocity(AngleUnit.DEGREES);
+        return currentVelocity;
     }
 
     public void useCustomVeloPIDLoop(boolean newUseCustomVelo) {
-        useCustomVelo = newUseCustomVelo;
+        useCustomVelocity = newUseCustomVelo;
     }
 
     public void setVelocityPIDFCoefficients(double p, double i, double d, double f) {
-        if (useCustomVelo) {
+        if (useCustomVelocity) {
             velocityController.setPIDF(p, i, d, f);
         } else {
             thisMotor.setVelocityPIDFCoefficients(p, i, d, f);
@@ -61,7 +61,7 @@ public class ComplexMotor {
     }
 
     public void setVelo(double newVelo) {
-        targetVelo = newVelo;
+        targetVelocity = newVelo;
     }
 
     public void resetEncoder() {
@@ -76,19 +76,25 @@ public class ComplexMotor {
     }
 
     public void update() {
-        if (currentMode == ComplexMotorModes.USE_VELOCITY_PID) {
-            if (useCustomVelo) {
-                velocityController.setSetPoint(targetVelo);
-                motorPower = velocityController.calculate(thisMotor.getVelocity(AngleUnit.DEGREES));
+        currentVelocity = thisMotor.getVelocity(AngleUnit.DEGREES);
 
-                thisMotor.setPower(motorPower);
+        if (currentMode == ComplexMotorModes.USE_VELOCITY_PID) {
+            if (useCustomVelocity) {
+                velocityController.setSetPoint(targetVelocity);
+                motorPower = velocityController.calculate(currentVelocity);
+
+                HardwareUtils.optimizeMethod(motorPower, thisMotor, thisMotor::setPower);
             } else {
-                thisMotor.setVelocity(targetVelo, AngleUnit.DEGREES);
+                double prevValue = HardwareUtils.previousValues.getOrDefault(thisMotor, Double.NaN);
+
+                if (Double.isNaN(prevValue) || targetVelocity != prevValue) {
+                    thisMotor.setVelocity(targetVelocity, AngleUnit.DEGREES);
+                    HardwareUtils.previousValues.put(thisMotor, targetVelocity);
+                }
             }
         } else if (currentMode == ComplexMotorModes.RAW_POWER) {
-            thisMotor.setPower(motorPower);
+            HardwareUtils.optimizeMethod(motorPower, thisMotor, thisMotor::setPower);
         }
-
     }
 
     public double getCurrent() {
@@ -103,10 +109,10 @@ public class ComplexMotor {
 
     public boolean atVelocity() {
         if (currentMode == ComplexMotorModes.USE_VELOCITY_PID) {
-            if (useCustomVelo) {
+            if (useCustomVelocity) {
                 return velocityController.atSetPoint();
             } else {
-                return abs(thisMotor.getVelocity(AngleUnit.DEGREES) - targetVelo) < 3;
+                return abs(thisMotor.getVelocity(AngleUnit.DEGREES) - targetVelocity) < 3;
             }
         }
         return true;

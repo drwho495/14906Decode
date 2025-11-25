@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.Base;
 // this is the file that all teleops and autos
 // the hardware is inited in the subsystem files
 
+import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -13,31 +14,31 @@ import org.firstinspires.ftc.teamcode.bedroBathing.localization.Pose;
 import org.firstinspires.ftc.teamcode.bedroBathing.pathGeneration.PathBuilder;
 import org.firstinspires.ftc.teamcode.bedroBathing.pathGeneration.Point;
 
-import java.lang.annotation.ElementType;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class RobotManager {
     // hardware is defined here
 
     private OpModeStates currentState = OpModeStates.IDLE;
-    private OpModeOptions managerOptions = new OpModeOptions();
     private LinearOpMode opMode;
     private Follower follower = null;
     private AllianceSides side = Parameters.LAST_ALLIANCE_SIDE;
     private double autoTimeout = -1;
-    private ElapsedTime autoTimer = new ElapsedTime();
+    private final ElapsedTime autoTimer = new ElapsedTime();
+    private final ElapsedTime timer = new ElapsedTime();
+    List<LynxModule> hubs;
 
     private boolean isShooting = false;
     private final boolean hoodServoManual = true;
 
     private double teleopHeadingGoal = 0;
     private boolean aimAtGoal = true;
-
     private boolean stateStart = true;
 
     // do NOT add a constructor to any of the subsystems!
-    private ShooterSubsystem shooterSubsystem = new ShooterSubsystem();
-    private IntakeSubsystem intakeSubsystem = new IntakeSubsystem();
+    private final ShooterSubsystem shooterSubsystem = new ShooterSubsystem();
+    private final IntakeSubsystem intakeSubsystem = new IntakeSubsystem();
 
     public RobotManager(LinearOpMode newOpMode) {
         opMode = newOpMode;
@@ -49,20 +50,30 @@ public class RobotManager {
         return currentState;
     }
 
-    public void initialiseHardware() {
+    public void initialise() {
         shooterSubsystem.initialiseHardware();
         intakeSubsystem.initialiseHardware();
+
+        follower = new Follower(opMode.hardwareMap);
+
+        List<LynxModule> hubs = opMode.hardwareMap.getAll(LynxModule.class);
+
+        for (LynxModule hub : hubs) {
+            hub.setBulkCachingMode(LynxModule.BulkCachingMode.MANUAL);
+        }
+    }
+
+    private void clearCache() {
+        for (LynxModule hub : hubs) {
+            hub.clearBulkCache();
+        }
     }
 
     public boolean isShooterOn() {
         return shooterSubsystem.isPoweredOn();
     }
 
-    public void initialisePedroPathing() {
-        follower = new Follower(opMode.hardwareMap);
-    }
-
-    public void trySetDrivePowers(double x, double y, double heading, boolean fieldCentric) {
+    public void setDrivePowers(double x, double y, double heading, boolean fieldCentric) {
         if (!follower.teleopDriveEnabled()) {
             follower.breakFollowing();
             follower.startTeleopDrive();
@@ -71,7 +82,7 @@ public class RobotManager {
         follower.setTeleOpMovementVectors(x, y, heading, !fieldCentric);
     }
 
-    public void tryEnableAutoHeading() {
+    public void enableAutoHeading() {
         follower.setAutoHeadingState(true);
     }
 
@@ -79,7 +90,7 @@ public class RobotManager {
         return follower;
     }
 
-    public void tryDisableAutoHeading() {
+    public void disableAutoHeading() {
         follower.setAutoHeadingState(false);
     }
 
@@ -87,7 +98,7 @@ public class RobotManager {
         follower.setPose(newPose);
     }
 
-    public void tryResetIMU() {
+    public void resetIMU() {
         if (!follower.isBusy()) {
             try {
                 follower.resetIMU();
@@ -99,32 +110,32 @@ public class RobotManager {
     /*
      * set a heading goal while in teleop drive mode that will not change regardless of position
      */
-    public void trySetConstantTeleopHeading(double heading) {
+    public void setConstantTeleopHeading(double heading) {
         aimAtGoal = false;
         teleopHeadingGoal = heading;
     }
 
-    public void tryUseGoalAimHeading() {
+    public void useGoalAimHeading() {
         aimAtGoal = true;
     }
 
-    public void tryPowerOnShooter() {
+    public void powerOnShooter() {
         shooterSubsystem.powerOn();
     }
 
-    public void tryReverseIntake() {
+    public void reverseIntake() {
 //        if (!isShooting) {
         intakeSubsystem.setIntakePower(-1);
 //        }
     }
 
-    public void tryPowerOffIntake() {
+    public void powerOffIntake() {
 //        if (!isShooting) {
         intakeSubsystem.powerIntakeOff();
 //        }
     }
 
-    public void trySetIntakePower(double newPower) {
+    public void setIntakePower(double newPower) {
 //        if (!isShooting) {
         intakeSubsystem.setIntakePower(newPower);
 //        }
@@ -134,19 +145,19 @@ public class RobotManager {
         return intakeSubsystem.isIntakeOn();
     }
 
-    public void tryToggleShooter() {
+    public void toggleShooter() {
         shooterSubsystem.toggleShooterPower();
     }
 
-    public void tryPowerOffShooter() {
+    public void powerOffShooter() {
         shooterSubsystem.powerOff();
     }
 
-    public void tryStartShootElement() {
+    public void startShootElement() {
         isShooting = true;
     }
 
-    public void tryStopShootElement() {
+    public void stopShootElement() {
         isShooting = false;
     }
 
@@ -162,11 +173,11 @@ public class RobotManager {
         }
     }
 
-    public void trySetShooterVelocity(double velocity) {
-        shooterSubsystem.setCustomVelocity(velocity);
+    public void setShooterVelocity(double velocity) {
+        shooterSubsystem.setVelocity(velocity);
     }
 
-    public void trySetHoodServoPos(double newPos) {
+    public void setHoodServoPos(double newPos) {
         if (hoodServoManual) {
             shooterSubsystem.setHoodPos(newPos);
         }
@@ -174,10 +185,6 @@ public class RobotManager {
 
     public Pose getPose() {
         return follower.getPose();
-    }
-
-    public void setManagerOptions(OpModeOptions newOptions) {
-        managerOptions = newOptions;
     }
 
     private void internalRunPath(PathBuilder path, boolean correctAfterFinished) {
@@ -201,7 +208,7 @@ public class RobotManager {
         autoTimeout = -1;
     }
 
-    public void tryRunBlocking(PathBuilder path) {
+    public void runBlocking(PathBuilder path) {
         if (!follower.isBusy()) internalRunPath(path, true);
     }
 
@@ -279,7 +286,7 @@ public class RobotManager {
         }
     }
 
-    public void tryRunBlocking(PathBuilder path, boolean correctAfterFinished) {
+    public void runBlocking(PathBuilder path, boolean correctAfterFinished) {
         if (!follower.isBusy()) internalRunPath(path, correctAfterFinished);
     }
 
@@ -314,6 +321,10 @@ public class RobotManager {
 
     public void update() {
         if (!opMode.opModeIsActive() || opMode.isStopRequested()) return;
+
+        if (timer.time(TimeUnit.MILLISECONDS) % 5 == 0) {
+            clearCache();
+        }
 
         switch (currentState) {
             case IDLE:
@@ -358,8 +369,12 @@ public class RobotManager {
         intakeSubsystem.update();
     }
 
-    public Double[] getShooterVelocities() {
+    public Double[] getCurrentShooterVelocities() {
         return shooterSubsystem.getVelocities();
+    }
+
+    public double getShooterTargetVelocity() {
+        return shooterSubsystem.getTargetVelocity();
     }
 
     public AllianceSides getAllianceSide() {
@@ -369,11 +384,15 @@ public class RobotManager {
     /*
      * set the power limit for the drivetrain motors in auto
      */
-    public void trySetMaxPower(double newPower) {
+    public void setMaxFollowerPower(double newPower) {
         follower.setMaxPower(newPower);
     }
 
-    public void tryBreakFollowing() {
+    public void breakFollowing() {
         follower.breakFollowing();
+    }
+
+    public double getHoodAngle() {
+        return shooterSubsystem.getHoodAngle();
     }
 }
