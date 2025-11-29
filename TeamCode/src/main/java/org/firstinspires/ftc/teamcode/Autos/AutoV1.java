@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.Autos;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.Base.AllianceSides;
 import org.firstinspires.ftc.teamcode.Base.OpModeStates;
@@ -13,20 +14,29 @@ import org.firstinspires.ftc.teamcode.bedroBathing.pathGeneration.BezierLine;
 import org.firstinspires.ftc.teamcode.bedroBathing.pathGeneration.Path;
 import org.firstinspires.ftc.teamcode.bedroBathing.pathGeneration.PathBuilder;
 import org.firstinspires.ftc.teamcode.bedroBathing.pathGeneration.Point;
+import org.firstinspires.ftc.teamcode.bedroBathing.tuning.FollowerConstants;
+
+import java.util.concurrent.TimeUnit;
 
 enum AutoStartPos {
-    ON_WALL_FACING_TOWARDS_GOAL,
-    ON_WALL_FACING_TOWARDS_WALL
+    CLOSE_ZONE,
+    FAR_ZONE
+}
+
+enum AutoShootPosition {
+    MIDDLE_LINE,
+    FAR_ZONE
 }
 
 @Autonomous(name = "Auto V1", group = "0", preselectTeleOp = "0: Main Teleop")
 public class AutoV1 extends LinearOpMode {
     private RobotManager robot;
-    private AutoStartPos autoStartPos = AutoStartPos.ON_WALL_FACING_TOWARDS_GOAL;
+    private AutoStartPos autoStartPos = AutoStartPos.CLOSE_ZONE;
     private boolean clearGate = true;
     private boolean invertedGrabOrder = false;
     private boolean clearAfterLine2 = false;
     private boolean grabFromHumanPlayer = false;
+    private ElapsedTime timer = new ElapsedTime();
 
     // 0 is the line furthest from the goal
     private void intakeFromTape(double number) {
@@ -47,7 +57,7 @@ public class AutoV1 extends LinearOpMode {
         } else if (number == 2) {
             intakeStart.setX(-20);
             intakeStart.setY(-50);
-            intakeEndX = 6;
+            intakeEndX = robot.getAllianceSide() == AllianceSides.RED ? 6 : 4;
         }
 
         if (number != 2) {
@@ -58,7 +68,7 @@ public class AutoV1 extends LinearOpMode {
                                             robot.getFixedPoint(intakeStart)
                                     )
                             ))
-                            .setLinearHeadingInterpolation(robotPose.getHeading(), robot.getFixedHeading(0))
+                            .addLinearHeadingInterpolation(robotPose.getHeading(), robot.getFixedHeading(0))
                             .setPathEndTValueConstraint(.95)
                             .setZeroPowerAccelerationMultiplier(10)
                     , number == 2);
@@ -67,11 +77,11 @@ public class AutoV1 extends LinearOpMode {
                             .addPath(new Path(
                                     new BezierCurve(
                                             new Point(robotPose),
-                                            robot.getFixedPoint(-40, -35),
+                                            robot.getFixedPoint(-40, -55),
                                             robot.getFixedPoint(intakeStart)
                                     )
                             ))
-                            .setLinearHeadingInterpolation(robotPose.getHeading(), robot.getFixedHeading(0))
+                            .addLinearHeadingInterpolation(robotPose.getHeading(), robot.getFixedHeading(0))
                             .setPathEndTValueConstraint(.95)
                             .setZeroPowerAccelerationMultiplier(10)
                     , number == 2);
@@ -114,7 +124,7 @@ public class AutoV1 extends LinearOpMode {
                                             robot.getFixedPoint(8.5, clearAfterLine2 ? -58 :-60)
                                     )
                             ))
-                            .setLinearHeadingInterpolation(robotPose.getHeading(), pushHeading)
+                            .addLinearHeadingInterpolation(robotPose.getHeading(), pushHeading)
                             .setPathEndTValueConstraint(.95)
                             .setZeroPowerAccelerationMultiplier(5)
                     , false);
@@ -133,117 +143,149 @@ public class AutoV1 extends LinearOpMode {
         robot.setMaxFollowerPower(1);
         robot.update();
 
+        double endY = -126;
+        double midY = -100;
+
+        if (robot.getAllianceSide() == AllianceSides.BLUE) {
+            endY = -124;
+            midY = -90;
+        }
+
+        robot.addPathTimeout(6000);
         robot.runBlocking(new PathBuilder()
                         .addPath(new Path(
-                                new BezierLine(
+                                new BezierCurve(
                                         new Point(robotPose),
-                                        new Point(10, -95)
+                                        robot.getFixedPoint(-30, midY),
+                                        robot.getFixedPoint(17, endY)
                                 )
                         ))
-                        .setLinearHeadingInterpolation(robotPose.getHeading(), robot.getFixedHeading(318))
+                        .addLinearHeadingInterpolation(robotPose.getHeading(), robot.getFixedHeading(-15))
                         .setPathEndTValueConstraint(.92)
                         .setZeroPowerAccelerationMultiplier(5)
-                , false);
+                , true);
+        robot.safeSleep(1000);
 
-        robot.safeSleep(75);
         robot.setMaxFollowerPower(.5);
-
         robot.runBlocking(new PathBuilder()
-                        .addPath(new Path(
-                                new BezierCurve(
-                                        new Point(10, -95),
-                                        new Point(10, -117)
-                                )
-                        ))
-                        .addTemporalCallback(2, () -> {
-                            robot.breakFollowing();
-                        })
-                        .setConstantHeadingInterpolation(robot.getFixedHeading(318))
-                        .setPathEndTValueConstraint(.9)
-                        .setZeroPowerAccelerationMultiplier(7)
-                , false);
-
-        robot.safeSleep(500);
-        robot.powerOffIntake();
+                .addPath(new Path(
+                        new BezierLine(
+                                robot.getFixedPoint(17, endY),
+                                robot.getFixedPoint(-10, -123)
+                        )
+                ))
+                .addConstantHeadingInterpolation(robot.getFixedHeading(-15))
+                .setPathEndTValueConstraint(.92)
+                .setZeroPowerAccelerationMultiplier(5), false);
         robot.setMaxFollowerPower(1);
 
-        robot.runBlocking(new PathBuilder()
-                        .addPath(new Path(
-                                new BezierCurve(
-                                        robot.getFixedPoint(10, -117),
-                                        robot.getFixedPoint(-16, -115)
-                                )
-                        ))
-                        .setLinearHeadingInterpolation(robot.getFixedHeading(318), robot.getFixedHeading(0))
-                        .setPathEndTValueConstraint(.92)
-                        .setZeroPowerAccelerationMultiplier(7)
-                , true);
+        robot.safeSleep(1000);
+        robot.powerOffIntake();
+        robot.powerOnShooter();
 
         robot.safeSleep(100);
     }
 
     private void shootBalls(double cycleNumber) {
-        Pose shootingPosition = robot.getFixedPose(-31, -48, Math.toRadians(230));
+        Pose shootingPosition;
         Pose robotPose = robot.getPose();
 
         robot.powerOffIntake();
         robot.powerOnShooter();
-        robot.setShooterVelocity(4400);
-        robot.setHoodServoPos(Parameters.HOOD_SERVO_FAR);
         robot.setMaxFollowerPower(1);
 
-        if (cycleNumber == 0) {
-            if(robot.getAllianceSide() == AllianceSides.RED) {
-                robot.runBlocking(new PathBuilder()
-                                .addPath(new Path(
-                                        new BezierLine(
-                                                new Point(robotPose),
-                                                new Point(shootingPosition)
-                                        )
-                                ))
-                                .setLinearHeadingInterpolation(robot.getFixedHeading(220), shootingPosition.getHeading())
-                                .setPathEndTValueConstraint(.95)
-                                .setPathEndVelocityConstraint(1)
-                                .setZeroPowerAccelerationMultiplier(6)
-                        , true);
-            } else if(robot.getAllianceSide() == AllianceSides.BLUE) {
+        FollowerConstants.secondaryHeadingPIDFCoefficients.P = 4;
+        FollowerConstants.secondaryHeadingPIDFCoefficients.D = 0;
+        FollowerConstants.headingPIDFSwitch = Math.PI / 10;
+        FollowerConstants.holdPointHeadingScaling = 1;
+
+        if (autoStartPos == AutoStartPos.CLOSE_ZONE) {
+            shootingPosition = robot.getFixedPose(-30, -40, Math.toRadians(180));
+
+            if (cycleNumber == 0) {
+                // jank >:(
+                if (robot.getAllianceSide() == AllianceSides.RED) {
+                    robot.runBlocking(new PathBuilder()
+                                    .addPath(new Path(
+                                            new BezierLine(
+                                                    new Point(robotPose),
+                                                    new Point(shootingPosition)
+                                            )
+                                    ))
+                                    .addVariableHeadingInterpolation(robot.getFixedHeading(220), shootingPosition.getHeading(), robot::getHeadingToGoal)
+                                    .setPathEndTValueConstraint(.95)
+                                    .setPathEndVelocityConstraint(1)
+                                    .setZeroPowerAccelerationMultiplier(6)
+                            , true);
+                } else if (robot.getAllianceSide() == AllianceSides.BLUE) {
+                    robot.runBlocking(new PathBuilder()
+                                    .addPath(new Path(
+                                            new BezierCurve(
+                                                    new Point(robotPose),
+                                                    robot.getFixedPoint(-5, -5),
+                                                    new Point(shootingPosition)
+                                            )
+                                    ))
+                                    .addVariableHeadingInterpolation(robot.getFixedHeading(220), shootingPosition.getHeading(), robot::getHeadingToGoal)
+                                    .setPathEndTValueConstraint(.95)
+                                    .setPathEndVelocityConstraint(1)
+                                    .setZeroPowerAccelerationMultiplier(6)
+                            , true);
+                }
+            } else if (cycleNumber >= 1) {
+                double yOffset = -15;
+
+                if ((clearAfterLine2 && invertedGrabOrder && cycleNumber == 1)) {
+                    yOffset = 25;
+                }
+
                 robot.runBlocking(new PathBuilder()
                                 .addPath(new Path(
                                         new BezierCurve(
                                                 new Point(robotPose),
-                                                robot.getFixedPoint(-10, -15),
+                                                robot.getFixedPoint(-20, robotPose.getY() + yOffset),
                                                 new Point(shootingPosition)
                                         )
                                 ))
-                                .setLinearHeadingInterpolation(robot.getFixedHeading(220), shootingPosition.getHeading())
+                                .addVariableHeadingInterpolation(robotPose.getHeading(), shootingPosition.getHeading(), robot::getHeadingToGoal)
                                 .setPathEndTValueConstraint(.95)
                                 .setPathEndVelocityConstraint(1)
-                                .setZeroPowerAccelerationMultiplier(6)
+                                .setZeroPowerAccelerationMultiplier(8)
                         , true);
             }
-        } else if (cycleNumber >= 1) {
-            double yOffset = -15;
-
-            if ((clearAfterLine2 && invertedGrabOrder && cycleNumber == 1)) {
-                yOffset = 25;
-            }
+        } else if (autoStartPos == AutoStartPos.FAR_ZONE) {
+            shootingPosition = robot.getFixedPose(-35, -115, Math.toRadians(robot.getAllianceSide() == AllianceSides.RED ? 250 : 248));
 
             robot.runBlocking(new PathBuilder()
                             .addPath(new Path(
-                                    new BezierCurve(
+                                    new BezierLine(
                                             new Point(robotPose),
-                                            robot.getFixedPoint(-20, robotPose.getY() + yOffset),
                                             new Point(shootingPosition)
                                     )
                             ))
-                            .setLinearHeadingInterpolation(robotPose.getHeading(), shootingPosition.getHeading())
-                            .setPathEndTValueConstraint(.95)
-                            .setPathEndVelocityConstraint(1)
+                            .addLinearHeadingInterpolation(robotPose.getHeading(), shootingPosition.getHeading())
+                            .setPathEndTValueConstraint(.99)
+                            .setPathEndVelocityConstraint(.5)
                             .setZeroPowerAccelerationMultiplier(8)
                     , true);
+
+            robot.waitForHeadingCorrection(.5, 2000, .15);
         }
 
-        robot.safeSleep(500);
+        if (autoStartPos == AutoStartPos.FAR_ZONE && cycleNumber == 0) {
+            robot.safeSleep(1200);
+        } else {
+            if (cycleNumber == 0) {
+                robot.safeSleep(800);
+            } else {
+                robot.safeSleep(500);
+            }
+        }
+
+        FollowerConstants.holdPointHeadingScaling = .35;
+        FollowerConstants.secondaryHeadingPIDFCoefficients.P = 1.5;
+        FollowerConstants.secondaryHeadingPIDFCoefficients.D = 0;
+        FollowerConstants.headingPIDFSwitch = Math.PI / 20;
 
         robot.startShootElement();
 
@@ -251,9 +293,8 @@ public class AutoV1 extends LinearOpMode {
 //        robot.safeSleep(350);
 
 //        robot.setHoodServoPos(65);
-        robot.safeSleep(1000);
+        robot.safeSleep(autoStartPos == AutoStartPos.CLOSE_ZONE ? 1100 : 2200);
 
-        robot.stopShootElement();
         robot.stopShootElement();
         robot.safeSleep(50);
 
@@ -267,10 +308,10 @@ public class AutoV1 extends LinearOpMode {
                         .addPath(new Path(
                                 new BezierLine(
                                         new Point(robotPose),
-                                        robot.getFixedPoint(-25, -75)
+                                        robot.getFixedPoint(-25, autoStartPos == AutoStartPos.FAR_ZONE ? -95 : -75)
                                 )
                         ))
-                        .setLinearHeadingInterpolation(robotPose.getHeading(), robot.getFixedHeading(0))
+                        .addLinearHeadingInterpolation(robotPose.getHeading(), robot.getFixedHeading(0))
                         .setPathEndTValueConstraint(.98)
                         .setPathEndVelocityConstraint(1)
                         .setZeroPowerAccelerationMultiplier(5)
@@ -284,56 +325,84 @@ public class AutoV1 extends LinearOpMode {
         robot = new RobotManager(this);
 
         robot.setState(OpModeStates.INTAKE_SCORE);
+        robot.disableManualShooting();
         robot.initialise();
         robot.resetIMU();
 
         while (opModeInInit()) {
             robot.powerOffShooter();
 
-            if (gamepad1.aWasPressed()) {
+            if (gamepad1.aWasPressed())
                 robot.setAllianceSide(robot.getAllianceSide() == AllianceSides.BLUE ? AllianceSides.RED : AllianceSides.BLUE);
+
+            if (autoStartPos == AutoStartPos.CLOSE_ZONE) {
+                if (gamepad1.bWasPressed())
+                    clearGate = !clearGate;
+
+                if (gamepad1.yWasPressed())
+                    grabFromHumanPlayer = !grabFromHumanPlayer;
             }
 
-            if (gamepad1.bWasPressed()) {
-                clearGate = !clearGate;
-            }
-
-            if (gamepad1.yWasPressed()) {
-                grabFromHumanPlayer = !grabFromHumanPlayer;
-            }
+            if (gamepad1.dpadDownWasPressed())
+                autoStartPos = ((autoStartPos == AutoStartPos.CLOSE_ZONE) ? AutoStartPos.FAR_ZONE : AutoStartPos.CLOSE_ZONE);
 
             telemetry.addLine("Press X to change the robot's alliance.");
             telemetry.addLine("Press O to enable/disable clearing the gate and the third cycle.");
-            if (clearGate) telemetry.addLine("Press ▲ to enable/disable grabbing artifacts from the human player.");
+            if (clearGate && autoStartPos == AutoStartPos.CLOSE_ZONE) telemetry.addLine("Press ▲ to enable/disable grabbing artifacts from the human player.");
+            telemetry.addLine("Press D-Pad Down to change the robot's starting position.");
             telemetry.addLine();
             telemetry.addData("Current Side: ", robot.getAllianceSide() == AllianceSides.BLUE ? "Blue" : "Red");
-            if (clearGate) telemetry.addData("Grab from Human Player: ", grabFromHumanPlayer);
-            telemetry.addData("Clear Gate Enabled: ", clearGate);
+            if (clearGate && autoStartPos == AutoStartPos.CLOSE_ZONE) telemetry.addData("Grab from Human Player: ", grabFromHumanPlayer);
+            telemetry.addData("Start Location: ", autoStartPos);
+            if (autoStartPos == AutoStartPos.CLOSE_ZONE) telemetry.addData("Clear Gate Enabled: ", clearGate);
             telemetry.update();
 
             robot.update();
         }
 
-        waitForStart();
         Parameters.AUTO_PROGRAM_HAS_RUN = true;
-        robot.setPose(robot.getAllianceSide() == AllianceSides.RED ? Parameters.RED_CLOSE_START : Parameters.BLUE_CLOSE_START);
+        waitForStart();
+        timer.reset();
+        Parameters.AUTO_PROGRAM_HAS_RUN = true;
+        Parameters.LAST_ALLIANCE_SIDE = robot.getAllianceSide();
+
+        if (autoStartPos == AutoStartPos.CLOSE_ZONE) {
+            robot.setPose(robot.getAllianceSide() == AllianceSides.RED ? Parameters.RED_CLOSE_START : Parameters.BLUE_CLOSE_START);
+        } else if (autoStartPos == AutoStartPos.FAR_ZONE) {
+            robot.setPose(robot.getAllianceSide() == AllianceSides.RED ? Parameters.RED_FAR_START : Parameters.BLUE_FAR_START);
+        }
 
         shootBalls(0);
-        intakeFromTape(invertedGrabOrder ? 2 : 0);
-        shootBalls(1);
-        intakeFromTape(1);
-        shootBalls(2);
-        intakeFromTape(invertedGrabOrder ? 0 : 2);
 
-        if (clearGate) shootBalls(3);
+        if (autoStartPos == AutoStartPos.CLOSE_ZONE) {
+            intakeFromTape(invertedGrabOrder ? 2 : 0);
+            shootBalls(1);
+            intakeFromTape(1);
+            shootBalls(2);
+            intakeFromTape(invertedGrabOrder ? 0 : 2);
+            if (clearGate) shootBalls(3);
+            if (grabFromHumanPlayer && clearGate)
+                intakeFromHumanPlayer();
+            else {
+                park();
+            }
+        } else if (autoStartPos == AutoStartPos.FAR_ZONE) {
+            intakeFromHumanPlayer();
+            shootBalls(1);
+
+            robot.powerOffShooter();
+            robot.powerOffIntake();
+
+            while (opModeIsActive() && timer.time(TimeUnit.SECONDS) <= 27) {
+                robot.update();
+            }
+
+
+            park();
+        }
 
         robot.powerOffShooter();
 
-        if (grabFromHumanPlayer && clearGate)
-            intakeFromHumanPlayer();
-        else
-            park();
-
-        Parameters.AUTO_PROGRAM_END_POSITION = robot.getPose();
+        Parameters.OPMODE_END_POSITION = robot.getPose();
     }
 }

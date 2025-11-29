@@ -31,6 +31,9 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigurationType;
 
+import org.firstinspires.ftc.robotcore.external.Consumer;
+import org.firstinspires.ftc.robotcore.external.Function;
+import org.firstinspires.ftc.robotcore.external.Supplier;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.bedroBathing.localization.Pose;
 import org.firstinspires.ftc.teamcode.bedroBathing.localization.PoseUpdater;
@@ -97,10 +100,10 @@ public class Follower {
     private boolean holdPositionAtEnd;
     private boolean teleopDrive;
     private boolean autoHeadingControl = false;
-    public double teleopHeadingGoal = 0;
+    private double teleopHeadingGoal = 0;
+    private double driverOffset = 0;
 
     private double maxPower = 1;
-    private double oldMaxPower = 1;
     private double previousSecondaryTranslationalIntegral;
     private double previousTranslationalIntegral;
     private double holdPointTranslationalScaling = FollowerConstants.holdPointTranslationalScaling;
@@ -280,6 +283,26 @@ public class Follower {
         return poseUpdater.getVelocity().getMagnitude();
     }
 
+
+    /**
+     * This method sets the heading goal of the follower if the path it follows has a modifiable end heading.
+     * use the method addVariableEndHeading() to make the heading mutable.
+     *
+     * @param newEndHeading this is the new heading to turn to.
+     */
+    public void setPathHeadingGoal(double newEndHeading) {
+        if (followerHeadingIsVariable()) {
+            currentPath.setVariablePathEndHeading(newEndHeading);
+        }
+    }
+
+    /**
+     * This method indicates if the robot is following a path that has a variable heading goal.
+     */
+    public boolean followerHeadingIsVariable() {
+        return getCurrentPath().usingVariableHeading();
+    }
+
     /**
      * This sets the starting pose. Do not run this after moving at all.
      *
@@ -369,14 +392,20 @@ public class Follower {
      * @param point   the Point to stay at.
      * @param heading the heading to face.
      */
-    public void holdPoint(BezierPoint point, double heading) {
+    public void holdPoint(BezierPoint point, boolean useVariableHeading, Supplier<Double> headingUpdateMethod, double heading) {
         breakFollowing();
         updatePIDF();
         holdingPosition = true;
         isBusy = false;
         followingPathChain = false;
         currentPath = new Path(point);
-        currentPath.setConstantHeadingInterpolation(heading);
+
+        if (useVariableHeading) {
+            currentPath.addVariableHeadingInterpolation(heading, heading, headingUpdateMethod);
+        } else {
+            currentPath.addConstantHeadingInterpolation(heading);
+        }
+
         closestPose = currentPath.getClosestPoint(poseUpdater.getPose(), 1);
     }
 
@@ -386,8 +415,18 @@ public class Follower {
      * @param point   the Point to stay at.
      * @param heading the heading to face.
      */
+    public void holdPoint(BezierPoint point, double heading) {
+        holdPoint(point, false, null, heading);
+    }
+
+    /**
+     * This holds a Point.
+     *
+     * @param point   the Point to stay at.
+     * @param heading the heading to face.
+     */
     public void holdPoint(Point point, double heading) {
-        holdPoint(new BezierPoint(point), heading);
+        holdPoint(new BezierPoint(point), false, null, heading);
     }
 
     /**
@@ -401,11 +440,8 @@ public class Follower {
 
     public void updateHoldPoint(Pose pose) {
         if (holdingPosition) {
-//            isBusy = false;
-//            followingPathChain = false;
             currentPath = new Path(new BezierPoint(new Point(pose)));
-            currentPath.setConstantHeadingInterpolation(pose.getHeading());
-//            closestPose = currentPath.getClosestPoint(poseUpdater.getPose(), 1);
+            currentPath.addConstantHeadingInterpolation(pose.getHeading());
         }
     }
 
@@ -533,6 +569,9 @@ public class Follower {
 
                         if (followingPathChain) updateCallbacks();
 
+                        Supplier<Double> headingUpdateMethod = getCurrentPath().getVariableHeadingUpdateMethod();
+                        if (headingUpdateMethod != null) setPathHeadingGoal(headingUpdateMethod.get());
+
                         double voltage = vSensor.getVoltage();
 
                         drivePowers = driveVectorScaler.getDrivePowers(getCorrectiveVector(), getHeadingVector(), getDriveVector(), poseUpdater.getPose().getHeading());
@@ -564,7 +603,7 @@ public class Follower {
                             if ((System.currentTimeMillis() - reachedParametricPathEndTime > currentPath.getPathEndTimeoutConstraint()) || (poseUpdater.getVelocity().getMagnitude() < currentPath.getPathEndVelocityConstraint() && MathFunctions.distance(poseUpdater.getPose(), closestPose) < currentPath.getPathEndTranslationalConstraint() && MathFunctions.getSmallestAngleDifference(poseUpdater.getPose().getHeading(), currentPath.getClosestPointHeadingGoal()) < currentPath.getPathEndHeadingConstraint())) {
                                 if (holdPositionAtEnd) {
                                     holdPositionAtEnd = false;
-                                    holdPoint(new BezierPoint(currentPath.getLastControlPoint()), currentPath.getHeadingGoal(1));
+                                    holdPoint(new BezierPoint(currentPath.getLastControlPoint()), followerHeadingIsVariable(), currentPath.getVariableHeadingUpdateMethod(), currentPath.getHeadingGoal(1));
                                 } else {
                                     breakFollowing();
                                 }
@@ -574,9 +613,6 @@ public class Follower {
                 }
             }
         } else {
-            velocities.add(poseUpdater.getVelocity());
-            velocities.remove(velocities.get(velocities.size() - 1));
-
             Vector localHeadingVector = teleopHeadingVector;
 
             if (autoHeadingControl) {
@@ -609,6 +645,16 @@ public class Follower {
     }
 
     /**
+     * This method rotates the robot's drive powers in case the drivers are located in a place that
+     * is not correct for the robot's heading zero.
+     *
+     * @param driverOffset The rotation offset of the drivers, in radians.
+     */
+    public void setDriverOffset(double driverOffset) {
+        this.driverOffset = driverOffset;
+    }
+
+    /**
      * This sets the teleop drive vectors.
      *
      * @param forwardDrive determines the forward drive vector for the robot in teleop. In field centric
@@ -627,6 +673,13 @@ public class Follower {
 
         if (robotCentric) {
             teleopDriveVector.rotateVector(getPose().getHeading());
+        } else {
+            // this is necessary because a robot may use an absolute positioning system for driving,
+            // when a zero for heading is set for one side of the field, field centric will work differently
+            // for the opposite side of the field
+            if (this.driverOffset != 0) {
+                teleopDriveVector.rotateVector(this.driverOffset);
+            }
         }
 
         teleopHeadingVector.setComponents(teleopDriveValues[2], getPose().getHeading());

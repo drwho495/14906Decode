@@ -49,8 +49,8 @@ public class ShooterSubsystem extends Subsystem {
         shooterMotor1.useCustomVeloPIDLoop(false);
         shooterMotor2.useCustomVeloPIDLoop(false);
 
-        shooterMotor1.setVelocityPIDFCoefficients(6, 2.8, 0, 0);
-        shooterMotor2.setVelocityPIDFCoefficients(6, 2.8, 0, 0);
+        shooterMotor1.setVelocityPIDFCoefficients(8, 2.8, 0, 0);
+        shooterMotor2.setVelocityPIDFCoefficients(8, 2.8, 0, 0);
 
         fingerServo = new ComplexServo(thisOpMode.hardwareMap, "fingerServo", 0, 180, AngleUnit.DEGREES);
         fingerServo.setInverted(true);
@@ -108,11 +108,11 @@ public class ShooterSubsystem extends Subsystem {
         if (!thisOpMode.opModeIsActive() || thisOpMode.isStopRequested()) return;
 
         if (powerOff) {
-            shooterMotor1.setVelo(0);
-            shooterMotor2.setVelo(0);
+            shooterMotor1.setVelocity(0);
+            shooterMotor2.setVelocity(0);
         } else {
-            shooterMotor1.setVelo(motorVelo * velocityMultiplier);
-            shooterMotor2.setVelo(motorVelo * velocityMultiplier);
+            shooterMotor1.setVelocity(motorVelo * velocityMultiplier);
+            shooterMotor2.setVelocity(motorVelo * velocityMultiplier);
         }
 
         fingerServo.turnToAngle(fingerServoPos);

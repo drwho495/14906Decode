@@ -63,7 +63,7 @@
 //                        mirroredPath.setTangentHeadingInterpolation();
 //                        mirroredPath.setReversed(mirroredPath.getReversed());
 //                    } else {
-//                        mirroredPath.setLinearHeadingInterpolation(
+//                        mirroredPath.addLinearHeadingInterpolation(
 //                                new Pose(0, 0, currentPath.getHeadingGoal(0)).getMirroredCopy(mirrorPlanePos, mirrorPlaneNormal).getHeading(),
 //                                new Pose(0, 0, currentPath.getHeadingGoal(1)).getMirroredCopy(mirrorPlanePos, mirrorPlaneNormal).getHeading(),
 //                                currentPath.getHeadingEndTValue()

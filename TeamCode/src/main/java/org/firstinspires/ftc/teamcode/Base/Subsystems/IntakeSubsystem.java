@@ -59,6 +59,10 @@ public class IntakeSubsystem extends Subsystem {
         return intakePower != 0;
     }
 
+    public double getTransferLockTime() {
+        return (transferDisabling && autoDisableTransfer) ? transferDisableTimeout.time(TimeUnit.MILLISECONDS) : -1;
+    }
+
     public void powerIntakeIdle() {
         intakePower = Parameters.INTAKE_IDLE;
     }
@@ -125,5 +129,9 @@ public class IntakeSubsystem extends Subsystem {
 
     public void setIntakePower(double newPower) {
         intakePower = newPower;
+    }
+
+    public boolean isTransferStalled() {
+        return transferDisabled;
     }
 }

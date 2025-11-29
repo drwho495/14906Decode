@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.bedroBathing.pathGeneration;
 
+import org.firstinspires.ftc.robotcore.external.Supplier;
+
 import java.util.ArrayList;
 
 /**
@@ -90,8 +92,36 @@ public class PathBuilder {
      *         This will be reached at the end of the Path if no end time is specified.
      * @return This returns itself with the updated data.
      */
-    public PathBuilder setLinearHeadingInterpolation(double startHeading, double endHeading) {
-        this.paths.get(paths.size() - 1).setLinearHeadingInterpolation(startHeading, endHeading);
+    public PathBuilder addLinearHeadingInterpolation(double startHeading, double endHeading) {
+        this.paths.get(paths.size() - 1).addLinearHeadingInterpolation(startHeading, endHeading);
+        return this;
+    }
+
+    /**
+     * This sets a variable heading interpolation on the last Path added to the PathBuilder.
+     *
+     * @param startHeading The start of the variable heading interpolation.
+     * @param initialEndHeading The initial end of the variable heading interpolation.
+     *         This will be reached at the end of the Path if no end time is specified.
+     * @return This returns itself with the updated data.
+     */
+    public PathBuilder addVariableHeadingInterpolation(double startHeading, double initialEndHeading) {
+        this.paths.get(paths.size() - 1).addVariableHeadingInterpolation(startHeading, initialEndHeading);
+        return this;
+    }
+
+    /**
+     * This sets a variable heading interpolation on the last Path added to the PathBuilder.
+     *
+     * @param startHeading The start of the variable heading interpolation.
+     * @param initialEndHeading The initial end of the variable heading interpolation.
+     *         This will be reached at the end of the Path if no end time is specified.
+     * @param updateMethod A method that will be run during each loop that will update the robot's end
+     *                     heading.
+     * @return This returns itself with the updated data.
+     */
+    public PathBuilder addVariableHeadingInterpolation(double startHeading, double initialEndHeading, Supplier<Double> updateMethod) {
+        this.paths.get(paths.size() - 1).addVariableHeadingInterpolation(startHeading, initialEndHeading, updateMethod);
         return this;
     }
 
@@ -105,8 +135,8 @@ public class PathBuilder {
      *         This value goes from [0, 1] since Bezier curves are parametric functions.
      * @return This returns itself with the updated data.
      */
-    public PathBuilder setLinearHeadingInterpolation(double startHeading, double endHeading, double endTime) {
-        this.paths.get(paths.size() - 1).setLinearHeadingInterpolation(startHeading, endHeading, endTime);
+    public PathBuilder addLinearHeadingInterpolation(double startHeading, double endHeading, double endTime) {
+        this.paths.get(paths.size() - 1).addLinearHeadingInterpolation(startHeading, endHeading, endTime);
         return this;
     }
 
@@ -116,8 +146,8 @@ public class PathBuilder {
      * @param setHeading The constant heading specified.
      * @return This returns itself with the updated data.
      */
-    public PathBuilder setConstantHeadingInterpolation(double setHeading) {
-        this.paths.get(paths.size() - 1).setConstantHeadingInterpolation(setHeading);
+    public PathBuilder addConstantHeadingInterpolation(double setHeading) {
+        this.paths.get(paths.size() - 1).addConstantHeadingInterpolation(setHeading);
         return this;
     }
 

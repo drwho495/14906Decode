@@ -50,9 +50,9 @@ public class StopTuner extends OpMode {
         follower = new Follower(hardwareMap);
 
         forwards = new Path(new BezierLine(new Point(0, 0, Point.CARTESIAN), new Point(DISTANCE, 0, Point.CARTESIAN)));
-        forwards.setConstantHeadingInterpolation(0);
+        forwards.addConstantHeadingInterpolation(0);
         backwards = new Path(new BezierLine(new Point(DISTANCE, 0, Point.CARTESIAN), new Point(0, 0, Point.CARTESIAN)));
-        backwards.setConstantHeadingInterpolation(0);
+        backwards.addConstantHeadingInterpolation(0);
 
 
         follower.followPath(forwards);

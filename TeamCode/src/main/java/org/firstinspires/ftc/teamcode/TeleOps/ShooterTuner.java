@@ -3,11 +3,12 @@ package org.firstinspires.ftc.teamcode.TeleOps;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
+import org.firstinspires.ftc.teamcode.Base.AllianceSides;
 import org.firstinspires.ftc.teamcode.Base.OpModeStates;
 import org.firstinspires.ftc.teamcode.Base.Parameters;
 import org.firstinspires.ftc.teamcode.Base.RobotManager;
 
-@TeleOp(name = "DEBUG: Shooter Tuner")
+@TeleOp(name = "ZDEBUG: Shooter Tuner")
 public class ShooterTuner extends LinearOpMode {
     private RobotManager robot;
 
@@ -18,6 +19,8 @@ public class ShooterTuner extends LinearOpMode {
         robot.initialise();
 
         waitForStart();
+
+        robot.setAllianceSide(AllianceSides.RED);
 
         while (opModeIsActive()) {
             if (gamepad1.psWasPressed()) robot.setPose(Parameters.RED_CLOSE_START);
@@ -43,6 +46,7 @@ public class ShooterTuner extends LinearOpMode {
                 robot.setHoodServoPos(robot.getHoodAngle() - 5);
             }
 
+            telemetry.addData("Distance to Red Goal: ", robot.getDistanceToGoal());
             telemetry.addData("Shooter Velocity Target: ", robot.getShooterTargetVelocity());
             telemetry.addData("Hood Angle: ", robot.getHoodAngle());
             telemetry.update();

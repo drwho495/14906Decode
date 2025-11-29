@@ -7,10 +7,12 @@ import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.teamcode.Base.Helpers.PointsCurve;
 import org.firstinspires.ftc.teamcode.Base.Subsystems.IntakeSubsystem;
 import org.firstinspires.ftc.teamcode.Base.Subsystems.ShooterSubsystem;
 import org.firstinspires.ftc.teamcode.bedroBathing.follower.Follower;
 import org.firstinspires.ftc.teamcode.bedroBathing.localization.Pose;
+import org.firstinspires.ftc.teamcode.bedroBathing.pathGeneration.MathFunctions;
 import org.firstinspires.ftc.teamcode.bedroBathing.pathGeneration.PathBuilder;
 import org.firstinspires.ftc.teamcode.bedroBathing.pathGeneration.Point;
 
@@ -27,14 +29,19 @@ public class RobotManager {
     private double autoTimeout = -1;
     private final ElapsedTime autoTimer = new ElapsedTime();
     private final ElapsedTime timer = new ElapsedTime();
-    List<LynxModule> hubs;
+    private final PointsCurve rpmCurve = new PointsCurve();
+    private final PointsCurve hoodCurve = new PointsCurve();
+    List<LynxModule> hubs = null;
 
     private boolean isShooting = false;
-    private final boolean hoodServoManual = true;
+    private boolean manualShooting = false;
 
     private double teleopHeadingGoal = 0;
+    private boolean aimHoldPoint = false;
     private boolean aimAtGoal = true;
     private boolean stateStart = true;
+    private boolean resetDistanceToGoal = false;
+    private double distanceToGoal = 0;
 
     // do NOT add a constructor to any of the subsystems!
     private final ShooterSubsystem shooterSubsystem = new ShooterSubsystem();
@@ -61,12 +68,45 @@ public class RobotManager {
         for (LynxModule hub : hubs) {
             hub.setBulkCachingMode(LynxModule.BulkCachingMode.MANUAL);
         }
+
+        rpmCurve.addPoint(65, 4380);
+        hoodCurve.addPoint(65, 55);
+
+        rpmCurve.addPoint(83, 4650);
+        hoodCurve.addPoint(83, 75);
+
+        rpmCurve.addPoint(100, 4700);
+        hoodCurve.addPoint(100, 70);
+
+        rpmCurve.addPoint(140, 5500);
+        hoodCurve.addPoint(140, 75);
+
+        rpmCurve.buildCurve();
+        hoodCurve.buildCurve();
     }
 
     private void clearCache() {
+        if (hubs == null) return;
+
         for (LynxModule hub : hubs) {
             hub.clearBulkCache();
         }
+    }
+
+    public double getTransferDisableTime() {
+        return intakeSubsystem.getTransferLockTime();
+    }
+
+    public void enableManualShooting() {
+        manualShooting = true;
+    }
+
+    public void disableManualShooting() {
+        manualShooting = false;
+    }
+
+    public boolean isManualShooterMode() {
+        return manualShooting;
     }
 
     public boolean isShooterOn() {
@@ -174,11 +214,11 @@ public class RobotManager {
     }
 
     public void setShooterVelocity(double velocity) {
-        shooterSubsystem.setVelocity(velocity);
+        if (manualShooting) shooterSubsystem.setVelocity(velocity);
     }
 
     public void setHoodServoPos(double newPos) {
-        if (hoodServoManual) {
+        if (manualShooting) {
             shooterSubsystem.setHoodPos(newPos);
         }
     }
@@ -194,6 +234,8 @@ public class RobotManager {
         while (follower.isBusy() && !opMode.isStopRequested() && opMode.opModeIsActive()) {
             opMode.telemetry.addData("Robot Heading: ", Math.toDegrees(follower.getPose().getHeading()));
             opMode.telemetry.addData("Alliance Side: ", side == AllianceSides.BLUE ? "Blue" : "Red");
+            opMode.telemetry.addData("Shooter RPM Goal: ", shooterSubsystem.getTargetVelocity());
+            opMode.telemetry.addData("Using Variable Heading: ", follower.followerHeadingIsVariable());
             opMode.telemetry.update();
 
             if (autoTimeout > 0 && autoTimer.time(TimeUnit.MILLISECONDS) > autoTimeout) {
@@ -332,10 +374,21 @@ public class RobotManager {
                 break;
 
             case INTAKE_SCORE:
+                double distanceToGoal = getDistanceToGoal();
+
+                if (!manualShooting) {
+                    shooterSubsystem.setVelocity(rpmCurve.getY(distanceToGoal));
+                    shooterSubsystem.setHoodPos(hoodCurve.getY(distanceToGoal));
+                }
+
                 if (isShooting) {
                     intakeSubsystem.disableAutoDisableTransfer();
 
-                    intakeSubsystem.setPowerLimits(1, .7);
+                    if (distanceToGoal >= 58) {
+                        intakeSubsystem.setPowerLimits(1, distanceToGoal < 130 ? .7 : .4);
+                    } else {
+                        intakeSubsystem.setPowerLimits(0, 0);
+                    }
                     shooterSubsystem.openFinger();
                 } else {
                     if (intakeSubsystem.getIntakePower() > 0) {
@@ -347,14 +400,6 @@ public class RobotManager {
                     intakeSubsystem.setPowerLimits(1, 1);
                     shooterSubsystem.closeFinger();
                 }
-
-                if (follower.getAutoHeadingState()) {
-                    if (aimAtGoal) {
-                        teleopHeadingGoal = this.getHeadingToGoal();
-                    }
-
-                    follower.setTeleopHeadingGoal(teleopHeadingGoal);
-                }
                 break;
 
             case PARK:
@@ -362,11 +407,61 @@ public class RobotManager {
                 break;
         }
 
+        if (follower.getAutoHeadingState()) {
+            if (aimAtGoal) {
+                teleopHeadingGoal = this.getHeadingToGoal();
+            }
+
+            follower.setTeleopHeadingGoal(teleopHeadingGoal);
+        }
+
+//        if (aimHoldPoint) {
+//            follower.updateHoldPoint(new Pose(holdPointPosition.getX(), holdPointPosition.getY(), getHeadingToGoal()));
+//        }
+
         stateStart = false;
+        resetDistanceToGoal = true;
+
+        Parameters.OPMODE_END_POSITION = follower.getPose();
 
         if (follower != null) follower.update();
         shooterSubsystem.update();
         intakeSubsystem.update();
+    }
+
+    /**
+     * This method sets the new driver offset.
+     * @param driverOffset New offset, in degrees.
+     */
+    public void setDriverOffset(double driverOffset) {
+        follower.setDriverOffset(Math.toRadians(driverOffset));
+    }
+
+    /**
+     * This method tells the robot to correct it's heading until it falls under a certain tolerance.
+     *
+     * @param tolerance The heading tolerance, in degrees.
+     * @param timeout The amount of time to wait before giving up and letting the rest of the code run.
+     * @param velocityConstraint The maximum velocity needed to end the loop.
+     */
+    public void waitForHeadingCorrection(double tolerance, double timeout, double velocityConstraint) {
+        autoTimer.reset();
+
+        while (!opMode.isStopRequested() && opMode.opModeIsActive()) {
+            double error = Math.abs(follower.headingError);
+
+            opMode.telemetry.addData("Heading Error: ", error);
+            opMode.telemetry.addData("Heading: ", Math.toDegrees(getPose().getHeading()));
+            opMode.telemetry.addData("Velocity: ", follower.getVelocityMagnitude());
+            opMode.telemetry.update();
+
+            if (autoTimer.time(TimeUnit.MILLISECONDS) > timeout || (error < Math.toRadians(tolerance) && Math.abs(follower.getVelocityMagnitude()) < velocityConstraint)) {
+                break;
+            }
+
+            update();
+            follower.update();
+        }
     }
 
     public Double[] getCurrentShooterVelocities() {
@@ -394,5 +489,25 @@ public class RobotManager {
 
     public double getHoodAngle() {
         return shooterSubsystem.getHoodAngle();
+    }
+
+    public double getDistanceToGoal() {
+        if (resetDistanceToGoal) {
+            Pose robotPose = follower.getPose();
+
+            Pose goalPos = Parameters.RED_SHOOTER_GOAL;
+
+            if (side == AllianceSides.BLUE) {
+                goalPos = Parameters.BLUE_SHOOTER_GOAL;
+            }
+
+            resetDistanceToGoal = false;
+            distanceToGoal =  MathFunctions.distance(robotPose, goalPos);
+        }
+        return distanceToGoal;
+    }
+
+    public boolean isTransferStalled() {
+        return intakeSubsystem.isTransferStalled();
     }
 }

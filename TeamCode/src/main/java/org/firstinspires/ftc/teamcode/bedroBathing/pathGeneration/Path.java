@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.bedroBathing.pathGeneration;
 
+import org.firstinspires.ftc.robotcore.external.Supplier;
 import org.firstinspires.ftc.teamcode.bedroBathing.localization.Pose;
 import org.firstinspires.ftc.teamcode.bedroBathing.tuning.FollowerConstants;
 
@@ -28,6 +29,10 @@ public class Path {
     private Vector closestPointTangentVector;
     private Vector closestPointNormalVector;
 
+    private Supplier<Double> variableHeadingUpdateMethod = null;
+
+    // this is sloppy code TODO: replace with heading queue and enums/classes
+    private boolean isVariableHeadingInterpolation = false;
     private boolean isTangentHeadingInterpolation = true;
     private double tangentialEndHeading = 0;
     private boolean hasTangentialEndHeading = true;
@@ -80,19 +85,47 @@ public class Path {
      * This sets the heading interpolation to linear with a specified start heading and end heading
      * for the Path. This will interpolate across the entire length of the Path, so there may be
      * some issues with end heading accuracy and precision if this is used. If a precise end heading
-     * is necessary, then use the setLinearHeadingInterpolation(double startHeading,
+     * is necessary, then use the addLinearHeadingInterpolation(double startHeading,
      * double endHeading, double endTime) method.
      *
      * @param startHeading The start of the linear heading interpolation.
      * @param endHeading   The end of the linear heading interpolation.
      *                     This will be reached at the end of the Path if no end time is specified.
      */
-    public Path setLinearHeadingInterpolation(double startHeading, double endHeading) {
+    public Path addLinearHeadingInterpolation(double startHeading, double endHeading) {
         linearInterpolationEndTime = 1;
         isTangentHeadingInterpolation = false;
         this.startHeading = startHeading;
         this.endHeading = endHeading;
         return this;
+    }
+
+    public Path addVariableHeadingInterpolation(double startHeading, double initialEndHeading, Supplier<Double> newUpdateMethod) {
+        isTangentHeadingInterpolation = false;
+        linearInterpolationEndTime = 1;
+        isVariableHeadingInterpolation = true;
+
+        this.variableHeadingUpdateMethod = newUpdateMethod;
+        this.startHeading = startHeading;
+        this.endHeading = initialEndHeading;
+
+        return this;
+    }
+
+    public Path addVariableHeadingInterpolation(double startHeading, double initialEndHeading) {
+        isTangentHeadingInterpolation = false;
+        linearInterpolationEndTime = 1;
+        isVariableHeadingInterpolation = true;
+
+        this.variableHeadingUpdateMethod = null;
+        this.startHeading = startHeading;
+        this.endHeading = initialEndHeading;
+
+        return this;
+    }
+
+    public Supplier<Double> getVariableHeadingUpdateMethod() {
+        return this.variableHeadingUpdateMethod;
     }
 
     /**
@@ -108,7 +141,7 @@ public class Path {
      * @param endTime      The end time on the Path that the linear heading interpolation will finish.
      *                     This value ranges from [0, 1] since Bezier curves are parametric functions.
      */
-    public void setLinearHeadingInterpolation(double startHeading, double endHeading, double endTime) {
+    public void addLinearHeadingInterpolation(double startHeading, double endHeading, double endTime) {
         linearInterpolationEndTime = MathFunctions.clamp(endTime, 0.000000001, 1);
         isTangentHeadingInterpolation = false;
         this.startHeading = startHeading;
@@ -120,7 +153,7 @@ public class Path {
      *
      * @param setHeading the constant heading for the Path.
      */
-    public Path setConstantHeadingInterpolation(double setHeading) {
+    public Path addConstantHeadingInterpolation(double setHeading) {
         linearInterpolationEndTime = 1;
         isTangentHeadingInterpolation = false;
         startHeading = setHeading;
@@ -529,5 +562,14 @@ public class Path {
 
     public boolean getReversed() {
         return followTangentReversed;
+    }
+
+    public boolean usingVariableHeading() {
+        return isVariableHeadingInterpolation;
+    }
+
+    public void setVariablePathEndHeading(double endHeading) {
+        if (isVariableHeadingInterpolation)
+            this.endHeading = endHeading;
     }
 }

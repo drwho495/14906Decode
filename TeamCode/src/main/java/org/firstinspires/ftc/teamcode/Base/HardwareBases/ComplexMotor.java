@@ -60,7 +60,7 @@ public class ComplexMotor {
         currentMode = newMode;
     }
 
-    public void setVelo(double newVelo) {
+    public void setVelocity(double newVelo) {
         targetVelocity = newVelo;
     }
 
@@ -85,11 +85,15 @@ public class ComplexMotor {
 
                 HardwareUtils.optimizeMethod(motorPower, thisMotor, thisMotor::setPower);
             } else {
-                double prevValue = HardwareUtils.previousValues.getOrDefault(thisMotor, Double.NaN);
+                if (targetVelocity != 0) {
+                    double prevValue = HardwareUtils.previousValues.getOrDefault(thisMotor, Double.NaN);
 
-                if (Double.isNaN(prevValue) || targetVelocity != prevValue) {
-                    thisMotor.setVelocity(targetVelocity, AngleUnit.DEGREES);
-                    HardwareUtils.previousValues.put(thisMotor, targetVelocity);
+                    if (Double.isNaN(prevValue) || targetVelocity != prevValue) {
+                        thisMotor.setVelocity(targetVelocity, AngleUnit.DEGREES);
+                        HardwareUtils.previousValues.put(thisMotor, targetVelocity);
+                    }
+                } else {
+                    HardwareUtils.optimizeMethod(0, thisMotor, thisMotor::setPower);
                 }
             }
         } else if (currentMode == ComplexMotorModes.RAW_POWER) {

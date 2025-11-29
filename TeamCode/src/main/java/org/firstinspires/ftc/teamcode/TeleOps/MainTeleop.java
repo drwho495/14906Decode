@@ -7,6 +7,7 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
+import org.firstinspires.ftc.teamcode.Base.AllianceSides;
 import org.firstinspires.ftc.teamcode.Base.OpModeStates;
 import org.firstinspires.ftc.teamcode.Base.Parameters;
 import org.firstinspires.ftc.teamcode.Base.RobotManager;
@@ -23,6 +24,11 @@ public class MainTeleop extends LinearOpMode {
     // (callbacks with pedro pathing)
 
     private boolean canDrive = true;
+    private boolean autoStartShooterEnabled = true;
+    private boolean autoStartShooter = false;
+    private boolean autoStartShootingStarted = false;
+    private boolean autoStartShootingStopTimed = false;
+    private ElapsedTime shooterTimer = new ElapsedTime();
 
     private DcMotorEx leftFront;
     private DcMotorEx leftRear;
@@ -37,8 +43,15 @@ public class MainTeleop extends LinearOpMode {
         RobotManager robot = new RobotManager(this);
         robot.initialise();
 
+        if (!Parameters.AUTO_PROGRAM_HAS_RUN) {
+            robot.resetIMU();
+            telemetry.addLine("Resetting IMU...");
+            telemetry.update();
+        }
+
         waitForStart();
 
+        robot.setAllianceSide(Parameters.LAST_ALLIANCE_SIDE);
         robot.powerOffShooter();
 
         leftFront = hardwareMap.get(DcMotorEx.class, FollowerConstants.leftFrontMotorName);
@@ -54,9 +67,9 @@ public class MainTeleop extends LinearOpMode {
         robot.disableAutoHeading();
 
         if (!Parameters.AUTO_PROGRAM_HAS_RUN) {
-            robot.setPose(new Pose(0, 0, Math.toRadians(0)));
+//            robot.setPose(new Pose(0, 0, Math.toRadians(0)));
         } else {
-            robot.setPose(Parameters.AUTO_PROGRAM_END_POSITION);
+//            robot.setPose(Parameters.OPMODE_END_POSITION);
         }
 
         robot.setState(OpModeStates.INTAKE_SCORE);
@@ -66,6 +79,8 @@ public class MainTeleop extends LinearOpMode {
             Pose robotPose = robot.getPose();
 
             if (canDrive) {
+                robot.setDriverOffset(robot.getAllianceSide() == AllianceSides.BLUE ? 180 : 0);
+
                 robot.setDrivePowers(-gamepad1.left_stick_y,
                         -gamepad1.left_stick_x,
                         -gamepad1.right_stick_x,
@@ -77,7 +92,7 @@ public class MainTeleop extends LinearOpMode {
 
                 robot.setPose(robotPose);
             };
-            if (gamepad1.psWasPressed()) robot.setPose(Parameters.RED_CLOSE_START);
+            if (gamepad1.psWasPressed()) robot.setPose(robot.getAllianceSide() == AllianceSides.BLUE ? Parameters.BLUE_CLOSE_START : Parameters.RED_CLOSE_START);
 
             switch (robot.getState()) {
                 case IDLE:
@@ -114,10 +129,49 @@ public class MainTeleop extends LinearOpMode {
 
                     shooterVelocity = Range.clip(shooterVelocity, 0, 6000);
 
-                    if ((gamepad2.getGamepadId() != -1 && gamepad2.rightBumperWasPressed()) || (!robot.isShooterOn() && gamepad1.dpadUpWasPressed())) {
+                    if (gamepad1.dpadUpWasPressed() || gamepad2.dpadUpWasPressed()) {
+                        robot.toggleShooter();
+                    }
+
+                    if (gamepad2.rightBumperWasPressed()) {
                         robot.powerOnShooter();
-                    } else if ((gamepad2.getGamepadId() != -1 && gamepad2.rightBumperWasReleased()) || (robot.isShooterOn() && gamepad1.dpadUpWasPressed())) {
+                    } else if (gamepad2.leftBumperWasPressed()) {
                         robot.powerOffShooter();
+                    }
+
+//                        if (gamepad1.aWasPressed()) {
+//                            robot.powerOnShooter();
+//                        } else if (gamepad1.aWasReleased()) {
+//                            robot.powerOffShooter();
+//                        }
+
+                    if (autoStartShooterEnabled) {
+                        if ((robot.isTransferStalled() || robot.getTransferDisableTime() >= 250) && !autoStartShooter) {
+                            autoStartShooter = true;
+                            autoStartShootingStarted = false;
+                            autoStartShootingStopTimed = false;
+
+                            robot.powerOnShooter();
+                        }
+
+                        if (autoStartShooter && !autoStartShootingStarted && robot.isShooting()) {
+                            autoStartShootingStarted = true;
+                        }
+
+                        if (autoStartShooter && autoStartShootingStarted && !robot.isShooting()) {
+                            if (!autoStartShootingStopTimed) shooterTimer.reset();
+
+                            autoStartShootingStopTimed = true;
+                        } else {
+                            autoStartShootingStopTimed = false;
+                        }
+
+                        if (autoStartShooter && autoStartShootingStopTimed && shooterTimer.time(TimeUnit.MILLISECONDS) > 1000) {
+                            autoStartShooter = false;
+                            autoStartShootingStarted = false;
+                            autoStartShootingStopTimed = false;
+                            robot.powerOffShooter();
+                        }
                     }
 
                     if (gamepad1.rightBumperWasPressed()) {
@@ -138,11 +192,19 @@ public class MainTeleop extends LinearOpMode {
                     break;
             }
 
-            telemetry.addData("Target RPM: ", shooterVelocity);
-            telemetry.addData("Shooter 1 RPM: ", robot.getCurrentShooterVelocities()[0]);
-            telemetry.addData("Shooter 2 RPM: ", robot.getCurrentShooterVelocities()[1]);
-            telemetry.addData("state: ", robot.getState());
-            telemetry.addData("loop time: ", timer.time(TimeUnit.MILLISECONDS));
+            if (gamepad1.dpadDownWasPressed()) {
+                robot.setAllianceSide(robot.getAllianceSide() == AllianceSides.RED ? AllianceSides.BLUE : AllianceSides.RED);
+            }
+
+            Double[] shooterVelocities = robot.getCurrentShooterVelocities();
+
+            telemetry.addData("Robot Alliance: ", robot.getAllianceSide() == AllianceSides.BLUE ? "Blue Side" : "Red Side");
+            telemetry.addData("Distance To Goal: ", robot.getDistanceToGoal());
+            telemetry.addData("Target RPM: ", robot.getShooterTargetVelocity());
+            telemetry.addData("Disable Time: ", robot.getTransferDisableTime());
+            telemetry.addData("Shooter 1 RPM: ", shooterVelocities[0]);
+            telemetry.addData("Shooter 2 RPM: ", shooterVelocities[1]);
+            telemetry.addData("Loop Time: ", timer.time(TimeUnit.MILLISECONDS));
 
             timer.reset();
 

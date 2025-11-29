@@ -59,7 +59,7 @@
       * @param map the HardwareMap
       */
      public PinpointLocalizer(HardwareMap map) {
-         this(map, new Pose());
+         this(map, null);
      }
 
      /**
@@ -84,13 +84,16 @@
          //TODO: Set encoder directions
          odo.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.FORWARD);
 
-         odo.resetPosAndIMU();
+//         odo.resetPosAndIMU();
 
-         setStartPose(setStartPose);
+         if (setStartPose != null) {
+             setStartPose(setStartPose);
+         }
+
          totalHeading = 0;
          previousHeading = startPose.getHeading();
 
-         resetPinpoint();
+//         resetPinpoint();
      }
 
      /**
