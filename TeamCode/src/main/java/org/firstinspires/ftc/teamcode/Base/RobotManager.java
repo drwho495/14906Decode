@@ -37,6 +37,7 @@ public class RobotManager {
     private boolean manualShooting = false;
 
     private double teleopHeadingGoal = 0;
+    private double transferSpeed = .7;
     private boolean aimHoldPoint = false;
     private boolean aimAtGoal = true;
     private boolean stateStart = true;
@@ -66,20 +67,23 @@ public class RobotManager {
         List<LynxModule> hubs = opMode.hardwareMap.getAll(LynxModule.class);
 
         for (LynxModule hub : hubs) {
-            hub.setBulkCachingMode(LynxModule.BulkCachingMode.MANUAL);
+            hub.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
         }
 
-        rpmCurve.addPoint(65, 4380);
-        hoodCurve.addPoint(65, 55);
+        double rpmOffset = 0;
+        double hoodOffset = 0;
 
-        rpmCurve.addPoint(83, 4650);
-        hoodCurve.addPoint(83, 75);
+        rpmCurve.addPoint(65, 4380 + rpmOffset);
+        hoodCurve.addPoint(65, 55 + hoodOffset);
 
-        rpmCurve.addPoint(100, 4700);
-        hoodCurve.addPoint(100, 70);
+        rpmCurve.addPoint(83, 4650 + rpmOffset);
+        hoodCurve.addPoint(83, 75 + hoodOffset);
 
-        rpmCurve.addPoint(140, 5500);
-        hoodCurve.addPoint(140, 75);
+        rpmCurve.addPoint(100, 4850 + rpmOffset);
+        hoodCurve.addPoint(100, 67 + hoodOffset);
+
+        rpmCurve.addPoint(140, 5500 + rpmOffset);
+        hoodCurve.addPoint(140, 75 + hoodOffset);
 
         rpmCurve.buildCurve();
         hoodCurve.buildCurve();
@@ -357,6 +361,10 @@ public class RobotManager {
         return (Math.atan2(goalPos.getY() - robotPose.getY(), goalPos.getX() - robotPose.getX()) + Math.toRadians(180));
     }
 
+    public void setTransferSpeed(double transferSpeed) {
+        this.transferSpeed = transferSpeed;
+    }
+
     public void setAllianceSide(AllianceSides newSide) {
         side = newSide;
     }
@@ -364,7 +372,7 @@ public class RobotManager {
     public void update() {
         if (!opMode.opModeIsActive() || opMode.isStopRequested()) return;
 
-        if (timer.time(TimeUnit.MILLISECONDS) % 5 == 0) {
+        if (timer.time(TimeUnit.MILLISECONDS) % 7 == 0) {
             clearCache();
         }
 
@@ -385,7 +393,7 @@ public class RobotManager {
                     intakeSubsystem.disableAutoDisableTransfer();
 
                     if (distanceToGoal >= 58) {
-                        intakeSubsystem.setPowerLimits(1, distanceToGoal < 130 ? .7 : .4);
+                        intakeSubsystem.setPowerLimits(1, distanceToGoal < 110 ? transferSpeed : .4);
                     } else {
                         intakeSubsystem.setPowerLimits(0, 0);
                     }
@@ -509,5 +517,22 @@ public class RobotManager {
 
     public boolean isTransferStalled() {
         return intakeSubsystem.isTransferStalled();
+    }
+
+    public int getHeldBallCount() {
+        return intakeSubsystem.getHeldBallCount();
+    }
+
+    public void waitForShooter(double timeout) {
+        ElapsedTime waitTimer = new ElapsedTime();
+        waitTimer.reset();
+
+        while (opMode.opModeIsActive() & waitTimer.time(TimeUnit.MILLISECONDS) < timeout) {
+            if (shooterSubsystem.ready()) {
+                break;
+            }
+
+            update();
+        }
     }
 }

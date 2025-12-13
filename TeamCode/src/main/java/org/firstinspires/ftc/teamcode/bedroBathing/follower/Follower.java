@@ -31,13 +31,13 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigurationType;
 
-import org.firstinspires.ftc.robotcore.external.Consumer;
-import org.firstinspires.ftc.robotcore.external.Function;
 import org.firstinspires.ftc.robotcore.external.Supplier;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.bedroBathing.localization.Pose;
 import org.firstinspires.ftc.teamcode.bedroBathing.localization.PoseUpdater;
 import org.firstinspires.ftc.teamcode.bedroBathing.pathGeneration.BezierPoint;
+import org.firstinspires.ftc.teamcode.bedroBathing.pathGeneration.HeadingInterpolation;
+import org.firstinspires.ftc.teamcode.bedroBathing.util.HeadingInterpolationType;
 import org.firstinspires.ftc.teamcode.bedroBathing.pathGeneration.MathFunctions;
 import org.firstinspires.ftc.teamcode.bedroBathing.pathGeneration.Path;
 import org.firstinspires.ftc.teamcode.bedroBathing.pathGeneration.PathBuilder;
@@ -119,8 +119,6 @@ public class Follower {
     private double[] teleopDriveValues;
     private ArrayList<Vector> velocities = new ArrayList<>();
     private ArrayList<Vector> accelerations = new ArrayList<>();
-    private double criticalVoltage = 0;
-    private double criticalVoltageDrivePower = 0;
 
     private Vector averageVelocity;
     private Vector averagePreviousVelocity;
@@ -291,8 +289,10 @@ public class Follower {
      * @param newEndHeading this is the new heading to turn to.
      */
     public void setPathHeadingGoal(double newEndHeading) {
-        if (followerHeadingIsVariable()) {
-            currentPath.setVariablePathEndHeading(newEndHeading);
+        ArrayList<HeadingInterpolation> foundInterpolations = currentPath.getHeadingInterpolationsOfType(HeadingInterpolationType.VARIABLE);
+
+        for (HeadingInterpolation headingInterpolation : foundInterpolations) {
+            headingInterpolation.setVariableEndHeading(newEndHeading);
         }
     }
 
@@ -300,7 +300,7 @@ public class Follower {
      * This method indicates if the robot is following a path that has a variable heading goal.
      */
     public boolean followerHeadingIsVariable() {
-        return getCurrentPath().usingVariableHeading();
+        return getCurrentPath().usingVariableHeading(getCurrentTValue());
     }
 
     /**
@@ -551,10 +551,10 @@ public class Follower {
 
         if (!teleopDrive) {
             if (currentPath != null) {
+                double voltage = vSensor.getVoltage();
+
                 if (holdingPosition) {
                     closestPose = currentPath.getClosestPoint(poseUpdater.getPose(), 1);
-
-                    double voltage = vSensor.getVoltage();
 
                     drivePowers = driveVectorScaler.getDrivePowers(MathFunctions.scalarMultiplyVector(getTranslationalCorrection(), holdPointTranslationalScaling), MathFunctions.scalarMultiplyVector(getHeadingVector(), holdPointHeadingScaling), new Vector(), poseUpdater.getPose().getHeading());
 
@@ -571,8 +571,6 @@ public class Follower {
 
                         Supplier<Double> headingUpdateMethod = getCurrentPath().getVariableHeadingUpdateMethod();
                         if (headingUpdateMethod != null) setPathHeadingGoal(headingUpdateMethod.get());
-
-                        double voltage = vSensor.getVoltage();
 
                         drivePowers = driveVectorScaler.getDrivePowers(getCorrectiveVector(), getHeadingVector(), getDriveVector(), poseUpdater.getPose().getHeading());
 

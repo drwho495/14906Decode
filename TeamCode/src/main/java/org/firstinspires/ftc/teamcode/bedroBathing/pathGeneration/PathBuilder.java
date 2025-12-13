@@ -126,6 +126,23 @@ public class PathBuilder {
     }
 
     /**
+     * This sets a variable heading interpolation on the last Path added to the PathBuilder.
+     *
+     * @param startT The time value to start this heading interpolation on.
+     * @param startHeading The start of the variable heading interpolation.
+     * @param initialEndHeading The initial end of the variable heading interpolation.
+     *         This will be reached at the end of the Path if no end time is specified.
+     * @param updateMethod A method that will be run during each loop that will update the robot's end
+     *                     heading.
+     * @param startT The time value in which this heading interpolation will end.
+     * @return This returns itself with the updated data.
+     */
+    public PathBuilder addVariableHeadingInterpolation(double startT, double startHeading, double initialEndHeading, Supplier<Double> updateMethod, double endT) {
+        this.paths.get(paths.size() - 1).addVariableHeadingInterpolation(startT, startHeading, initialEndHeading, updateMethod, endT);
+        return this;
+    }
+
+    /**
      * This sets a linear heading interpolation on the last Path added to the PathBuilder.
      *
      * @param startHeading The start of the linear heading interpolation.
@@ -141,6 +158,23 @@ public class PathBuilder {
     }
 
     /**
+     * This sets a linear heading interpolation on the last Path added to the PathBuilder.
+     *
+     * @param startT The start time on the Path that the linear heading interpolation will start.
+     *         This value goes from [0, 1] since Bezier curves are parametric functions.
+     * @param startHeading The start of the linear heading interpolation.
+     * @param endHeading The end of the linear heading interpolation.
+     *         This will be reached at the end of the Path if no end time is specified.
+     * @param endT The end time on the Path that the linear heading interpolation will end.
+     *         This value goes from [0, 1] since Bezier curves are parametric functions.
+     * @return This returns itself with the updated data.
+     */
+    public PathBuilder addLinearHeadingInterpolation(double startT, double startHeading, double endHeading, double endT) {
+        this.paths.get(paths.size() - 1).addLinearHeadingInterpolation(startT, startHeading, endHeading, endT);
+        return this;
+    }
+
+    /**
      * This sets a constant heading interpolation on the last Path added to the PathBuilder.
      *
      * @param setHeading The constant heading specified.
@@ -152,6 +186,19 @@ public class PathBuilder {
     }
 
     /**
+     * This sets a constant heading interpolation on the last Path added to the PathBuilder.
+     *
+     * @param startT The start time on the Path that the constant heading interpolation will start.
+     * @param setHeading The constant heading specified.
+     * @param endT The end time on the Path that the linear heading interpolation will end.
+     * @return This returns itself with the updated data.
+     */
+    public PathBuilder addConstantHeadingInterpolation(double startT, double setHeading, double endT) {
+        this.paths.get(paths.size() - 1).addConstantHeadingInterpolation(startT, setHeading, endT);
+        return this;
+    }
+
+    /**
      * This sets a reversed or tangent heading interpolation on the last Path added to the PathBuilder.
      *
      * @param set This sets the heading to reversed tangent following if this parameter is true.
@@ -159,7 +206,9 @@ public class PathBuilder {
      * @return This returns itself with the updated data.
      */
     public PathBuilder setReversed(boolean set) {
-        this.paths.get(paths.size() - 1).setReversed(set);
+        Path path = this.paths.get(paths.size() - 1);
+
+        path.setReversed(set, path.getLastHeadingInterpolation().getEndT());
         return this;
     }
 
@@ -168,17 +217,28 @@ public class PathBuilder {
      * There really shouldn't be a reason to use this since the default heading interpolation is
      * tangential but it's here.
      */
-    public PathBuilder setTangentHeadingInterpolation() {
-        this.paths.get(paths.size() - 1).setTangentHeadingInterpolation();
+    public PathBuilder addTangentHeadingInterpolation() {
+        this.paths.get(paths.size() - 1).addTangentHeadingInterpolation();
         return this;
     }
 
-    public PathBuilder setTangentHeadingInterpolation(double startHeading, double endHeading, double tangentLength) {
-        try {
-            this.paths.get(paths.size() - 1).setTangentHeadingInterpolation(startHeading, endHeading, tangentLength);
-        } catch (Exception e) {
-            //ignore
-        }
+    /**
+     * This sets the heading interpolation to tangential on the last Path added to the PathBuilder.
+     * There really shouldn't be a reason to use this since the default heading interpolation is
+     * tangential but it's here.
+     */
+    public PathBuilder addTangentHeadingInterpolation(double startT, boolean reversed, double endT) {
+        this.paths.get(paths.size() - 1).addTangentHeadingInterpolation(startT, reversed, endT);
+        return this;
+    }
+
+    /**
+     * This sets the heading interpolation to tangential on the last Path added to the PathBuilder.
+     * There really shouldn't be a reason to use this since the default heading interpolation is
+     * tangential but it's here.
+     */
+    public PathBuilder addTangentHeadingInterpolation(boolean reversed) {
+        this.paths.get(paths.size() - 1).addTangentHeadingInterpolation(reversed);
         return this;
     }
 

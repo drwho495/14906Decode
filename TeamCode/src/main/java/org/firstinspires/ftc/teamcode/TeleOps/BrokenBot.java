@@ -8,7 +8,7 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.teamcode.bedroBathing.tuning.FollowerConstants;
 
-@TeleOp(name = "Broken Bot", group = "1")
+@TeleOp(name = "Broken Bot", group = "Debug")
 public class BrokenBot extends LinearOpMode {
     private DcMotorEx leftFront;
     private DcMotorEx leftRear;

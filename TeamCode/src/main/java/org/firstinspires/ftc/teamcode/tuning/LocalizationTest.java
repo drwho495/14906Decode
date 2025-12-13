@@ -14,7 +14,7 @@ import org.firstinspires.ftc.teamcode.Base.Drawing;
 import org.firstinspires.ftc.teamcode.Base.MecanumDrive;
 import org.firstinspires.ftc.teamcode.Base.TankDrive;
 
-@TeleOp(name = "localization test")
+@TeleOp(name = "localization test", group = "Debug")
 public class LocalizationTest extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {

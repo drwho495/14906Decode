@@ -1,11 +1,11 @@
 package org.firstinspires.ftc.teamcode.bedroBathing.pathGeneration;
 
 import org.firstinspires.ftc.robotcore.external.Supplier;
+import org.firstinspires.ftc.teamcode.bedroBathing.util.HeadingInterpolationType;
 import org.firstinspires.ftc.teamcode.bedroBathing.localization.Pose;
 import org.firstinspires.ftc.teamcode.bedroBathing.tuning.FollowerConstants;
 
 import java.util.ArrayList;
-import java.util.Objects;
 
 /**
  * This is the Path class. This class handles containing information on the actual path the Follower
@@ -20,11 +20,11 @@ import java.util.Objects;
 public class Path {
     private BezierCurve curve;
 
-    private double startHeading;
-    private double endHeading;
+//    private double startHeading;
+//    private double endHeading;
     private double closestPointCurvature;
     private double closestPointTValue;
-    private double linearInterpolationEndTime;
+//    private double linearInterpolationEndTime;
 
     private Vector closestPointTangentVector;
     private Vector closestPointNormalVector;
@@ -32,11 +32,10 @@ public class Path {
     private Supplier<Double> variableHeadingUpdateMethod = null;
 
     // this is sloppy code TODO: replace with heading queue and enums/classes
-    private boolean isVariableHeadingInterpolation = false;
-    private boolean isTangentHeadingInterpolation = true;
-    private double tangentialEndHeading = 0;
-    private boolean hasTangentialEndHeading = true;
-    private boolean followTangentReversed;
+    private ArrayList<HeadingInterpolation> headingInterpolations = new ArrayList<>();
+//    private boolean isVariableHeadingInterpolation = false;
+//    private boolean isTangentHeadingInterpolation = true;
+//    private boolean followTangentReversed;
 
     // A multiplier for the zero power acceleration to change the speed the robot decelerates at
     // the end of paths.
@@ -92,34 +91,38 @@ public class Path {
      * @param endHeading   The end of the linear heading interpolation.
      *                     This will be reached at the end of the Path if no end time is specified.
      */
-    public Path addLinearHeadingInterpolation(double startHeading, double endHeading) {
-        linearInterpolationEndTime = 1;
-        isTangentHeadingInterpolation = false;
-        this.startHeading = startHeading;
-        this.endHeading = endHeading;
+    public Path addLinearHeadingInterpolation(double startT, double startHeading, double endHeading, double endT) {
+        this.headingInterpolations.add(HeadingInterpolation.createLinearHeadingInterpolation(startT, startHeading, endHeading, endT));
+
         return this;
     }
 
-    public Path addVariableHeadingInterpolation(double startHeading, double initialEndHeading, Supplier<Double> newUpdateMethod) {
-        isTangentHeadingInterpolation = false;
-        linearInterpolationEndTime = 1;
-        isVariableHeadingInterpolation = true;
+    public ArrayList<HeadingInterpolation> getHeadingInterpolationsOfType(HeadingInterpolationType type) {
+        ArrayList<HeadingInterpolation> foundInterpolations = new ArrayList<>();
 
-        this.variableHeadingUpdateMethod = newUpdateMethod;
-        this.startHeading = startHeading;
-        this.endHeading = initialEndHeading;
+        for (HeadingInterpolation headingInterpolation : headingInterpolations) {
+            if (headingInterpolation.getType() == type) {
+                foundInterpolations.add(headingInterpolation);
+            }
+        }
+
+        return foundInterpolations;
+    }
+
+    public Path addVariableHeadingInterpolation(double startHeading, double initialEndHeading, Supplier<Double> newUpdateMethod) {
+        this.headingInterpolations.add(HeadingInterpolation.createVariableHeadingInterpolation(0, startHeading, initialEndHeading, newUpdateMethod, 1));
+
+        return this;
+    }
+
+    public Path addVariableHeadingInterpolation(double startT, double startHeading, double initialEndHeading, Supplier<Double> newUpdateMethod, double endT) {
+        this.headingInterpolations.add(HeadingInterpolation.createVariableHeadingInterpolation(startT, startHeading, initialEndHeading, newUpdateMethod, endT));
 
         return this;
     }
 
     public Path addVariableHeadingInterpolation(double startHeading, double initialEndHeading) {
-        isTangentHeadingInterpolation = false;
-        linearInterpolationEndTime = 1;
-        isVariableHeadingInterpolation = true;
-
-        this.variableHeadingUpdateMethod = null;
-        this.startHeading = startHeading;
-        this.endHeading = initialEndHeading;
+        this.headingInterpolations.add(HeadingInterpolation.createVariableHeadingInterpolation(0, startHeading, initialEndHeading, null, 1));
 
         return this;
     }
@@ -128,36 +131,22 @@ public class Path {
         return this.variableHeadingUpdateMethod;
     }
 
-    /**
-     * This sets the heading interpolation to linear with a specified start heading and end heading
-     * for the Path. This will interpolate from the start of the Path to the specified end time.
-     * This ensures high accuracy and precision than interpolating across the entire Path. However,
-     * interpolating too quickly can cause undesired oscillations and inaccuracies of its own, so
-     * generally interpolating to something like 0.8 of your Path should work best.
-     *
-     * @param startHeading The start of the linear heading interpolation.
-     * @param endHeading   The end of the linear heading interpolation.
-     *                     This will be reached at the end of the Path if no end time is specified.
-     * @param endTime      The end time on the Path that the linear heading interpolation will finish.
-     *                     This value ranges from [0, 1] since Bezier curves are parametric functions.
-     */
-    public void addLinearHeadingInterpolation(double startHeading, double endHeading, double endTime) {
-        linearInterpolationEndTime = MathFunctions.clamp(endTime, 0.000000001, 1);
-        isTangentHeadingInterpolation = false;
-        this.startHeading = startHeading;
-        this.endHeading = endHeading;
+    public Path addLinearHeadingInterpolation(double startHeading, double endHeading, double endTime) {
+        return addLinearHeadingInterpolation(0, startHeading, endHeading, endTime);
     }
 
-    /**
-     * This sets the heading interpolation to maintain a constant heading.
-     *
-     * @param setHeading the constant heading for the Path.
-     */
+    public Path addLinearHeadingInterpolation(double startHeading, double endHeading) {
+        return addLinearHeadingInterpolation(0, startHeading, endHeading, 1);
+    }
+
     public Path addConstantHeadingInterpolation(double setHeading) {
-        linearInterpolationEndTime = 1;
-        isTangentHeadingInterpolation = false;
-        startHeading = setHeading;
-        endHeading = setHeading;
+        this.headingInterpolations.add(HeadingInterpolation.createConstantHeadingInterpolation(0, setHeading, 1));
+
+        return this;
+    }
+
+    public Path addConstantHeadingInterpolation(double startT, double setHeading, double endT) {
+        this.headingInterpolations.add(HeadingInterpolation.createConstantHeadingInterpolation(startT, setHeading, endT));
 
         return this;
     }
@@ -203,30 +192,26 @@ public class Path {
      *
      * @param set sets tangential heading reversed or not.
      */
-    public void setReversed(boolean set) {
-        isTangentHeadingInterpolation = true;
-        followTangentReversed = set;
+
+    /**
+     * This sets the heading interpolation to tangential.
+     */
+    public void addTangentHeadingInterpolation(double startT, boolean reversed, double endT) {
+        this.headingInterpolations.add(HeadingInterpolation.createTangentHeadingInterpolation(startT, reversed, endT));
     }
 
     /**
      * This sets the heading interpolation to tangential.
      */
-    public void setTangentHeadingInterpolation() {
-        isTangentHeadingInterpolation = true;
-        hasTangentialEndHeading = false;
-        followTangentReversed = false;
+    public void addTangentHeadingInterpolation(boolean reversed) {
+        addTangentHeadingInterpolation(0, reversed, 1);
     }
 
-    public void setTangentHeadingInterpolation(double startHeading, double endHeading, double tangentLength) throws RuntimeException {
-        isTangentHeadingInterpolation = true;
-
-        this.endHeading = endHeading;
-        this.startHeading = startHeading;
-        if (Objects.equals(this.pathType(), "DoubleHeadingTangentPath")) {
-            ((DoubleHeadingTangentPath) this.curve).setTangentAttributes(startHeading, endHeading, tangentLength);
-        } else {
-            throw new RuntimeException("Use DoubleHeadingTangentPath!");
-        }
+    /**
+     * This sets the heading interpolation to tangential.
+     */
+    public void addTangentHeadingInterpolation() {
+        addTangentHeadingInterpolation(0, false, 1);
     }
 
     /**
@@ -312,17 +297,25 @@ public class Path {
      * @return returns the heading goal at the closest Point.
      */
     public double getClosestPointHeadingGoal() {
-        if (isTangentHeadingInterpolation) {
-            if (Objects.equals(curve.pathType(), "DoubleHeadingTangentPath")) {
-                return getHeadingGoal(closestPointTValue);
-            } else {
-                if (followTangentReversed)
-                    return MathFunctions.normalizeAngle(closestPointTangentVector.getTheta() + Math.PI);
-                return closestPointTangentVector.getTheta();
+        return getHeadingGoal(closestPointTValue);
+    }
+
+    public HeadingInterpolation getHeadingInterpolation(double t) {
+        HeadingInterpolation currentHeadingInterpolation = null;
+
+        if (headingInterpolations.size() != 0) {
+            for (HeadingInterpolation headingInterpolation : headingInterpolations) {
+                if (headingInterpolation.tInRange(t)) {
+                    currentHeadingInterpolation = headingInterpolation;
+                }
             }
         } else {
-            return getHeadingGoal(closestPointTValue);
+            headingInterpolations.add(HeadingInterpolation.createTangentHeadingInterpolation(0, false, 1));
+
+            currentHeadingInterpolation = headingInterpolations.get(0);
         }
+
+        return currentHeadingInterpolation == null ? HeadingInterpolation.createTangentHeadingInterpolation(0, false, 1) : currentHeadingInterpolation;
     }
 
     /**
@@ -332,22 +325,7 @@ public class Path {
      * @return returns the heading goal at the specified t-value.
      */
     public double getHeadingGoal(double t) {
-        if (isTangentHeadingInterpolation) {
-            if (Objects.equals(curve.pathType(), "DoubleHeadingTangentPath")) {
-                return MathFunctions.normalizeAngle(((DoubleHeadingTangentPath) curve).getHeading(t));
-            } else {
-                if (followTangentReversed) {
-                    return MathFunctions.normalizeAngle(curve.getDerivative(t).getTheta() + Math.PI);
-                } else {
-                    return curve.getDerivative(t).getTheta();
-                }
-            }
-        } else {
-            if (t > linearInterpolationEndTime) {
-                return MathFunctions.normalizeAngle(endHeading);
-            }
-            return MathFunctions.normalizeAngle(startHeading + MathFunctions.getTurnDirection(startHeading, endHeading) * MathFunctions.getSmallestAngleDifference(endHeading, startHeading) * (t / linearInterpolationEndTime));
-        }
+        return getHeadingInterpolation(t).getHeadingGoalAtPoint(t, curve.getDerivative(t));
     }
 
     /**
@@ -552,24 +530,42 @@ public class Path {
         return curve.getDashboardDrawingPoints();
     }
 
-    public double getHeadingEndTValue() {
-        return linearInterpolationEndTime;
+    public double getHeadingEndTValue(double pathT) {
+        return getHeadingInterpolation(pathT).getEndT();
     }
 
-    public boolean usingTangentialHeading() {
-        return isTangentHeadingInterpolation;
+    public boolean usingTangentialHeading(double pathT) {
+        return getHeadingInterpolation(pathT).getType() == HeadingInterpolationType.TANGENTIAL;
     }
 
-    public boolean getReversed() {
-        return followTangentReversed;
+    public boolean getReversed(double pathT) {
+        return getHeadingInterpolation(pathT).isTangentReversed();
     }
 
-    public boolean usingVariableHeading() {
-        return isVariableHeadingInterpolation;
+    public boolean usingVariableHeading(double pathT) {
+        return getHeadingInterpolation(pathT).getType() == HeadingInterpolationType.VARIABLE;
     }
 
-    public void setVariablePathEndHeading(double endHeading) {
-        if (isVariableHeadingInterpolation)
-            this.endHeading = endHeading;
+    public Path setReversed(boolean set, double pathT) {
+        getHeadingInterpolation(pathT).setTangentReversed(set);
+
+        return this;
+    }
+
+    public HeadingInterpolation getLastHeadingInterpolation() {
+        // assume the array is unsorted
+        double foundT = 0;
+        HeadingInterpolation foundInterpolation = null;
+
+        for (HeadingInterpolation headingInterpolation : headingInterpolations) {
+            double currentT = headingInterpolation.getEndT();
+
+            if (foundT < currentT) {
+                foundT = currentT;
+                foundInterpolation = headingInterpolation;
+            }
+        }
+
+        return foundInterpolation;
     }
 }

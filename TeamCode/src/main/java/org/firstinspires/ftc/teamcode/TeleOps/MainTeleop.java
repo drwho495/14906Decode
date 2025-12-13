@@ -28,6 +28,7 @@ public class MainTeleop extends LinearOpMode {
     private boolean autoStartShooter = false;
     private boolean autoStartShootingStarted = false;
     private boolean autoStartShootingStopTimed = false;
+    private boolean driverNotifiedOf3 = false;
     private ElapsedTime shooterTimer = new ElapsedTime();
 
     private DcMotorEx leftFront;
@@ -42,14 +43,26 @@ public class MainTeleop extends LinearOpMode {
     public void runOpMode() throws InterruptedException {
         RobotManager robot = new RobotManager(this);
         robot.initialise();
+        ElapsedTime resetIMUTimer = null;
 
-        if (!Parameters.AUTO_PROGRAM_HAS_RUN) {
+        if (!Parameters.IMU_RECALIBRATED) {
             robot.resetIMU();
             telemetry.addLine("Resetting IMU...");
             telemetry.update();
+            resetIMUTimer = new ElapsedTime();
+
+            Parameters.IMU_RECALIBRATED = true;
         }
 
         waitForStart();
+
+        robot.setTransferSpeed(.6);
+
+        if (resetIMUTimer != null) {
+            while (resetIMUTimer.time(TimeUnit.MILLISECONDS) < 3000 && opModeIsActive()) {
+                robot.update();
+            }
+        }
 
         robot.setAllianceSide(Parameters.LAST_ALLIANCE_SIDE);
         robot.powerOffShooter();
@@ -65,12 +78,6 @@ public class MainTeleop extends LinearOpMode {
         rightFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         robot.disableAutoHeading();
-
-        if (!Parameters.AUTO_PROGRAM_HAS_RUN) {
-//            robot.setPose(new Pose(0, 0, Math.toRadians(0)));
-        } else {
-//            robot.setPose(Parameters.OPMODE_END_POSITION);
-        }
 
         robot.setState(OpModeStates.INTAKE_SCORE);
         robot.setHoodServoPos(Parameters.HOOD_SERVO_DEFAULT);
@@ -99,11 +106,6 @@ public class MainTeleop extends LinearOpMode {
                     break;
                 case INTAKE_SCORE:
                     robot.useGoalAimHeading();
-
-                    telemetry.addData("auto heading goal: ", Math.toDegrees(robot.getHeadingToGoal()));
-                    telemetry.addData("current heading: ", Math.toDegrees(robotPose.getHeading()));
-                    telemetry.addData("pose x: ", robotPose.getX());
-                    telemetry.addData("pose y: ", robotPose.getY());
 
                     if (gamepad1.right_trigger > .1) {
                         robot.setIntakePower(gamepad1.right_trigger);
@@ -139,14 +141,8 @@ public class MainTeleop extends LinearOpMode {
                         robot.powerOffShooter();
                     }
 
-//                        if (gamepad1.aWasPressed()) {
-//                            robot.powerOnShooter();
-//                        } else if (gamepad1.aWasReleased()) {
-//                            robot.powerOffShooter();
-//                        }
-
                     if (autoStartShooterEnabled) {
-                        if ((robot.isTransferStalled() || robot.getTransferDisableTime() >= 250) && !autoStartShooter) {
+                        if ((robot.isTransferStalled() || robot.getTransferDisableTime() >= 250 || gamepad1.left_bumper || gamepad1.right_bumper) && !autoStartShooter) {
                             autoStartShooter = true;
                             autoStartShootingStarted = false;
                             autoStartShootingStopTimed = false;
@@ -180,13 +176,17 @@ public class MainTeleop extends LinearOpMode {
                         robot.disableAutoHeading();
                     }
 
-                    if (gamepad1.aWasPressed()) {
-                        robot.setHoodServoPos(Parameters.HOOD_SERVO_DOWN);
-                    } else if (gamepad1.bWasPressed()) {
-                        robot.setHoodServoPos(Parameters.HOOD_SERVO_FAR);
+                    if (!driverNotifiedOf3) {
+                        if (robot.getHeldBallCount() == 3){
+                            gamepad1.rumble(500);
+                            driverNotifiedOf3 = true;
+                        }
+                    } else {
+                        if (robot.getHeldBallCount() != 3) {
+                            driverNotifiedOf3 = false;
+                        }
                     }
 
-                    robot.setShooterVelocity(shooterVelocity);
                     break;
                 case PARK:
                     break;
@@ -204,6 +204,10 @@ public class MainTeleop extends LinearOpMode {
             telemetry.addData("Disable Time: ", robot.getTransferDisableTime());
             telemetry.addData("Shooter 1 RPM: ", shooterVelocities[0]);
             telemetry.addData("Shooter 2 RPM: ", shooterVelocities[1]);
+            telemetry.addData("Robot X: ", robotPose.getX());
+            telemetry.addData("Robot Y: ", robotPose.getY());
+            telemetry.addData("Robot Heading: ", Math.toDegrees(robotPose.getHeading()));
+            telemetry.addData("Number of Artifacts in the Intake: ", robot.getHeldBallCount());
             telemetry.addData("Loop Time: ", timer.time(TimeUnit.MILLISECONDS));
 
             timer.reset();

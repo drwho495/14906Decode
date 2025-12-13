@@ -8,7 +8,7 @@ import org.firstinspires.ftc.teamcode.Base.OpModeStates;
 import org.firstinspires.ftc.teamcode.Base.Parameters;
 import org.firstinspires.ftc.teamcode.Base.RobotManager;
 
-@TeleOp(name = "ZDEBUG: Shooter Tuner")
+@TeleOp(name = "Debug: Shooter Tuner", group = "Debug")
 public class ShooterTuner extends LinearOpMode {
     private RobotManager robot;
 
@@ -17,6 +17,7 @@ public class ShooterTuner extends LinearOpMode {
         robot = new RobotManager(this);
         robot.setState(OpModeStates.INTAKE_SCORE);
         robot.initialise();
+        robot.enableManualShooting();
 
         waitForStart();
 

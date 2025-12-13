@@ -79,6 +79,8 @@ public class ComplexMotor {
         currentVelocity = thisMotor.getVelocity(AngleUnit.DEGREES);
 
         if (currentMode == ComplexMotorModes.USE_VELOCITY_PID) {
+            opMode.telemetry.addData("current velo: ", currentVelocity);
+
             if (useCustomVelocity) {
                 velocityController.setSetPoint(targetVelocity);
                 motorPower = velocityController.calculate(currentVelocity);
@@ -116,7 +118,7 @@ public class ComplexMotor {
             if (useCustomVelocity) {
                 return velocityController.atSetPoint();
             } else {
-                return abs(thisMotor.getVelocity(AngleUnit.DEGREES) - targetVelocity) < 3;
+                return abs(currentVelocity - targetVelocity) < 5;
             }
         }
         return true;

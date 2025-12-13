@@ -4,6 +4,8 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.teamcode.Base.HardwareBases.ColorRangefinder;
 import org.firstinspires.ftc.teamcode.Base.HardwareBases.ComplexMotor;
 import org.firstinspires.ftc.teamcode.Base.HardwareBases.ComplexMotorModes;
 import org.firstinspires.ftc.teamcode.Base.Parameters;
@@ -19,8 +21,14 @@ public class IntakeSubsystem extends Subsystem {
     private double intakeMotor2Limit = 1;
     private boolean autoDisableTransfer = true;
     private boolean transferDisabled = false;
+    private ElapsedTime sensorTimer = new ElapsedTime();
     private ElapsedTime transferDisableTimeout = new ElapsedTime();
     private boolean transferDisabling = false;
+    private boolean ballCount3Started = false;
+    private ElapsedTime ballCountTimer = new ElapsedTime();
+    private ColorRangefinder colorSensor1;
+//    private ColorRangefinder colorSensor2;
+    private int ballCount = 0;
 
     @Override
     public void setLinearTeleop(LinearOpMode newOpMode) {
@@ -41,10 +49,12 @@ public class IntakeSubsystem extends Subsystem {
 
         intakeMotor2 = new ComplexMotor("intakeMotor2", thisOpMode);
         intakeMotor2.setMode(ComplexMotorModes.RAW_POWER);
-        intakeMotor2.setEncoderState(false);
+        intakeMotor2.setEncoderState(true);
         intakeMotor2.setReversed(true);
         intakeMotor2.enableBrake();
         intakeMotor2.setPower(0);
+
+        sensorTimer.reset();
     }
 
     public void powerIntakeOn() {
@@ -85,6 +95,7 @@ public class IntakeSubsystem extends Subsystem {
             autoDisableTransfer = true;
             transferDisabled = false;
             transferDisabling = false;
+            ballCount = 0;
         }
     }
 
@@ -93,6 +104,7 @@ public class IntakeSubsystem extends Subsystem {
             autoDisableTransfer = false;
             transferDisabled = false;
             transferDisabling = false;
+            ballCount = 0;
         }
     }
 
@@ -121,10 +133,30 @@ public class IntakeSubsystem extends Subsystem {
 
             if (transferDisableTimeout.time(TimeUnit.MILLISECONDS) > 750) {
                 transferDisabled = true;
+                ballCount = 2;
             }
         } else {
             transferDisabling = false;
         }
+
+//        if (sensor1Distance <= Parameters.BALL_SENSOR_TOLERANCE || sensor2Distance <= Parameters.BALL_SENSOR_TOLERANCE) {
+//            if (ballCount != 3) {
+//                if (transferDisabled)
+//                    ballCount = 3;
+//
+//                if (!ballCount3Started) {
+//                    ballCountTimer.reset();
+//                    ballCount3Started = true;
+//                }
+//
+//                if (ballCountTimer.time(TimeUnit.MILLISECONDS) >= 750) {
+//                    ballCount3Started = false;
+//                    ballCount = 3;
+//                }
+//            }
+//        } else {
+//            ballCount3Started = false;
+//        }
     }
 
     public void setIntakePower(double newPower) {
@@ -133,5 +165,9 @@ public class IntakeSubsystem extends Subsystem {
 
     public boolean isTransferStalled() {
         return transferDisabled;
+    }
+
+    public int getHeldBallCount() {
+        return ballCount;
     }
 }

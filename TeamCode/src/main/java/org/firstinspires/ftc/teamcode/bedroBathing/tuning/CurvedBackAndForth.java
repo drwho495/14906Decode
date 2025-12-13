@@ -50,7 +50,7 @@ public class CurvedBackAndForth extends OpMode {
         forwards = new Path(new BezierCurve(new Point(0,0, Point.CARTESIAN), new Point(Math.abs(DISTANCE),0, Point.CARTESIAN), new Point(Math.abs(DISTANCE),DISTANCE, Point.CARTESIAN)));
         backwards = new Path(new BezierCurve(new Point(Math.abs(DISTANCE),DISTANCE, Point.CARTESIAN), new Point(Math.abs(DISTANCE),0, Point.CARTESIAN), new Point(0,0, Point.CARTESIAN)));
 
-        backwards.setReversed(true);
+        backwards.setReversed(true, 0);
 
         follower.followPath(forwards);
 

@@ -27,6 +27,8 @@ public class Parameters {
     public final static double HOOD_SERVO_UP = 120;
     public final static double HOOD_SERVO_DEFAULT = HOOD_SERVO_FAR;
 
-    public static boolean AUTO_PROGRAM_HAS_RUN = false;
+    public static boolean IMU_RECALIBRATED = false;
     public static Pose OPMODE_END_POSITION = new Pose();
+
+    public final static double BALL_SENSOR_TOLERANCE = 130;
 }

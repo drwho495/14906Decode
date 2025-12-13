@@ -60,7 +60,7 @@
 //
 //                if (mirroredPath != null) {
 //                    if (!mirroredPath.usingTangentialHeading()) {
-//                        mirroredPath.setTangentHeadingInterpolation();
+//                        mirroredPath.addTangentHeadingInterpolation();
 //                        mirroredPath.setReversed(mirroredPath.getReversed());
 //                    } else {
 //                        mirroredPath.addLinearHeadingInterpolation(

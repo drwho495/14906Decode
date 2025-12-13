@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.Base.Subsystems;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
@@ -16,11 +17,14 @@ public class ShooterSubsystem extends Subsystem {
     private ComplexMotor shooterMotor2;
     private ComplexServo fingerServo;
     private ComplexServo hoodServo;
+    private VoltageSensor vSensor;
 
     private double motorVelo = Parameters.SHOOTER_DEFAULT_RPM;
     private boolean powerOff = true;
     private double fingerServoPos = Parameters.FINGER_SERVO_OPEN;
     private double hoodServoPos = Parameters.HOOD_SERVO_DOWN;
+    private double shooter1Current = 0;
+    public int numLaunchedBalls = 0;
 
     private final double velocityMultiplier = 304.0/6000;
 
@@ -49,8 +53,10 @@ public class ShooterSubsystem extends Subsystem {
         shooterMotor1.useCustomVeloPIDLoop(false);
         shooterMotor2.useCustomVeloPIDLoop(false);
 
-        shooterMotor1.setVelocityPIDFCoefficients(8, 2.8, 0, 0);
-        shooterMotor2.setVelocityPIDFCoefficients(8, 2.8, 0, 0);
+        shooterMotor1.setVelocityPIDFCoefficients(10, 3, 0, 0);
+        shooterMotor2.setVelocityPIDFCoefficients(10, 3, 0, 0);
+
+        vSensor = thisOpMode.hardwareMap.voltageSensor.iterator().next();
 
         fingerServo = new ComplexServo(thisOpMode.hardwareMap, "fingerServo", 0, 180, AngleUnit.DEGREES);
         fingerServo.setInverted(true);
@@ -107,6 +113,8 @@ public class ShooterSubsystem extends Subsystem {
     public void update() {
         if (!thisOpMode.opModeIsActive() || thisOpMode.isStopRequested()) return;
 
+        shooter1Current = shooterMotor1.getCurrent();
+
         if (powerOff) {
             shooterMotor1.setVelocity(0);
             shooterMotor2.setVelocity(0);
@@ -115,8 +123,16 @@ public class ShooterSubsystem extends Subsystem {
             shooterMotor2.setVelocity(motorVelo * velocityMultiplier);
         }
 
+        double hoodServoOffset = 0;
+
+        if (shooter1Current > 1) {
+            double voltage = vSensor.getVoltage();
+
+            hoodServoOffset = Range.clip(shooter1Current * (8 * (12.0 / voltage)), 0, 1000);
+        }
+
         fingerServo.turnToAngle(fingerServoPos);
-        hoodServo.turnToAngle(hoodServoPos);
+        hoodServo.turnToAngle(Range.clip(hoodServoPos - hoodServoOffset, Parameters.HOOD_SERVO_DOWN, Parameters.HOOD_SERVO_UP));
 
         shooterMotor1.update();
         shooterMotor2.update();
