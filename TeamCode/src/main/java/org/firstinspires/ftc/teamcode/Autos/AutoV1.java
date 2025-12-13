@@ -34,7 +34,7 @@ public class AutoV1 extends LinearOpMode {
     private RobotManager robot;
     private AutoStartPos autoStartPos = AutoStartPos.CLOSE_ZONE;
     private boolean clearGate = true;
-    private boolean grabFromHumanPlayer = true;
+    private boolean grabFromHumanPlayer = false;
     private ElapsedTime timer = new ElapsedTime();
     private double preciseTurnP = 4;
 
@@ -263,9 +263,10 @@ public class AutoV1 extends LinearOpMode {
                 } else if (robot.getAllianceSide() == AllianceSides.BLUE) {
                     robot.runBlocking(new PathBuilder()
                                     .addPath(new Path(
-                                            new BezierCurve(
+                                            new BezierLine(
+
                                                     new Point(robotPose),
-                                                    robot.getFixedPoint(-5, -5),
+//                                                    robot.getFixedPoint(-5, -5),
                                                     new Point(shootingPosition)
                                             )
                                     ))
@@ -435,7 +436,10 @@ public class AutoV1 extends LinearOpMode {
 
         Parameters.IMU_RECALIBRATED = true;
         waitForStart();
+
         robot.setTransferSpeed(.7);
+        robot.disableHoodCompensation();
+
         timer.reset();
         Parameters.IMU_RECALIBRATED = true;
         Parameters.LAST_ALLIANCE_SIDE = robot.getAllianceSide();
@@ -449,10 +453,10 @@ public class AutoV1 extends LinearOpMode {
         shootBalls(0);
 
         if (autoStartPos == AutoStartPos.CLOSE_ZONE) {
-            intakeFromTape(0);
-            shootBalls(1);
-            intakeFromTape(1);
-            shootBalls(2);
+            intakeFromTape(grabFromHumanPlayer ? 0 : 1);
+            shootBalls(grabFromHumanPlayer ? 1 : 2);
+            intakeFromTape(grabFromHumanPlayer ? 1 : 0);
+            shootBalls(grabFromHumanPlayer ? 2 : 1);
             intakeFromTape(2);
             if (clearGate) shootBalls(3);
             if (grabFromHumanPlayer && clearGate) {

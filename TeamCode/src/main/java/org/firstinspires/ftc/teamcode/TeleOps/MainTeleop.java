@@ -56,7 +56,8 @@ public class MainTeleop extends LinearOpMode {
 
         waitForStart();
 
-        robot.setTransferSpeed(.6);
+        robot.setTransferSpeed(.7);
+        robot.enableHoodCompensation();
 
         if (resetIMUTimer != null) {
             while (resetIMUTimer.time(TimeUnit.MILLISECONDS) < 3000 && opModeIsActive()) {
@@ -106,6 +107,12 @@ public class MainTeleop extends LinearOpMode {
                     break;
                 case INTAKE_SCORE:
                     robot.useGoalAimHeading();
+
+                    if (gamepad1.aWasPressed()) {
+                        robot.setTransferSpeed(.2);
+                    } else if (gamepad1.yWasPressed()) {
+                        robot.setTransferSpeed(.7);
+                    }
 
                     if (gamepad1.right_trigger > .1) {
                         robot.setIntakePower(gamepad1.right_trigger);
@@ -199,6 +206,7 @@ public class MainTeleop extends LinearOpMode {
             Double[] shooterVelocities = robot.getCurrentShooterVelocities();
 
             telemetry.addData("Robot Alliance: ", robot.getAllianceSide() == AllianceSides.BLUE ? "Blue Side" : "Red Side");
+            telemetry.addData("Transfer Speed: ", robot.getTransferSpeed());
             telemetry.addData("Distance To Goal: ", robot.getDistanceToGoal());
             telemetry.addData("Target RPM: ", robot.getShooterTargetVelocity());
             telemetry.addData("Disable Time: ", robot.getTransferDisableTime());

@@ -40,6 +40,7 @@ public class RobotManager {
     private double transferSpeed = .7;
     private boolean aimHoldPoint = false;
     private boolean aimAtGoal = true;
+    private boolean useHoodCompensation = false;
     private boolean stateStart = true;
     private boolean resetDistanceToGoal = false;
     private double distanceToGoal = 0;
@@ -365,6 +366,18 @@ public class RobotManager {
         this.transferSpeed = transferSpeed;
     }
 
+    public void enableHoodCompensation() {
+        useHoodCompensation = true;
+    }
+
+    public void disableHoodCompensation() {
+        useHoodCompensation = false;
+    }
+
+    public double getTransferSpeed() {
+        return transferSpeed;
+    }
+
     public void setAllianceSide(AllianceSides newSide) {
         side = newSide;
     }
@@ -392,6 +405,12 @@ public class RobotManager {
                 if (isShooting) {
                     intakeSubsystem.disableAutoDisableTransfer();
 
+                    if (useHoodCompensation) {
+                        shooterSubsystem.enableHoodCompensation();
+                    } else {
+                        shooterSubsystem.disableHoodCompensation();
+                    }
+
                     if (distanceToGoal >= 58) {
                         intakeSubsystem.setPowerLimits(1, distanceToGoal < 110 ? transferSpeed : .4);
                     } else {
@@ -399,6 +418,8 @@ public class RobotManager {
                     }
                     shooterSubsystem.openFinger();
                 } else {
+                    shooterSubsystem.disableHoodCompensation();
+
                     if (intakeSubsystem.getIntakePower() > 0) {
                         intakeSubsystem.enableAutoDisableTransfer();
                     } else if (intakeSubsystem.getIntakePower() < 0) {

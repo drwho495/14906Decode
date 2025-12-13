@@ -24,6 +24,7 @@ public class ShooterSubsystem extends Subsystem {
     private double fingerServoPos = Parameters.FINGER_SERVO_OPEN;
     private double hoodServoPos = Parameters.HOOD_SERVO_DOWN;
     private double shooter1Current = 0;
+    private boolean hoodCompensationEnabled = false;
     public int numLaunchedBalls = 0;
 
     private final double velocityMultiplier = 304.0/6000;
@@ -109,26 +110,34 @@ public class ShooterSubsystem extends Subsystem {
         powerOff = !powerOff;
     }
 
+    public void enableHoodCompensation() {
+        hoodCompensationEnabled = true;
+    }
+
+    public void disableHoodCompensation() {
+        hoodCompensationEnabled = false;
+    }
+
     @Override
     public void update() {
         if (!thisOpMode.opModeIsActive() || thisOpMode.isStopRequested()) return;
 
         shooter1Current = shooterMotor1.getCurrent();
 
+        double hoodServoOffset = 0;
+
+        if (shooter1Current > 1 && hoodCompensationEnabled) {
+            double voltage = vSensor.getVoltage();
+
+            hoodServoOffset = Range.clip((shooter1Current) * (9 * (12.0 / voltage)), 0, 1000);
+        }
+
         if (powerOff) {
             shooterMotor1.setVelocity(0);
             shooterMotor2.setVelocity(0);
         } else {
-            shooterMotor1.setVelocity(motorVelo * velocityMultiplier);
-            shooterMotor2.setVelocity(motorVelo * velocityMultiplier);
-        }
-
-        double hoodServoOffset = 0;
-
-        if (shooter1Current > 1) {
-            double voltage = vSensor.getVoltage();
-
-            hoodServoOffset = Range.clip(shooter1Current * (8 * (12.0 / voltage)), 0, 1000);
+            shooterMotor1.setVelocity((motorVelo * velocityMultiplier));
+            shooterMotor2.setVelocity((motorVelo * velocityMultiplier));
         }
 
         fingerServo.turnToAngle(fingerServoPos);
