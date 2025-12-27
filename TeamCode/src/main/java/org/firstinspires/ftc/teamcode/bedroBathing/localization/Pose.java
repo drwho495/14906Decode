@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.bedroBathing.localization;
 import androidx.annotation.NonNull;
 
 import org.firstinspires.ftc.teamcode.bedroBathing.pathGeneration.MathFunctions;
+import org.firstinspires.ftc.teamcode.bedroBathing.pathGeneration.Path;
 import org.firstinspires.ftc.teamcode.bedroBathing.pathGeneration.Vector;
 
 /**
@@ -134,10 +135,12 @@ public class Pose {
      *
      * @param pose the input Pose
      */
-    public void add(Pose pose) {
+    public Pose add(Pose pose) {
         setX(x + pose.getX());
         setY(y + pose.getY());
         setHeading(heading + pose.getHeading());
+
+        return this;
     }
 
     /**

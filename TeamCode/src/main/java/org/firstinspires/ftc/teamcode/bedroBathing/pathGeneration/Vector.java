@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.bedroBathing.pathGeneration;
 
+import org.firstinspires.ftc.teamcode.bedroBathing.localization.Pose;
+
 /**
  * This is the Point class. This class handles storing information about vectors, which are
  * basically Points but using polar coordinates as the default. The main reason this class exists
@@ -139,5 +141,17 @@ public class Vector {
      */
     public double getYComponent() {
         return yComponent;
+    }
+
+    public Pose toPose() {
+        return new Pose(xComponent, yComponent);
+    }
+
+    public Vector returnMultiplied(double argument) {
+        Vector returnVector = new Vector();
+
+        returnVector.setOrthogonalComponents(xComponent * argument, yComponent * argument);
+
+        return returnVector;
     }
 }

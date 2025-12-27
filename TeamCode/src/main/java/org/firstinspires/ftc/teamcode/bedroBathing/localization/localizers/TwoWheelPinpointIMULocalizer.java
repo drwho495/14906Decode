@@ -204,7 +204,7 @@ package org.firstinspires.ftc.teamcode.bedroBathing.localization.localizers;//pa
 //            transformation.set(2, 2, 1.0);
 //        }
 //
-//        globalDeltas = Matrix.multiply(Matrix.multiply(prevRotationMatrix, transformation), robotDeltas);
+//        globalDeltas = Matrix.returnMultiplied(Matrix.returnMultiplied(prevRotationMatrix, transformation), robotDeltas);
 //
 //        displacementPose.add(new Pose(globalDeltas.get(0, 0), globalDeltas.get(1, 0), globalDeltas.get(2, 0)));
 //        currentVelocity = new Pose(globalDeltas.get(0, 0) / (deltaTimeNano / Math.pow(10.0, 9)), globalDeltas.get(1, 0) / (deltaTimeNano / Math.pow(10.0, 9)), globalDeltas.get(2, 0) / (deltaTimeNano / Math.pow(10.0, 9)));

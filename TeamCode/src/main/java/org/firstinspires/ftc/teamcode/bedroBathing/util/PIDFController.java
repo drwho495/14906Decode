@@ -3,7 +3,7 @@ package org.firstinspires.ftc.teamcode.bedroBathing.util;
 /**
  * This is the PIDFController class. This class handles the running of PIDFs. PIDF stands for
  * proportional, integral, derivative, and feedforward. PIDFs take the error of a system as an input.
- * Coefficients multiply into the error, the integral of the error, the derivative of the error, and
+ * Coefficients returnMultiplied into the error, the integral of the error, the derivative of the error, and
  * a feedforward value. Then, these values are added up and returned. In this way, error in the
  * system is corrected.
  *

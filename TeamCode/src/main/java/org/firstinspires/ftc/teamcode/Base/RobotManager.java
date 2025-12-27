@@ -41,9 +41,13 @@ public class RobotManager {
     private boolean aimHoldPoint = false;
     private boolean aimAtGoal = true;
     private boolean useHoodCompensation = false;
+    private boolean useVelocityCompensation = true;
     private boolean stateStart = true;
     private boolean resetDistanceToGoal = false;
     private double distanceToGoal = 0;
+    private boolean autoTransferStopEnabled = true;
+    private boolean printDebugEnabled = false;
+    private ShootingStyle shootingStyle = ShootingStyle.STRAIGHT_ON;
 
     // do NOT add a constructor to any of the subsystems!
     private final ShooterSubsystem shooterSubsystem = new ShooterSubsystem();
@@ -57,6 +61,39 @@ public class RobotManager {
 
     public OpModeStates getState() {
         return currentState;
+    }
+
+    public void enableAutoTransferStop() {
+        autoTransferStopEnabled = true;
+    }
+
+    public void disableAutoTransferStop() {
+        autoTransferStopEnabled = false;
+    }
+
+    public void enableDebugPrinting() {
+        printDebugEnabled = true;
+    }
+
+    public void disableDebugPrinting() {
+        printDebugEnabled = false;
+    }
+
+    public void enableVelocityCompensation() {
+        useVelocityCompensation = true;
+    }
+
+    public void disableVelocityCompensation() {
+        useVelocityCompensation = false;
+    }
+
+    public void printDebugInfo() {
+        opMode.telemetry.addData("Robot Heading: ", Math.toDegrees(follower.getPose().getHeading()));
+        opMode.telemetry.addData("Robot Heading Error: ", Math.toDegrees(follower.headingError));
+        opMode.telemetry.addData("Alliance Side: ", side == AllianceSides.BLUE ? "Blue" : "Red");
+        opMode.telemetry.addData("Shooter RPM Goal: ", shooterSubsystem.getTargetVelocity());
+        if (follower.isBusy()) opMode.telemetry.addData("Using Variable Heading: ", follower.followerHeadingIsVariable());
+        opMode.telemetry.update();
     }
 
     public void initialise() {
@@ -74,17 +111,20 @@ public class RobotManager {
         double rpmOffset = 0;
         double hoodOffset = 0;
 
-        rpmCurve.addPoint(65, 4380 + rpmOffset);
-        hoodCurve.addPoint(65, 55 + hoodOffset);
+        if (shootingStyle == ShootingStyle.STRAIGHT_ON) {
+            rpmCurve.addPoint(65, 4380 + rpmOffset);
+            hoodCurve.addPoint(65, 55 + hoodOffset);
 
-        rpmCurve.addPoint(83, 4650 + rpmOffset);
-        hoodCurve.addPoint(83, 75 + hoodOffset);
+            rpmCurve.addPoint(83, 4650 + rpmOffset);
+            hoodCurve.addPoint(83, 75 + hoodOffset);
 
-        rpmCurve.addPoint(100, 4850 + rpmOffset);
-        hoodCurve.addPoint(100, 67 + hoodOffset);
+            rpmCurve.addPoint(100, 4850 + rpmOffset);
+            hoodCurve.addPoint(100, 67 + hoodOffset);
 
-        rpmCurve.addPoint(140, 5500 + rpmOffset);
-        hoodCurve.addPoint(140, 75 + hoodOffset);
+            rpmCurve.addPoint(140, 5500 + rpmOffset);
+            hoodCurve.addPoint(140, 75 + hoodOffset);
+        } else if (shootingStyle == ShootingStyle.LARGE_ARC) {
+        }
 
         rpmCurve.buildCurve();
         hoodCurve.buildCurve();
@@ -232,17 +272,15 @@ public class RobotManager {
         return follower.getPose();
     }
 
+    public void setShootingStyle(ShootingStyle shootingStyle) {
+        this.shootingStyle = shootingStyle;
+    }
+
     private void internalRunPath(PathBuilder path, boolean correctAfterFinished) {
         follower.followPath(path.build(), correctAfterFinished);
         follower.update();
 
         while (follower.isBusy() && !opMode.isStopRequested() && opMode.opModeIsActive()) {
-            opMode.telemetry.addData("Robot Heading: ", Math.toDegrees(follower.getPose().getHeading()));
-            opMode.telemetry.addData("Alliance Side: ", side == AllianceSides.BLUE ? "Blue" : "Red");
-            opMode.telemetry.addData("Shooter RPM Goal: ", shooterSubsystem.getTargetVelocity());
-            opMode.telemetry.addData("Using Variable Heading: ", follower.followerHeadingIsVariable());
-            opMode.telemetry.update();
-
             if (autoTimeout > 0 && autoTimer.time(TimeUnit.MILLISECONDS) > autoTimeout) {
                 follower.breakFollowing();
                 break;
@@ -351,8 +389,13 @@ public class RobotManager {
         autoTimer.reset();
     }
 
+    public Pose getVelocityCorrectedPose() {
+        return follower.getPose().add(follower.getVelocity().returnMultiplied(.65).toPose());
+    }
+
     public double getHeadingToGoal() {
-        Pose robotPose = follower.getPose();
+        Pose robotPose = useVelocityCompensation ? getVelocityCorrectedPose() : getPose();
+
         Pose goalPos = Parameters.RED_SHOOTER_GOAL;
 
         if (side == AllianceSides.BLUE) {
@@ -421,7 +464,11 @@ public class RobotManager {
                     shooterSubsystem.disableHoodCompensation();
 
                     if (intakeSubsystem.getIntakePower() > 0) {
-                        intakeSubsystem.enableAutoDisableTransfer();
+                        if (autoTransferStopEnabled) {
+                            intakeSubsystem.enableAutoDisableTransfer();
+                        } else {
+                            intakeSubsystem.disableAutoDisableTransfer();
+                        }
                     } else if (intakeSubsystem.getIntakePower() < 0) {
                         intakeSubsystem.disableAutoDisableTransfer();
                     }
@@ -444,9 +491,8 @@ public class RobotManager {
             follower.setTeleopHeadingGoal(teleopHeadingGoal);
         }
 
-//        if (aimHoldPoint) {
-//            follower.updateHoldPoint(new Pose(holdPointPosition.getX(), holdPointPosition.getY(), getHeadingToGoal()));
-//        }
+        if (printDebugEnabled)
+            printDebugInfo();
 
         stateStart = false;
         resetDistanceToGoal = true;
@@ -522,7 +568,7 @@ public class RobotManager {
 
     public double getDistanceToGoal() {
         if (resetDistanceToGoal) {
-            Pose robotPose = follower.getPose();
+            Pose robotPose = useVelocityCompensation ? getVelocityCorrectedPose() : getPose();
 
             Pose goalPos = Parameters.RED_SHOOTER_GOAL;
 
@@ -555,5 +601,9 @@ public class RobotManager {
 
             update();
         }
+    }
+
+    public void holdPoint(Pose point) {
+        follower.holdPoint(point);
     }
 }

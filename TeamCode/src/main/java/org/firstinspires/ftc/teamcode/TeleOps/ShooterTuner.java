@@ -29,11 +29,11 @@ public class ShooterTuner extends LinearOpMode {
 
             if (gamepad1.leftBumperWasPressed()) {
                 robot.startShootElement();
-                robot.setIntakePower(1);
             } else if (gamepad1.leftBumperWasReleased()) {
                 robot.stopShootElement();
-                robot.setIntakePower(0);
             }
+
+            robot.setIntakePower(gamepad1.right_trigger);
 
             if (gamepad1.dpadRightWasPressed()) {
                 robot.setShooterVelocity(robot.getShooterTargetVelocity() + 15);

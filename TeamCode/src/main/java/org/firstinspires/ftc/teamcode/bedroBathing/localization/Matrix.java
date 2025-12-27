@@ -233,7 +233,7 @@ public class Matrix {
     /**
      * This multiplies a Matrix to this Matrix.
      *
-     * @param input the Matrix to multiply to this. Nothing will change in this Matrix
+     * @param input the Matrix to returnMultiplied to this. Nothing will change in this Matrix
      * @return returns if the operation was successful
      */
     public boolean multiply(Matrix input) {
@@ -258,8 +258,8 @@ public class Matrix {
      * This multiplies a Matrix to another Matrix. This will not change any data in the two input
      * Matrices.
      *
-     * @param one the first Matrix to multiply.
-     * @param two the second Matrix to multiply
+     * @param one the first Matrix to returnMultiplied.
+     * @param two the second Matrix to returnMultiplied
      * @return returns if the operation was successful
      */
     public static Matrix multiply(Matrix one, Matrix two) {

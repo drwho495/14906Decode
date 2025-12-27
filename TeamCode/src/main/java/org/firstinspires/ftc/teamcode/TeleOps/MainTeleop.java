@@ -56,7 +56,7 @@ public class MainTeleop extends LinearOpMode {
 
         waitForStart();
 
-        robot.setTransferSpeed(.7);
+        robot.setTransferSpeed(1);
         robot.enableHoodCompensation();
 
         if (resetIMUTimer != null) {
@@ -111,7 +111,7 @@ public class MainTeleop extends LinearOpMode {
                     if (gamepad1.aWasPressed()) {
                         robot.setTransferSpeed(.2);
                     } else if (gamepad1.yWasPressed()) {
-                        robot.setTransferSpeed(.7);
+                        robot.setTransferSpeed(1);
                     }
 
                     if (gamepad1.right_trigger > .1) {

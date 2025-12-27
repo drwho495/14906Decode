@@ -49,7 +49,7 @@ public class ShooterSubsystem extends Subsystem {
         shooterMotor2.setEncoderState(true);
         shooterMotor2.resetEncoder();
         shooterMotor2.setMode(ComplexMotorModes.USE_VELOCITY_PID);
-        shooterMotor2.setReversed(false);
+        shooterMotor2.setReversed(true);
 
         shooterMotor1.useCustomVeloPIDLoop(false);
         shooterMotor2.useCustomVeloPIDLoop(false);
