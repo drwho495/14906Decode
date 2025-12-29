@@ -48,6 +48,10 @@ public class ComplexMotor {
         useCustomVelocity = newUseCustomVelo;
     }
 
+    public boolean useCustomVeloPIDLoop() {
+        return useCustomVelocity;
+    }
+
     public void setVelocityPIDFCoefficients(double p, double i, double d, double f) {
         if (useCustomVelocity) {
             velocityController.setPIDF(p, i, d, f);
@@ -79,13 +83,15 @@ public class ComplexMotor {
         currentVelocity = thisMotor.getVelocity(AngleUnit.DEGREES);
 
         if (currentMode == ComplexMotorModes.USE_VELOCITY_PID) {
-            opMode.telemetry.addData("current velo: ", currentVelocity);
-
             if (useCustomVelocity) {
-                velocityController.setSetPoint(targetVelocity);
-                motorPower = velocityController.calculate(currentVelocity);
+                if (targetVelocity != 0) {
+                    velocityController.setSetPoint(targetVelocity);
+                    motorPower = velocityController.calculate(currentVelocity);
 
-                HardwareUtils.optimizeMethod(motorPower, thisMotor, thisMotor::setPower);
+                    HardwareUtils.optimizeMethod(motorPower, thisMotor, thisMotor::setPower);
+                } else {
+                    HardwareUtils.optimizeMethod(0, thisMotor, thisMotor::setPower);
+                }
             } else {
                 if (targetVelocity != 0) {
                     double prevValue = HardwareUtils.previousValues.getOrDefault(thisMotor, Double.NaN);

@@ -255,7 +255,7 @@ public class AutoV1 extends LinearOpMode {
         if (autoStartPos == AutoStartPos.CLOSE_ZONE) {
             if (cycleNumber == 0) {
                 shootingPosition = robot.getFixedPose(-25, -33, Math.toRadians(180));
-                robot.setIntakePower(1);
+
                 robot.runBlocking(new PathBuilder()
                                 .addPath(new Path(
                                         new BezierLine(
@@ -280,13 +280,13 @@ public class AutoV1 extends LinearOpMode {
                                                     new Point(shootingPosition)
                                             )
                                     ))
-                                    .addParametricCallback(.75, () -> robot.setIntakePower(1))
+//                                    .addParametricCallback(.75, () -> robot.setIntakePower(1))
 //                                    .addTangentHeadingInterpolation(0, true, .85)
-                                    .addVariableHeadingInterpolation(0, Math.toRadians(270), shootingPosition.getHeading(), robot::getHeadingToGoal, 1)
+                                    .addVariableHeadingInterpolation(0, Math.toRadians(270), shootingPosition.getHeading(), robot::getHeadingToGoalWhileFollowingPath, 1)
                                     .setPathEndTValueConstraint(.9)
 //                                    .setPathEndVelocityConstraint(1)
                                     .setZeroPowerAccelerationMultiplier(6)
-                            , true);
+                            , false);
                 } else if (cycleNumber == 2) {
                     robot.runBlocking(new PathBuilder()
                                     .addPath(new Path(
@@ -296,12 +296,12 @@ public class AutoV1 extends LinearOpMode {
                                                     new Point(shootingPosition)
                                             )
                                     ))
-                                    .addParametricCallback(.5, () -> robot.setIntakePower(1))
-                                    .addVariableHeadingInterpolation(0, Math.toRadians(270), shootingPosition.getHeading(), robot::getHeadingToGoal, 1)
+//                                    .addParametricCallback(.5, () -> robot.setIntakePower(1))
+                                    .addVariableHeadingInterpolation(0, Math.toRadians(270), shootingPosition.getHeading(), robot::getHeadingToGoalWhileFollowingPath, 1)
                                     .setPathEndTValueConstraint(.9)
 //                                    .setPathEndVelocityConstraint(1)
                                     .setZeroPowerAccelerationMultiplier(6)
-                            , true);
+                            , false);
                 } else if (cycleNumber == 3) {
                     robot.runBlocking(new PathBuilder()
                                     .addPath(new Path(
@@ -312,14 +312,14 @@ public class AutoV1 extends LinearOpMode {
                                             )
                                     ))
                                     .addParametricCallback(.3, () -> {
-                                        robot.setIntakePower(1);
+//                                        robot.setIntakePower(1);
                                     })
 //                                    .addTangentHeadingInterpolation(0, true, .85)
-                                    .addVariableHeadingInterpolation(0, Math.toRadians(270), shootingPosition.getHeading(), robot::getHeadingToGoal, 1)
+                                    .addVariableHeadingInterpolation(0, Math.toRadians(270), shootingPosition.getHeading(), robot::getHeadingToGoalWhileFollowingPath, 1)
                                     .setPathEndTValueConstraint(.9)
 //                                    .setPathEndVelocityConstraint(1)
                                     .setZeroPowerAccelerationMultiplier(6)
-                            , true);
+                            , false);
                 }
             }
         } else if (autoStartPos == AutoStartPos.FAR_ZONE) {
@@ -340,6 +340,8 @@ public class AutoV1 extends LinearOpMode {
 
             robot.waitForHeadingCorrection(.5, 2000, .15);
         }
+
+        robot.stopAndAim();
 
         if (autoStartPos == AutoStartPos.FAR_ZONE && cycleNumber == 0) {
             robot.safeSleep(1200);
@@ -394,12 +396,15 @@ public class AutoV1 extends LinearOpMode {
         robot = new RobotManager(this);
 
         robot.setState(OpModeStates.INTAKE_SCORE);
+        robot.setTransferSpeed(1);
         robot.disableManualShooting();
-        robot.initialise();
         robot.disableAutoTransferStop();
         robot.enableDebugPrinting();
         robot.disableVelocityCompensation();
         robot.setShootingStyle(ShootingStyle.LARGE_ARC);
+        robot.enableHoodCompensation();
+
+        robot.initialise();
         robot.resetIMU();
 
         while (opModeInInit()) {
@@ -439,8 +444,8 @@ public class AutoV1 extends LinearOpMode {
         Parameters.IMU_RECALIBRATED = true;
         waitForStart();
 
-        robot.setTransferSpeed(1);
-        robot.disableHoodCompensation();
+        robot.update();
+        robot.getPose();
 
         timer.reset();
         Parameters.IMU_RECALIBRATED = true;
@@ -464,9 +469,9 @@ public class AutoV1 extends LinearOpMode {
             if (grabFromHumanPlayer && clearGate) {
                 intakeFromHumanPlayer();
                 shootBalls(3);
-            } else {
-                park();
             }
+
+            park();
         } else if (autoStartPos == AutoStartPos.FAR_ZONE) {
             intakeFromHumanPlayer();
             shootBalls(1);

@@ -11,6 +11,7 @@ import org.firstinspires.ftc.teamcode.Base.AllianceSides;
 import org.firstinspires.ftc.teamcode.Base.OpModeStates;
 import org.firstinspires.ftc.teamcode.Base.Parameters;
 import org.firstinspires.ftc.teamcode.Base.RobotManager;
+import org.firstinspires.ftc.teamcode.Base.ShootingStyle;
 import org.firstinspires.ftc.teamcode.bedroBathing.localization.Pose;
 import org.firstinspires.ftc.teamcode.bedroBathing.tuning.FollowerConstants;
 
@@ -57,7 +58,10 @@ public class MainTeleop extends LinearOpMode {
         waitForStart();
 
         robot.setTransferSpeed(1);
+        robot.setShootingStyle(ShootingStyle.STANDARD);
+        robot.enableAutoTransferStop();
         robot.enableHoodCompensation();
+        robot.enableVelocityCompensation();
 
         if (resetIMUTimer != null) {
             while (resetIMUTimer.time(TimeUnit.MILLISECONDS) < 3000 && opModeIsActive()) {
@@ -203,15 +207,15 @@ public class MainTeleop extends LinearOpMode {
                 robot.setAllianceSide(robot.getAllianceSide() == AllianceSides.RED ? AllianceSides.BLUE : AllianceSides.RED);
             }
 
-            Double[] shooterVelocities = robot.getCurrentShooterVelocities();
+//            Double[] shooterVelocities = robot.getCurrentShooterVelocities();
 
             telemetry.addData("Robot Alliance: ", robot.getAllianceSide() == AllianceSides.BLUE ? "Blue Side" : "Red Side");
             telemetry.addData("Transfer Speed: ", robot.getTransferSpeed());
             telemetry.addData("Distance To Goal: ", robot.getDistanceToGoal());
             telemetry.addData("Target RPM: ", robot.getShooterTargetVelocity());
             telemetry.addData("Disable Time: ", robot.getTransferDisableTime());
-            telemetry.addData("Shooter 1 RPM: ", shooterVelocities[0]);
-            telemetry.addData("Shooter 2 RPM: ", shooterVelocities[1]);
+//            telemetry.addData("Shooter 1 RPM: ", shooterVelocities[0]);
+//            telemetry.addData("Shooter 2 RPM: ", shooterVelocities[1]);
             telemetry.addData("Robot X: ", robotPose.getX());
             telemetry.addData("Robot Y: ", robotPose.getY());
             telemetry.addData("Robot Heading: ", Math.toDegrees(robotPose.getHeading()));

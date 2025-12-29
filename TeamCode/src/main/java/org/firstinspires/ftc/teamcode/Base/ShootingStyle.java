@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.Base;
 
 public enum ShootingStyle {
-    STRAIGHT_ON,
+    STANDARD,
+    DEAD_ON,
     LARGE_ARC
 }

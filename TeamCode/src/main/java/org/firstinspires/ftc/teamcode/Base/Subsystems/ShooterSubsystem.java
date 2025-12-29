@@ -25,6 +25,7 @@ public class ShooterSubsystem extends Subsystem {
     private double hoodServoPos = Parameters.HOOD_SERVO_DOWN;
     private double shooter1Current = 0;
     private boolean hoodCompensationEnabled = false;
+    private double hoodCompensationMultiplier = 9;
     public int numLaunchedBalls = 0;
 
     private final double velocityMultiplier = 304.0/6000;
@@ -118,6 +119,10 @@ public class ShooterSubsystem extends Subsystem {
         hoodCompensationEnabled = false;
     }
 
+    public void setHoodCompensationMultiplier(double newMult) {
+        hoodCompensationMultiplier = newMult;
+    }
+
     @Override
     public void update() {
         if (!thisOpMode.opModeIsActive() || thisOpMode.isStopRequested()) return;
@@ -129,7 +134,7 @@ public class ShooterSubsystem extends Subsystem {
         if (shooter1Current > 1 && hoodCompensationEnabled) {
             double voltage = vSensor.getVoltage();
 
-            hoodServoOffset = Range.clip((shooter1Current) * (9 * (12.0 / voltage)), 0, 1000);
+            hoodServoOffset = Range.clip((shooter1Current) * (hoodCompensationMultiplier * (12.0 / voltage)), 0, 1000);
         }
 
         if (powerOff) {

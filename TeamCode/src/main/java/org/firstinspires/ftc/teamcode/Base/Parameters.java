@@ -18,15 +18,15 @@ public class Parameters {
     public final static Pose RED_CLOSE_AUTO_START = new Pose(9, -11.5, Math.toRadians(220));
     public final static Pose BLUE_CLOSE_AUTO_START = RED_CLOSE_AUTO_START.getMirroredCopy();
     public final static Pose RED_FAR_START = new Pose(-30.5, -125, Math.toRadians(180));
-    public final static Pose RED_SHOOTER_GOAL = new Pose(20, 0);
-//    public final static Pose RED_SHOOTER_GOAL = new Pose(20, 10);
+//    public final static Pose RED_SHOOTER_GOAL = new Pose(20, 0);
+    public final static Pose RED_SHOOTER_GOAL = new Pose(20, 10);
     public final static Pose BLUE_CLOSE_START = new Pose(-90, 0, RED_CLOSE_START.getMirroredCopy().getHeading());
     public final static Pose BLUE_FAR_START = RED_FAR_START.getMirroredCopy();
     public final static Pose BLUE_SHOOTER_GOAL = RED_SHOOTER_GOAL.getMirroredCopy();
     public static CustomPIDFCoefficients preciseTurnCoeffs = new CustomPIDFCoefficients(
-            3.5,
+            2,
             0,
-            0.04,
+            0.02,
             0);
 
     public final static double FINGER_SERVO_OPEN = 45;

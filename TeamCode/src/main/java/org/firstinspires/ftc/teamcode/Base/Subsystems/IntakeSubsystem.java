@@ -116,7 +116,7 @@ public class IntakeSubsystem extends Subsystem {
         intakeMotor1.update();
 
         if (transferDisabled && autoDisableTransfer) {
-            intakeMotor2.setPower(0);
+            intakeMotor2.setPower(Range.clip(intakePower, -1, .4));
         } else {
             intakeMotor2.setPower(Range.clip(intakePower, -1, intakeMotor2Limit));
         }

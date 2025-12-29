@@ -13,6 +13,7 @@ import org.firstinspires.ftc.teamcode.Base.Subsystems.ShooterSubsystem;
 import org.firstinspires.ftc.teamcode.bedroBathing.follower.Follower;
 import org.firstinspires.ftc.teamcode.bedroBathing.localization.Pose;
 import org.firstinspires.ftc.teamcode.bedroBathing.pathGeneration.MathFunctions;
+import org.firstinspires.ftc.teamcode.bedroBathing.pathGeneration.Path;
 import org.firstinspires.ftc.teamcode.bedroBathing.pathGeneration.PathBuilder;
 import org.firstinspires.ftc.teamcode.bedroBathing.pathGeneration.Point;
 
@@ -37,7 +38,7 @@ public class RobotManager {
     private boolean manualShooting = false;
 
     private double teleopHeadingGoal = 0;
-    private double transferSpeed = .7;
+    private double transferSpeed = 1;
     private boolean aimHoldPoint = false;
     private boolean aimAtGoal = true;
     private boolean useHoodCompensation = false;
@@ -47,7 +48,8 @@ public class RobotManager {
     private double distanceToGoal = 0;
     private boolean autoTransferStopEnabled = true;
     private boolean printDebugEnabled = false;
-    private ShootingStyle shootingStyle = ShootingStyle.STRAIGHT_ON;
+    private double pathGetHeadingToGoalTrackT = .75;
+    private ShootingStyle shootingStyle = ShootingStyle.STANDARD;
 
     // do NOT add a constructor to any of the subsystems!
     private final ShooterSubsystem shooterSubsystem = new ShooterSubsystem();
@@ -111,20 +113,74 @@ public class RobotManager {
         double rpmOffset = 0;
         double hoodOffset = 0;
 
-        if (shootingStyle == ShootingStyle.STRAIGHT_ON) {
+        if (shootingStyle == ShootingStyle.STANDARD) {
             rpmCurve.addPoint(65, 4380 + rpmOffset);
             hoodCurve.addPoint(65, 55 + hoodOffset);
 
             rpmCurve.addPoint(83, 4650 + rpmOffset);
             hoodCurve.addPoint(83, 75 + hoodOffset);
 
-            rpmCurve.addPoint(100, 4850 + rpmOffset);
-            hoodCurve.addPoint(100, 67 + hoodOffset);
+            rpmCurve.addPoint(100, 5050 + rpmOffset);
+            hoodCurve.addPoint(100, 80 + hoodOffset);
 
             rpmCurve.addPoint(140, 5500 + rpmOffset);
             hoodCurve.addPoint(140, 75 + hoodOffset);
+
+            shooterSubsystem.setHoodCompensationMultiplier(9);
         } else if (shootingStyle == ShootingStyle.LARGE_ARC) {
+            rpmCurve.addPoint(65, 4330 + rpmOffset);
+            hoodCurve.addPoint(65, 20 + hoodOffset);
+
+            rpmCurve.addPoint(76, 4425 + rpmOffset);
+            hoodCurve.addPoint(76, 20 + hoodOffset);
+
+            rpmCurve.addPoint(83, 4700 + rpmOffset);
+            hoodCurve.addPoint(83, 25 + hoodOffset);
+
+            rpmCurve.addPoint(100, 4950 + rpmOffset);
+            hoodCurve.addPoint(100, 35 + hoodOffset);
+
+            rpmCurve.addPoint(140, 5500 + rpmOffset);
+            hoodCurve.addPoint(140, 75 + hoodOffset);
+
+            shooterSubsystem.setHoodCompensationMultiplier(5);
         }
+
+//        if (shootingStyle == ShootingStyle.STANDARD) {
+//            rpmCurve.addPoint(65, 3900 + rpmOffset);
+//            hoodCurve.addPoint(65, 25 + hoodOffset);
+//
+//            rpmCurve.addPoint(76, 4400 + rpmOffset);
+//            hoodCurve.addPoint(76, 80 + hoodOffset);
+//
+//            rpmCurve.addPoint(83, 4400 + rpmOffset);
+//            hoodCurve.addPoint(83, 90 + hoodOffset);
+//
+//            rpmCurve.addPoint(100, 4600 + rpmOffset);
+//            hoodCurve.addPoint(100, 90 + hoodOffset);
+//
+//            rpmCurve.addPoint(131, 5150 + rpmOffset);
+//            hoodCurve.addPoint(131, 85 + hoodOffset);
+//
+//            shooterSubsystem.setHoodCompensationMultiplier(9);
+//        } else if (shootingStyle == ShootingStyle.LARGE_ARC) {
+//            rpmCurve.addPoint(65, 4330 + rpmOffset);
+//            hoodCurve.addPoint(65, 20 + hoodOffset);
+//
+//            rpmCurve.addPoint(76, 4400 + rpmOffset);
+//            hoodCurve.addPoint(76, 80 + hoodOffset);
+//
+//            rpmCurve.addPoint(83, 4700 + rpmOffset);
+//            hoodCurve.addPoint(83, 25 + hoodOffset);
+//
+//            rpmCurve.addPoint(100, 4600 + rpmOffset);
+//            hoodCurve.addPoint(100, 90 + hoodOffset);
+//
+//            rpmCurve.addPoint(140, 5500 + rpmOffset);
+//            hoodCurve.addPoint(140, 75 + hoodOffset);
+//
+//            shooterSubsystem.setHoodCompensationMultiplier(5);
+//        }
 
         rpmCurve.buildCurve();
         hoodCurve.buildCurve();
@@ -393,9 +449,7 @@ public class RobotManager {
         return follower.getPose().add(follower.getVelocity().returnMultiplied(.65).toPose());
     }
 
-    public double getHeadingToGoal() {
-        Pose robotPose = useVelocityCompensation ? getVelocityCorrectedPose() : getPose();
-
+    public double getHeadingToGoal(Pose robotPose) {
         Pose goalPos = Parameters.RED_SHOOTER_GOAL;
 
         if (side == AllianceSides.BLUE) {
@@ -403,6 +457,36 @@ public class RobotManager {
         }
 
         return (Math.atan2(goalPos.getY() - robotPose.getY(), goalPos.getX() - robotPose.getX()) + Math.toRadians(180));
+    }
+
+    public void stopAndAim() {
+        follower.breakFollowing();
+
+        follower.startTeleopDrive();
+        follower.setAutoHeadingState(true);
+
+        useGoalAimHeading();
+    }
+
+    public double getHeadingToGoal() {
+        return getHeadingToGoal(useVelocityCompensation ? getVelocityCorrectedPose() : getPose());
+    }
+
+    public double getHeadingToGoalWhileFollowingPath() {
+        if (follower.isBusy()) {
+            Path currentPath = follower.getCurrentPath();
+
+            if (follower.getCurrentTValue() < pathGetHeadingToGoalTrackT) {
+                Pose futurePose = new Pose();
+                Point futurePoint = currentPath.getPoint(pathGetHeadingToGoalTrackT);
+
+                futurePose.setX(futurePoint.getX());
+                futurePose.setY(futurePoint.getY());
+
+                return getHeadingToGoal(futurePose);
+            }
+        }
+        return getHeadingToGoal();
     }
 
     public void setTransferSpeed(double transferSpeed) {
