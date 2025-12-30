@@ -116,7 +116,7 @@ public class IntakeSubsystem extends Subsystem {
         intakeMotor1.update();
 
         if (transferDisabled && autoDisableTransfer) {
-            intakeMotor2.setPower(Range.clip(intakePower, -1, .4));
+            intakeMotor2.setPower(0);
         } else {
             intakeMotor2.setPower(Range.clip(intakePower, -1, intakeMotor2Limit));
         }
@@ -125,7 +125,7 @@ public class IntakeSubsystem extends Subsystem {
 
         double intakeMotor2Current = intakeMotor2.getCurrent();
 
-        if (intakeMotor2Current > 2 && autoDisableTransfer) {
+        if (intakeMotor2Current > 3 && autoDisableTransfer) {
             if (!transferDisabling) {
                 transferDisabling = true;
                 transferDisableTimeout.reset();

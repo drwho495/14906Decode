@@ -44,16 +44,6 @@ public class MainTeleop extends LinearOpMode {
     public void runOpMode() throws InterruptedException {
         RobotManager robot = new RobotManager(this);
         robot.initialise();
-        ElapsedTime resetIMUTimer = null;
-
-        if (!Parameters.IMU_RECALIBRATED) {
-            robot.resetIMU();
-            telemetry.addLine("Resetting IMU...");
-            telemetry.update();
-            resetIMUTimer = new ElapsedTime();
-
-            Parameters.IMU_RECALIBRATED = true;
-        }
 
         waitForStart();
 
@@ -62,12 +52,6 @@ public class MainTeleop extends LinearOpMode {
         robot.enableAutoTransferStop();
         robot.enableHoodCompensation();
         robot.enableVelocityCompensation();
-
-        if (resetIMUTimer != null) {
-            while (resetIMUTimer.time(TimeUnit.MILLISECONDS) < 3000 && opModeIsActive()) {
-                robot.update();
-            }
-        }
 
         robot.setAllianceSide(Parameters.LAST_ALLIANCE_SIDE);
         robot.powerOffShooter();
@@ -83,9 +67,7 @@ public class MainTeleop extends LinearOpMode {
         rightFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         robot.disableAutoHeading();
-
         robot.setState(OpModeStates.INTAKE_SCORE);
-        robot.setHoodServoPos(Parameters.HOOD_SERVO_DEFAULT);
 
         while (opModeIsActive() && !isStopRequested()) {
             Pose robotPose = robot.getPose();
@@ -103,7 +85,8 @@ public class MainTeleop extends LinearOpMode {
                 robotPose.setHeading(0);
 
                 robot.setPose(robotPose);
-            };
+            }
+
             if (gamepad1.psWasPressed()) robot.setPose(robot.getAllianceSide() == AllianceSides.BLUE ? Parameters.BLUE_CLOSE_START : Parameters.RED_CLOSE_START);
 
             switch (robot.getState()) {

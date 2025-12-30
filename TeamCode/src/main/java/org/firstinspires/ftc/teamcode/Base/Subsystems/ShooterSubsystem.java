@@ -141,8 +141,8 @@ public class ShooterSubsystem extends Subsystem {
             shooterMotor1.setVelocity(0);
             shooterMotor2.setVelocity(0);
         } else {
-            shooterMotor1.setVelocity((motorVelo * velocityMultiplier));
-            shooterMotor2.setVelocity((motorVelo * velocityMultiplier));
+            shooterMotor1.setVelocity(motorVelo * velocityMultiplier);
+            shooterMotor2.setVelocity(motorVelo * velocityMultiplier);
         }
 
         fingerServo.turnToAngle(fingerServoPos);

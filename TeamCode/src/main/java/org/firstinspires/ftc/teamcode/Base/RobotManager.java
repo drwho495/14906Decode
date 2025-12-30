@@ -90,7 +90,11 @@ public class RobotManager {
     }
 
     public void printDebugInfo() {
-        opMode.telemetry.addData("Robot Heading: ", Math.toDegrees(follower.getPose().getHeading()));
+        Pose robotPose = follower.getPose();
+
+        opMode.telemetry.addData("Robot X: ", robotPose.getX());
+        opMode.telemetry.addData("Robot Y: ", robotPose.getY());
+        opMode.telemetry.addData("Robot Heading: ", Math.toDegrees(robotPose.getHeading()));
         opMode.telemetry.addData("Robot Heading Error: ", Math.toDegrees(follower.headingError));
         opMode.telemetry.addData("Alliance Side: ", side == AllianceSides.BLUE ? "Blue" : "Red");
         opMode.telemetry.addData("Shooter RPM Goal: ", shooterSubsystem.getTargetVelocity());
@@ -114,14 +118,14 @@ public class RobotManager {
         double hoodOffset = 0;
 
         if (shootingStyle == ShootingStyle.STANDARD) {
-            rpmCurve.addPoint(65, 4380 + rpmOffset);
-            hoodCurve.addPoint(65, 55 + hoodOffset);
+            rpmCurve.addPoint(60, 4650 + rpmOffset);
+            hoodCurve.addPoint(60, 50 + hoodOffset);
 
-            rpmCurve.addPoint(83, 4650 + rpmOffset);
-            hoodCurve.addPoint(83, 75 + hoodOffset);
+            rpmCurve.addPoint(83, 4900 + rpmOffset);
+            hoodCurve.addPoint(83, 65 + hoodOffset);
 
-            rpmCurve.addPoint(100, 5050 + rpmOffset);
-            hoodCurve.addPoint(100, 80 + hoodOffset);
+            rpmCurve.addPoint(100, 4950 + rpmOffset);
+            hoodCurve.addPoint(100, 65 + hoodOffset);
 
             rpmCurve.addPoint(140, 5500 + rpmOffset);
             hoodCurve.addPoint(140, 75 + hoodOffset);
@@ -131,8 +135,8 @@ public class RobotManager {
             rpmCurve.addPoint(65, 4330 + rpmOffset);
             hoodCurve.addPoint(65, 20 + hoodOffset);
 
-            rpmCurve.addPoint(76, 4425 + rpmOffset);
-            hoodCurve.addPoint(76, 20 + hoodOffset);
+            rpmCurve.addPoint(76, 4550 + rpmOffset);
+            hoodCurve.addPoint(76, 25 + hoodOffset);
 
             rpmCurve.addPoint(83, 4700 + rpmOffset);
             hoodCurve.addPoint(83, 25 + hoodOffset);
@@ -143,7 +147,7 @@ public class RobotManager {
             rpmCurve.addPoint(140, 5500 + rpmOffset);
             hoodCurve.addPoint(140, 75 + hoodOffset);
 
-            shooterSubsystem.setHoodCompensationMultiplier(5);
+            shooterSubsystem.setHoodCompensationMultiplier(6);
         }
 
 //        if (shootingStyle == ShootingStyle.STANDARD) {
