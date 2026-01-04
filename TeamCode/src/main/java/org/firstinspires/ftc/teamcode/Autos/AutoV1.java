@@ -51,7 +51,7 @@ public class AutoV1 extends LinearOpMode {
 
         Pose robotPose = robot.getPose();
         Pose intakeStart = new Pose();
-        double intakeEndX = 10;
+        double intakeEndX = 8;
 
         if (number == 0) {
             intakeStart.setX(-20);
@@ -62,7 +62,7 @@ public class AutoV1 extends LinearOpMode {
         } else if (number == 2) {
             intakeStart.setX(-20);
             intakeStart.setY(-50);
-            intakeEndX = robot.getAllianceSide() == AllianceSides.RED ? 6 : 4;
+            intakeEndX = robot.getAllianceSide() == AllianceSides.RED ? 5 : 4;
         }
 
         if (number != 2) {
@@ -94,8 +94,7 @@ public class AutoV1 extends LinearOpMode {
             robot.safeSleep(150);
         }
 
-
-        robot.addPathTimeout(2000);
+        robot.addPathTimeout(4000);
         robot.setMaxFollowerPower(1);
         robot.runBlocking(new PathBuilder()
                         .addPath(new Path(
@@ -115,10 +114,10 @@ public class AutoV1 extends LinearOpMode {
             robotPose = robot.getPose();
             Pose mirroredRobotPose = robot.getFixedPose(robotPose);
 
-            double pushHeading = robot.getFixedHeading(270);
+            double pushHeading = robot.getFixedHeading(260);
 
             robot.setMaxFollowerPower(1);
-            robot.addPathTimeout(1250);
+            robot.addPathTimeout(900);
 
             boolean oldValue = FollowerConstants.useSecondaryHeadingPID;
             FollowerConstants.useSecondaryHeadingPID = false;
@@ -129,14 +128,13 @@ public class AutoV1 extends LinearOpMode {
                                             new Point(robotPose),
                                             // for this, we need to mirror the robot pose, make the transformation, then mirror it back
                                             // if we don't, the robot will drive forward closer to the scoring wall instead of away from it
-                                            robot.getFixedPoint(mirroredRobotPose.getX() - 10, mirroredRobotPose.getY() - 2),
-                                            robot.getFixedPoint(14, -55)
+                                            robot.getFixedPoint(mirroredRobotPose.getX() - 5, mirroredRobotPose.getY() - 2),
+                                            robot.getFixedPoint(14, -59)
                                     )
                             ))
-                            .addLinearHeadingInterpolation(robotPose.getHeading(), pushHeading, .5)
-                            .addConstantHeadingInterpolation(.5, pushHeading, 1)
+                            .addLinearHeadingInterpolation(robotPose.getHeading(), pushHeading)
                             .setPathEndTValueConstraint(.95)
-                            .setZeroPowerAccelerationMultiplier(4)
+                            .setZeroPowerAccelerationMultiplier(5)
                     , false);
 
             FollowerConstants.useSecondaryHeadingPID = oldValue;
@@ -152,7 +150,7 @@ public class AutoV1 extends LinearOpMode {
 
         robot.stopShootElement();
         robot.setIntakePower(1);
-        robot.setMaxFollowerPower(.95);
+        robot.setMaxFollowerPower(1);
         robot.update();
 
         if (autoStartPos == AutoStartPos.FAR_ZONE) {
@@ -198,10 +196,10 @@ public class AutoV1 extends LinearOpMode {
 
             robot.safeSleep(100);
         } else {
-            double wallY = 15.5; // 14.2
+            double wallY = 16.5; // 14.2
             double endHeading = robot.getFixedHeading(280);
 
-            robot.setMaxFollowerPower(1);
+            robot.setMaxFollowerPower(.8);
 
             robot.runBlocking(new PathBuilder()
                     .addPath(new Path(
@@ -269,7 +267,7 @@ public class AutoV1 extends LinearOpMode {
                                 .setPathEndTValueConstraint(.95)
                                 .setPathEndVelocityConstraint(1)
                                 .setZeroPowerAccelerationMultiplier(6)
-                        , false);
+                        , true);
             } else {
                 shootingPosition = robot.getFixedPose(-30, -40, Math.toRadians(180));
 
@@ -282,8 +280,11 @@ public class AutoV1 extends LinearOpMode {
                                                     new Point(shootingPosition)
                                             )
                                     ))
+//                                    .addParametricCallback(.75, () -> robot.setIntakePower(1))
+//                                    .addTangentHeadingInterpolation(0, true, .85)
                                     .addVariableHeadingInterpolation(0, Math.toRadians(270), shootingPosition.getHeading(), robot::getHeadingToGoalWhileFollowingPath, 1)
                                     .setPathEndTValueConstraint(.9)
+//                                    .setPathEndVelocityConstraint(1)
                                     .setZeroPowerAccelerationMultiplier(6)
                             , false);
                 } else if (cycleNumber == 2) {
@@ -295,9 +296,10 @@ public class AutoV1 extends LinearOpMode {
                                                     new Point(shootingPosition)
                                             )
                                     ))
-                                    .addConstantHeadingInterpolation(0, robot.getFixedHeading(0), .3)
-                                    .addVariableHeadingInterpolation(.3, Math.toRadians(270), shootingPosition.getHeading(), robot::getHeadingToGoalWhileFollowingPath, 1)
-                                    .setPathEndTValueConstraint(.94)
+//                                    .addParametricCallback(.5, () -> robot.setIntakePower(1))
+                                    .addVariableHeadingInterpolation(0, Math.toRadians(270), shootingPosition.getHeading(), robot::getHeadingToGoalWhileFollowingPath, 1)
+                                    .setPathEndTValueConstraint(.9)
+//                                    .setPathEndVelocityConstraint(1)
                                     .setZeroPowerAccelerationMultiplier(6)
                             , false);
                 } else if (cycleNumber == 3) {
@@ -309,8 +311,13 @@ public class AutoV1 extends LinearOpMode {
                                                     new Point(shootingPosition)
                                             )
                                     ))
+                                    .addParametricCallback(.3, () -> {
+//                                        robot.setIntakePower(1);
+                                    })
+//                                    .addTangentHeadingInterpolation(0, true, .85)
                                     .addVariableHeadingInterpolation(0, Math.toRadians(270), shootingPosition.getHeading(), robot::getHeadingToGoalWhileFollowingPath, 1)
-                                    .setPathEndTValueConstraint(.98)
+                                    .setPathEndTValueConstraint(.9)
+//                                    .setPathEndVelocityConstraint(1)
                                     .setZeroPowerAccelerationMultiplier(6)
                             , false);
                 }
@@ -329,7 +336,7 @@ public class AutoV1 extends LinearOpMode {
                             .setPathEndTValueConstraint(.99)
                             .setPathEndVelocityConstraint(.5)
                             .setZeroPowerAccelerationMultiplier(8)
-                    , false);
+                    , true);
 
             robot.waitForHeadingCorrection(.5, 2000, .15);
         }
@@ -350,6 +357,7 @@ public class AutoV1 extends LinearOpMode {
         robot.safeSleep(25);
         robot.startShootElement();
         headingErrors.add(Double.toString(Math.toDegrees(robot.getFollower().headingError)));
+//        robot.waitForHeadingCorrection(1, 500, 1);
 
         robot.safeSleep(autoStartPos == AutoStartPos.CLOSE_ZONE ? 850 : 2200);
 

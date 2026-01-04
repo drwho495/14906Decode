@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.Base.Subsystems;
 
+import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.qualcomm.robotcore.util.Range;
@@ -11,6 +12,7 @@ import org.firstinspires.ftc.teamcode.Base.HardwareBases.ComplexServo;
 import org.firstinspires.ftc.teamcode.Base.Parameters;
 import org.firstinspires.ftc.teamcode.bedroBathing.localization.Pose;
 
+@Config
 public class ShooterSubsystem extends Subsystem {
     private LinearOpMode thisOpMode = null;
     private ComplexMotor shooterMotor1;
@@ -24,9 +26,13 @@ public class ShooterSubsystem extends Subsystem {
     private double fingerServoPos = Parameters.FINGER_SERVO_OPEN;
     private double hoodServoPos = Parameters.HOOD_SERVO_DOWN;
     private double shooter1Current = 0;
+    private double shooter2Current = 0;
     private boolean hoodCompensationEnabled = false;
     private double hoodCompensationMultiplier = 9;
     public int numLaunchedBalls = 0;
+
+    public static double shooterP = 0.01;
+    public static double shooterF = 0.00323;
 
     private final double velocityMultiplier = 304.0/6000;
 
@@ -47,16 +53,13 @@ public class ShooterSubsystem extends Subsystem {
         shooterMotor1.setReversed(true);
 
         shooterMotor2.enableFloat();
-        shooterMotor2.setEncoderState(true);
-        shooterMotor2.resetEncoder();
         shooterMotor2.setMode(ComplexMotorModes.USE_VELOCITY_PID);
-        shooterMotor2.setReversed(true);
+        shooterMotor2.setReversed(false);
 
-        shooterMotor1.useCustomVeloPIDLoop(false);
-        shooterMotor2.useCustomVeloPIDLoop(false);
-
-        shooterMotor1.setVelocityPIDFCoefficients(10, 3, 0, 0);
-        shooterMotor2.setVelocityPIDFCoefficients(10, 3, 0, 0);
+        shooterMotor1.useCustomVeloPIDLoop(true);
+        shooterMotor1.setVelocityPIDFCoefficients(shooterP,0,0,shooterF);
+//        shooterMotor1.setVelocityPIDFCoefficients(8, 2.5, 0, 0);
+        shooterMotor1.setLinkedMotor(shooterMotor2);
 
         vSensor = thisOpMode.hardwareMap.voltageSensor.iterator().next();
 
@@ -127,23 +130,32 @@ public class ShooterSubsystem extends Subsystem {
     public void update() {
         if (!thisOpMode.opModeIsActive() || thisOpMode.isStopRequested()) return;
 
-        shooter1Current = shooterMotor1.getCurrent();
-
         double hoodServoOffset = 0;
 
-        if (shooter1Current > 1 && hoodCompensationEnabled) {
-            double voltage = vSensor.getVoltage();
+        shooterMotor1.setVelocityPIDFCoefficients(shooterP,0,0,shooterF);
 
-            hoodServoOffset = Range.clip((shooter1Current) * (hoodCompensationMultiplier * (12.0 / voltage)), 0, 1000);
+        if (hoodCompensationEnabled) {
+            shooter1Current = shooterMotor1.getCurrent();
+            shooter2Current = shooterMotor2.getCurrent();
+
+            if (shooter1Current > 1) {
+//                double voltage = vSensor.getVoltage();
+
+                hoodServoOffset = Range.clip((shooter1Current) * hoodCompensationMultiplier, 0, 1000);
+            }
+
+            thisOpMode.telemetry.addData("motor 1 current: ", shooter1Current);
+            thisOpMode.telemetry.addData("motor 2 current: ", shooter2Current);
         }
 
         if (powerOff) {
             shooterMotor1.setVelocity(0);
             shooterMotor2.setVelocity(0);
         } else {
-            shooterMotor1.setVelocity(motorVelo * velocityMultiplier);
-            shooterMotor2.setVelocity(motorVelo * velocityMultiplier);
+            shooterMotor1.setVelocity((motorVelo * velocityMultiplier));
+            shooterMotor2.setVelocity((motorVelo * velocityMultiplier));
         }
+
 
         fingerServo.turnToAngle(fingerServoPos);
         hoodServo.turnToAngle(Range.clip(hoodServoPos - hoodServoOffset, Parameters.HOOD_SERVO_DOWN, Parameters.HOOD_SERVO_UP));

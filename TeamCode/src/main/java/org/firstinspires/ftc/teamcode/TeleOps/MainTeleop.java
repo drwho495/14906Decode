@@ -25,7 +25,7 @@ public class MainTeleop extends LinearOpMode {
     // (callbacks with pedro pathing)
 
     private boolean canDrive = true;
-    private boolean autoStartShooterEnabled = true;
+    private boolean autoStartShooterEnabled = false;
     private boolean autoStartShooter = false;
     private boolean autoStartShootingStarted = false;
     private boolean autoStartShootingStopTimed = false;
@@ -44,6 +44,16 @@ public class MainTeleop extends LinearOpMode {
     public void runOpMode() throws InterruptedException {
         RobotManager robot = new RobotManager(this);
         robot.initialise();
+//        ElapsedTime resetIMUTimer = null;
+//
+//        if (!Parameters.IMU_RECALIBRATED) {
+//            robot.resetIMU();
+//            telemetry.addLine("Resetting IMU...");
+//            telemetry.update();
+//            resetIMUTimer = new ElapsedTime();
+//
+//            Parameters.IMU_RECALIBRATED = true;
+//        }
 
         waitForStart();
 
@@ -51,7 +61,13 @@ public class MainTeleop extends LinearOpMode {
         robot.setShootingStyle(ShootingStyle.STANDARD);
         robot.enableAutoTransferStop();
         robot.enableHoodCompensation();
-        robot.enableVelocityCompensation();
+        robot.disableVelocityCompensation();
+
+//        if (resetIMUTimer != null) {
+//            while (resetIMUTimer.time(TimeUnit.MILLISECONDS) < 3000 && opModeIsActive()) {
+//                robot.update();
+//            }
+//        }
 
         robot.setAllianceSide(Parameters.LAST_ALLIANCE_SIDE);
         robot.powerOffShooter();
@@ -67,7 +83,9 @@ public class MainTeleop extends LinearOpMode {
         rightFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         robot.disableAutoHeading();
+
         robot.setState(OpModeStates.INTAKE_SCORE);
+        robot.setHoodServoPos(Parameters.HOOD_SERVO_DEFAULT);
 
         while (opModeIsActive() && !isStopRequested()) {
             Pose robotPose = robot.getPose();
@@ -85,6 +103,10 @@ public class MainTeleop extends LinearOpMode {
                 robotPose.setHeading(0);
 
                 robot.setPose(robotPose);
+            }
+
+            if (gamepad1.shareWasPressed()) {
+                robot.resetIMU();
             }
 
             if (gamepad1.psWasPressed()) robot.setPose(robot.getAllianceSide() == AllianceSides.BLUE ? Parameters.BLUE_CLOSE_START : Parameters.RED_CLOSE_START);
@@ -190,15 +212,16 @@ public class MainTeleop extends LinearOpMode {
                 robot.setAllianceSide(robot.getAllianceSide() == AllianceSides.RED ? AllianceSides.BLUE : AllianceSides.RED);
             }
 
-//            Double[] shooterVelocities = robot.getCurrentShooterVelocities();
+            Double[] shooterRPMs = robot.getCurrentShooterVelocities();
 
             telemetry.addData("Robot Alliance: ", robot.getAllianceSide() == AllianceSides.BLUE ? "Blue Side" : "Red Side");
             telemetry.addData("Transfer Speed: ", robot.getTransferSpeed());
             telemetry.addData("Distance To Goal: ", robot.getDistanceToGoal());
             telemetry.addData("Target RPM: ", robot.getShooterTargetVelocity());
+            telemetry.addData("Actual RPM 1: ", shooterRPMs[0]);
+            telemetry.addData("Actual RPM 2: ", shooterRPMs[1]);
+            telemetry.addData("Hood Angle: ", robot.getHoodAngle());
             telemetry.addData("Disable Time: ", robot.getTransferDisableTime());
-//            telemetry.addData("Shooter 1 RPM: ", shooterVelocities[0]);
-//            telemetry.addData("Shooter 2 RPM: ", shooterVelocities[1]);
             telemetry.addData("Robot X: ", robotPose.getX());
             telemetry.addData("Robot Y: ", robotPose.getY());
             telemetry.addData("Robot Heading: ", Math.toDegrees(robotPose.getHeading()));

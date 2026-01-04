@@ -21,6 +21,7 @@ public class ComplexMotor {
     private double currentVelocity;
     private final PIDFController velocityController = new PIDFController(0, 0, 0, 0);
     private boolean useCustomVelocity = true;
+    private ComplexMotor childMotor = null;
 
     public ComplexMotor(String hwName, LinearOpMode newOpMode) {
         opMode = newOpMode;
@@ -34,6 +35,12 @@ public class ComplexMotor {
 
     public void enableFloat() {
         this.thisMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+    }
+
+    public void setLinkedMotor(ComplexMotor linkedMotor) {
+        this.childMotor = linkedMotor;
+        this.childMotor.setEncoderState(true);
+        this.childMotor.setMode(ComplexMotorModes.RAW_POWER);
     }
 
     public void setEncoderState(boolean use) {
@@ -89,8 +96,16 @@ public class ComplexMotor {
                     motorPower = velocityController.calculate(currentVelocity);
 
                     HardwareUtils.optimizeMethod(motorPower, thisMotor, thisMotor::setPower);
+
+                    if (childMotor != null) {
+                        HardwareUtils.optimizeMethod(motorPower, childMotor, childMotor::setPower);
+                    }
                 } else {
                     HardwareUtils.optimizeMethod(0, thisMotor, thisMotor::setPower);
+
+                    if (childMotor != null) {
+                        HardwareUtils.optimizeMethod(0, childMotor, childMotor::setPower);
+                    }
                 }
             } else {
                 if (targetVelocity != 0) {
@@ -106,6 +121,10 @@ public class ComplexMotor {
             }
         } else if (currentMode == ComplexMotorModes.RAW_POWER) {
             HardwareUtils.optimizeMethod(motorPower, thisMotor, thisMotor::setPower);
+
+            if (childMotor != null) {
+                HardwareUtils.optimizeMethod(motorPower, childMotor, childMotor::setPower);
+            }
         }
     }
 
@@ -121,11 +140,7 @@ public class ComplexMotor {
 
     public boolean atVelocity() {
         if (currentMode == ComplexMotorModes.USE_VELOCITY_PID) {
-            if (useCustomVelocity) {
-                return velocityController.atSetPoint();
-            } else {
-                return abs(currentVelocity - targetVelocity) < 5;
-            }
+            return abs(currentVelocity - targetVelocity) <= 4;
         }
         return true;
     }

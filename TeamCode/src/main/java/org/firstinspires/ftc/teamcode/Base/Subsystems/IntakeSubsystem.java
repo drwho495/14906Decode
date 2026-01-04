@@ -125,7 +125,7 @@ public class IntakeSubsystem extends Subsystem {
 
         double intakeMotor2Current = intakeMotor2.getCurrent();
 
-        if (intakeMotor2Current > 3 && autoDisableTransfer) {
+        if (intakeMotor2Current > 2.5 && autoDisableTransfer) {
             if (!transferDisabling) {
                 transferDisabling = true;
                 transferDisableTimeout.reset();
