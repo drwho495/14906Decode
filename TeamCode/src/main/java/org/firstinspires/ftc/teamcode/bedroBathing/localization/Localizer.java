@@ -102,4 +102,7 @@ public abstract class Localizer {
     public IMU getIMU() {
         return null;
     }
+
+    public void recalibrateIMU() {
+    }
 }

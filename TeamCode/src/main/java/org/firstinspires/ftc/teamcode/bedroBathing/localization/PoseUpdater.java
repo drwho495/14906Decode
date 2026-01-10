@@ -346,4 +346,8 @@ public class PoseUpdater {
     public void resetIMU() throws InterruptedException {
         localizer.resetIMU();
     }
+
+    public void recalibrateIMU() {
+        localizer.recalibrateIMU();
+    }
 }

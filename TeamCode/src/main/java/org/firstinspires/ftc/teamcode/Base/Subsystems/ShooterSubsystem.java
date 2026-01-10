@@ -31,7 +31,7 @@ public class ShooterSubsystem extends Subsystem {
     private double hoodCompensationMultiplier = 9;
     public int numLaunchedBalls = 0;
 
-    public static double shooterP = 0.01;
+    public static double shooterP = 0.02;
     public static double shooterF = 0.00323;
 
     private final double velocityMultiplier = 304.0/6000;
@@ -46,13 +46,13 @@ public class ShooterSubsystem extends Subsystem {
         shooterMotor1 = new ComplexMotor("shooterMotor1", thisOpMode);
         shooterMotor2 = new ComplexMotor("shooterMotor2", thisOpMode);
 
-        shooterMotor1.enableFloat();
+        shooterMotor1.enableBrake();
         shooterMotor1.setEncoderState(true);
         shooterMotor1.resetEncoder();
         shooterMotor1.setMode(ComplexMotorModes.USE_VELOCITY_PID);
         shooterMotor1.setReversed(true);
 
-        shooterMotor2.enableFloat();
+        shooterMotor2.enableBrake();
         shooterMotor2.setMode(ComplexMotorModes.USE_VELOCITY_PID);
         shooterMotor2.setReversed(false);
 

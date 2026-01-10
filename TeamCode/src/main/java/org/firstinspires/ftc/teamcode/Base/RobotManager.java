@@ -4,7 +4,10 @@ package org.firstinspires.ftc.teamcode.Base;
 // the hardware is inited in the subsystem files
 
 import com.qualcomm.hardware.lynx.LynxModule;
+import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.IMU;
+import com.qualcomm.robotcore.hardware.ImuOrientationOnRobot;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.Base.Helpers.PointsCurve;
@@ -51,6 +54,8 @@ public class RobotManager {
     private double pathGetHeadingToGoalTrackT = .75;
     private ShootingStyle shootingStyle = ShootingStyle.STANDARD;
     private boolean canShoot = false;
+    private boolean canShootOveride = false;
+    private double canShootAtVelocity = 0;
 
     // do NOT add a constructor to any of the subsystems!
     private final ShooterSubsystem shooterSubsystem = new ShooterSubsystem();
@@ -124,65 +129,28 @@ public class RobotManager {
             rpmCurve.addPoint(100, 4850 + rpmOffset);
             hoodCurve.addPoint(100, 67 + hoodOffset);
 
-            rpmCurve.addPoint(140, 5500 + rpmOffset);
-            hoodCurve.addPoint(140, 75 + hoodOffset);
+            rpmCurve.addPoint(140, 5100 + rpmOffset);
+            hoodCurve.addPoint(140, 70 + hoodOffset);
 
-            shooterSubsystem.setHoodCompensationMultiplier(9);
+            shooterSubsystem.setHoodCompensationMultiplier(4);
         } else if (shootingStyle == ShootingStyle.LARGE_ARC) {
-            rpmCurve.addPoint(65, 4330 + rpmOffset);
+            rpmCurve.addPoint(65, 3800 + rpmOffset);
             hoodCurve.addPoint(65, 20 + hoodOffset);
 
-            rpmCurve.addPoint(76, 4425 + rpmOffset);
+            rpmCurve.addPoint(76, 3850 + rpmOffset);
             hoodCurve.addPoint(76, 20 + hoodOffset);
 
-            rpmCurve.addPoint(83, 4700 + rpmOffset);
-            hoodCurve.addPoint(83, 25 + hoodOffset);
+            rpmCurve.addPoint(83, 3980 + rpmOffset);
+            hoodCurve.addPoint(83, 20 + hoodOffset);
 
-            rpmCurve.addPoint(100, 4950 + rpmOffset);
-            hoodCurve.addPoint(100, 35 + hoodOffset);
+            rpmCurve.addPoint(100, 4250 + rpmOffset);
+            hoodCurve.addPoint(100, 30 + hoodOffset);
 
-            rpmCurve.addPoint(140, 5500 + rpmOffset);
-            hoodCurve.addPoint(140, 75 + hoodOffset);
+            rpmCurve.addPoint(140, 5100 + rpmOffset);
+            hoodCurve.addPoint(140, 70 + hoodOffset);
 
             shooterSubsystem.setHoodCompensationMultiplier(7);
         }
-
-//        if (shootingStyle == ShootingStyle.STANDARD) {
-//            rpmCurve.addPoint(65, 3900 + rpmOffset);
-//            hoodCurve.addPoint(65, 25 + hoodOffset);
-//
-//            rpmCurve.addPoint(76, 4400 + rpmOffset);
-//            hoodCurve.addPoint(76, 80 + hoodOffset);
-//
-//            rpmCurve.addPoint(83, 4400 + rpmOffset);
-//            hoodCurve.addPoint(83, 90 + hoodOffset);
-//
-//            rpmCurve.addPoint(100, 4600 + rpmOffset);
-//            hoodCurve.addPoint(100, 90 + hoodOffset);
-//
-//            rpmCurve.addPoint(131, 5150 + rpmOffset);
-//            hoodCurve.addPoint(131, 85 + hoodOffset);
-//
-//            shooterSubsystem.setHoodCompensationMultiplier(9);
-//        } else if (shootingStyle == ShootingStyle.LARGE_ARC) {
-//            rpmCurve.addPoint(65, 4330 + rpmOffset);
-//            hoodCurve.addPoint(65, 20 + hoodOffset);
-//
-//            rpmCurve.addPoint(76, 4400 + rpmOffset);
-//            hoodCurve.addPoint(76, 80 + hoodOffset);
-//
-//            rpmCurve.addPoint(83, 4700 + rpmOffset);
-//            hoodCurve.addPoint(83, 25 + hoodOffset);
-//
-//            rpmCurve.addPoint(100, 4600 + rpmOffset);
-//            hoodCurve.addPoint(100, 90 + hoodOffset);
-//
-//            rpmCurve.addPoint(140, 5500 + rpmOffset);
-//            hoodCurve.addPoint(140, 75 + hoodOffset);
-//
-//            shooterSubsystem.setHoodCompensationMultiplier(5);
-//        }
-
         rpmCurve.buildCurve();
         hoodCurve.buildCurve();
     }
@@ -297,6 +265,7 @@ public class RobotManager {
 
     public void startShootElement() {
         canShoot = false;
+        canShootOveride = false;
         isShooting = true;
     }
 
@@ -474,6 +443,10 @@ public class RobotManager {
         return getHeadingToGoal(useVelocityCompensation ? getVelocityCorrectedPose() : getPose());
     }
 
+    public void recalibrateIMU() {
+        follower.recalibrateIMU();
+    }
+
     public double getHeadingToGoalWhileFollowingPath() {
         if (follower.isBusy()) {
             Path currentPath = follower.getCurrentPath();
@@ -540,19 +513,28 @@ public class RobotManager {
                         shooterSubsystem.disableHoodCompensation();
                     }
 
-                    if (distanceToGoal >= 58) {
-                        intakeSubsystem.setPowerLimits(1, distanceToGoal < 110 ? transferSpeed : .4);
-                    } else {
-                        intakeSubsystem.setPowerLimits(0, 0);
-                    }
-
-                    if (shooterSubsystem.ready() || canShoot) {
-                        if (intakeSubsystem.getIntakePower() > .5)
+                    if (shooterSubsystem.ready() || canShootOveride || (canShoot && Math.abs(canShootAtVelocity - shooterSubsystem.getTargetVelocity()) < 15)) {
+                        if (!canShoot) {
                             canShoot = true;
+                            canShootAtVelocity = shooterSubsystem.getTargetVelocity();
+                        }
+
+                        if (intakeSubsystem.getIntakePower() >= .5) {
+                            canShootOveride = true;
+                        }
+
+                        if (distanceToGoal >= 58) {
+                            intakeSubsystem.setPowerLimits(1, distanceToGoal < 110 ? transferSpeed : 1);
+                        } else {
+                            intakeSubsystem.setPowerLimits(0, 0);
+                        }
 
                         shooterSubsystem.openFinger();
                     } else {
+                        canShoot = false;
                         shooterSubsystem.closeFinger();
+
+                        intakeSubsystem.setPowerLimits(.5, 0);
                     }
                 } else {
                     shooterSubsystem.disableHoodCompensation();
@@ -699,5 +681,9 @@ public class RobotManager {
 
     public void holdPoint(Pose point) {
         follower.holdPoint(point);
+    }
+
+    public boolean shooterReady() {
+        return shooterSubsystem.ready();
     }
 }

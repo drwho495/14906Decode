@@ -218,6 +218,13 @@
          odo.setHeading(0, AngleUnit.RADIANS);
      }
 
+     @Override
+     public void recalibrateIMU() {
+         odo.resetPosAndIMU();
+         odo.recalibrateIMU();
+         odo.resetPosAndIMU();
+     }
+
      /**
       * This resets the OTOS.
       */

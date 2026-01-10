@@ -56,6 +56,7 @@ public class ShooterTuner extends LinearOpMode {
 
             telemetry.addData("Shooter 1 Motor Velocity: ", velocities[0]);
             telemetry.addData("Shooter 2 Motor Velocity: ", velocities[1]);
+            telemetry.addData("Shooter Ready: ", robot.shooterReady());
             telemetry.addData("Distance to Red Goal: ", robot.getDistanceToGoal());
             telemetry.addData("Shooter Velocity Target: ", robot.getShooterTargetVelocity());
             telemetry.addData("Hood Angle: ", robot.getHoodAngle());

@@ -241,7 +241,7 @@ public class AutoV1 extends LinearOpMode {
 
         robot.powerOffIntake();
         robot.powerOnShooter();
-        robot.setMaxFollowerPower(1);
+        robot.setMaxFollowerPower(cycleNumber == 0 ? .8 : 1);
 
         CustomPIDFCoefficients oldSecondaryHeading = FollowerConstants.secondaryHeadingPIDFCoefficients;
         double oldHoldPointScaling = FollowerConstants.holdPointHeadingScaling;

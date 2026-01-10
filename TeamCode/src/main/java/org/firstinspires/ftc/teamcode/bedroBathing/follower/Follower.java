@@ -1180,4 +1180,8 @@ public class Follower {
     public double getMaxPower() {
         return maxPower;
     }
+
+    public void recalibrateIMU() {
+        poseUpdater.recalibrateIMU();
+    }
 }

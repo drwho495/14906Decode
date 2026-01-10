@@ -25,7 +25,7 @@ public class MainTeleop extends LinearOpMode {
     // (callbacks with pedro pathing)
 
     private boolean canDrive = true;
-    private boolean autoStartShooterEnabled = false;
+    private boolean autoStartShooterEnabled = true;
     private boolean autoStartShooter = false;
     private boolean autoStartShootingStarted = false;
     private boolean autoStartShootingStopTimed = false;
@@ -43,6 +43,7 @@ public class MainTeleop extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
         RobotManager robot = new RobotManager(this);
+        robot.setShootingStyle(ShootingStyle.LARGE_ARC);
         robot.initialise();
 //        ElapsedTime resetIMUTimer = null;
 //
@@ -58,7 +59,6 @@ public class MainTeleop extends LinearOpMode {
         waitForStart();
 
         robot.setTransferSpeed(1);
-        robot.setShootingStyle(ShootingStyle.STANDARD);
         robot.enableAutoTransferStop();
         robot.enableHoodCompensation();
         robot.disableVelocityCompensation();
@@ -106,7 +106,7 @@ public class MainTeleop extends LinearOpMode {
             }
 
             if (gamepad1.shareWasPressed()) {
-                robot.resetIMU();
+                robot.recalibrateIMU();
             }
 
             if (gamepad1.psWasPressed()) robot.setPose(robot.getAllianceSide() == AllianceSides.BLUE ? Parameters.BLUE_CLOSE_START : Parameters.RED_CLOSE_START);
