@@ -29,9 +29,10 @@ public class ShooterSubsystem extends Subsystem {
     private double shooter2Current = 0;
     private boolean hoodCompensationEnabled = false;
     private double hoodCompensationMultiplier = 9;
+    private double lastVelocity = 0;
     public int numLaunchedBalls = 0;
 
-    public static double shooterP = 0.02;
+    public static double shooterP = 0.03;
     public static double shooterF = 0.00323;
 
     private final double velocityMultiplier = 304.0/6000;
@@ -126,6 +127,10 @@ public class ShooterSubsystem extends Subsystem {
         hoodCompensationMultiplier = newMult;
     }
 
+    public double getRateOfChange() {
+        return getVelocities()[0] / lastVelocity;
+    }
+
     @Override
     public void update() {
         if (!thisOpMode.opModeIsActive() || thisOpMode.isStopRequested()) return;
@@ -139,29 +144,25 @@ public class ShooterSubsystem extends Subsystem {
             shooter2Current = shooterMotor2.getCurrent();
 
             if (shooter1Current > 1) {
-//                double voltage = vSensor.getVoltage();
-
                 hoodServoOffset = Range.clip((shooter1Current) * hoodCompensationMultiplier, 0, 1000);
             }
-
-            thisOpMode.telemetry.addData("motor 1 current: ", shooter1Current);
-            thisOpMode.telemetry.addData("motor 2 current: ", shooter2Current);
         }
 
         if (powerOff) {
             shooterMotor1.setVelocity(0);
             shooterMotor2.setVelocity(0);
         } else {
-            shooterMotor1.setVelocity((motorVelo * velocityMultiplier));
-            shooterMotor2.setVelocity((motorVelo * velocityMultiplier));
+            shooterMotor1.setVelocity(motorVelo * velocityMultiplier);
+            shooterMotor2.setVelocity(motorVelo * velocityMultiplier);
         }
-
 
         fingerServo.turnToAngle(fingerServoPos);
         hoodServo.turnToAngle(Range.clip(hoodServoPos - hoodServoOffset, Parameters.HOOD_SERVO_DOWN, Parameters.HOOD_SERVO_UP));
 
         shooterMotor1.update();
         shooterMotor2.update();
+
+        lastVelocity = getVelocities()[0];
     }
 
     public boolean isPoweredOn() {

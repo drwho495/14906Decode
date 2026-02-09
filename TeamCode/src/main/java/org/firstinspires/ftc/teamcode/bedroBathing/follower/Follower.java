@@ -264,6 +264,15 @@ public class Follower {
     }
 
     /**
+     * This returns the current angular velocity of the robot as a Double.
+     *
+     * @return returns the current velocity as a double.
+     */
+    public double getAngularVelocity() {
+        return poseUpdater.getAngularVelocity();
+    }
+
+    /**
      * This returns the current acceleration of the robot as a Vector.
      *
      * @return returns the current acceleration as a Vector.

@@ -16,7 +16,8 @@ public class IntakeSubsystem extends Subsystem {
     private LinearOpMode thisOpMode = null;
     private ComplexMotor intakeMotor1;
     private ComplexMotor intakeMotor2;
-    private double intakePower = 0;
+    private double intakeMotor1Power = 0;
+    private double intakeMotor2Power = 0;
     private double intakeMotor1Limit = 1;
     private double intakeMotor2Limit = 1;
     private boolean autoDisableTransfer = true;
@@ -58,27 +59,25 @@ public class IntakeSubsystem extends Subsystem {
     }
 
     public void powerIntakeOn() {
-        intakePower = Parameters.INTAKE_SPEED;
+        intakeMotor1Power = Parameters.INTAKE_SPEED;
+        intakeMotor2Power = Parameters.INTAKE_SPEED;
     }
 
     public double getIntakePower() {
-        return intakePower;
+        return (intakeMotor1Power + intakeMotor2Power) / 2;
     }
 
     public boolean isIntakeOn() {
-        return intakePower != 0;
+        return (intakeMotor1Power != 0 && intakeMotor2Power != 0);
     }
 
     public double getTransferLockTime() {
         return (transferDisabling && autoDisableTransfer) ? transferDisableTimeout.time(TimeUnit.MILLISECONDS) : -1;
     }
 
-    public void powerIntakeIdle() {
-        intakePower = Parameters.INTAKE_IDLE;
-    }
-
     public void powerIntakeOff() {
-        intakePower = 0;
+        intakeMotor1Power = 0;
+        intakeMotor2Power = 0;
     }
 
     public boolean isAutoTransferOffEnabled() {
@@ -112,20 +111,20 @@ public class IntakeSubsystem extends Subsystem {
     public void update() {
         if (!thisOpMode.opModeIsActive() || thisOpMode.isStopRequested()) return;
 
-        intakeMotor1.setPower(Range.clip(intakePower, -1, intakeMotor1Limit));
+        intakeMotor1.setPower(Range.clip(intakeMotor1Power, -1, intakeMotor1Limit));
         intakeMotor1.update();
 
         if (transferDisabled && autoDisableTransfer) {
             intakeMotor2.setPower(0);
         } else {
-            intakeMotor2.setPower(Range.clip(intakePower, -1, intakeMotor2Limit));
+            intakeMotor2.setPower(Range.clip(intakeMotor2Power, -1, intakeMotor2Limit));
         }
 
         intakeMotor2.update();
 
         double intakeMotor2Current = intakeMotor2.getCurrent();
 
-        if (intakeMotor2Current > 2.5 && autoDisableTransfer) {
+        if (intakeMotor2Current > 3.2 && autoDisableTransfer) {
             if (!transferDisabling) {
                 transferDisabling = true;
                 transferDisableTimeout.reset();
@@ -160,7 +159,8 @@ public class IntakeSubsystem extends Subsystem {
     }
 
     public void setIntakePower(double newPower) {
-        intakePower = newPower;
+        intakeMotor1Power = newPower;
+        intakeMotor2Power = newPower;
     }
 
     public boolean isTransferStalled() {
@@ -169,5 +169,10 @@ public class IntakeSubsystem extends Subsystem {
 
     public int getHeldBallCount() {
         return ballCount;
+    }
+
+    public void setIntakePowers(double motor1Power, int motor2Power) {
+        intakeMotor1Power = motor1Power;
+        intakeMotor2Power = motor2Power;
     }
 }

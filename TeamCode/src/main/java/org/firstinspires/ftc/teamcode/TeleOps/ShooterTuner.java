@@ -17,7 +17,7 @@ public class ShooterTuner extends LinearOpMode {
         robot = new RobotManager(this);
         robot.setState(OpModeStates.INTAKE_SCORE);
         robot.initialise();
-        robot.enableManualShooting();
+        robot.enableManualShooterControl();
 
         waitForStart();
 
@@ -33,9 +33,9 @@ public class ShooterTuner extends LinearOpMode {
             if (gamepad1.aWasPressed()) robot.toggleShooter();
 
             if (gamepad1.leftBumperWasPressed()) {
-                robot.startShootElement();
+                robot.enableShooting();
             } else if (gamepad1.leftBumperWasReleased()) {
-                robot.stopShootElement();
+                robot.disableShooting();
             }
 
             robot.setIntakePower(gamepad1.right_trigger);

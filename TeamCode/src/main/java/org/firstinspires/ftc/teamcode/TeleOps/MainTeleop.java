@@ -61,7 +61,9 @@ public class MainTeleop extends LinearOpMode {
         robot.setTransferSpeed(1);
         robot.enableAutoTransferStop();
         robot.enableHoodCompensation();
-        robot.disableVelocityCompensation();
+        robot.enableWaitForVelocityToShoot();
+        robot.disableOnlyShootInZone();
+        robot.enableVelocityCompensation();
 
 //        if (resetIMUTimer != null) {
 //            while (resetIMUTimer.time(TimeUnit.MILLISECONDS) < 3000 && opModeIsActive()) {
@@ -117,11 +119,14 @@ public class MainTeleop extends LinearOpMode {
                 case INTAKE_SCORE:
                     robot.useGoalAimHeading();
 
-                    if (gamepad1.aWasPressed()) {
-                        robot.setTransferSpeed(.2);
-                    } else if (gamepad1.yWasPressed()) {
-                        robot.setTransferSpeed(1);
-                    }
+//                    if (gamepad1.aWasPressed()) {
+//                        robot.enableShooting();
+//                        robot.enableAutomaticTeleopShooting();
+//                        robot.powerOnShooter();
+//                    } else if (gamepad1.aWasReleased()) {
+//                        robot.disableAutomaticTeleopShooting();
+//                        robot.disableShooting();
+//                    }
 
                     if (gamepad1.right_trigger > .1) {
                         robot.setIntakePower(gamepad1.right_trigger);
@@ -132,9 +137,9 @@ public class MainTeleop extends LinearOpMode {
                     }
 
                     if (gamepad1.leftBumperWasPressed()) {
-                        robot.startShootElement();
+                        robot.enableShooting();
                     } else if (gamepad1.leftBumperWasReleased()) {
-                        robot.stopShootElement();
+                        robot.disableShooting();
                     }
 
                     if (gamepad1.dpadRightWasPressed() || gamepad2.dpadRightWasPressed()) {
@@ -214,6 +219,8 @@ public class MainTeleop extends LinearOpMode {
 
             Double[] shooterRPMs = robot.getCurrentShooterVelocities();
 
+            telemetry.addData("Is Shooting: ", robot.isShooting());
+            telemetry.addData("Angular Velocity: ", robot.getFollower().getAngularVelocity());
             telemetry.addData("Robot Alliance: ", robot.getAllianceSide() == AllianceSides.BLUE ? "Blue Side" : "Red Side");
             telemetry.addData("Transfer Speed: ", robot.getTransferSpeed());
             telemetry.addData("Distance To Goal: ", robot.getDistanceToGoal());
