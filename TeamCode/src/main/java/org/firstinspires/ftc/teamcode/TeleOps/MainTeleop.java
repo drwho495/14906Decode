@@ -142,6 +142,14 @@ public class MainTeleop extends LinearOpMode {
                         robot.disableShooting();
                     }
 
+                    if (gamepad1.bWasPressed()) {
+                        if (robot.getShootingStyle() != ShootingStyle.UNJAM) {
+                            robot.setShootingStyle(ShootingStyle.UNJAM);
+                        } else {
+                            robot.setShootingStyle(ShootingStyle.LARGE_ARC);
+                        }
+                    }
+
                     if (gamepad1.dpadRightWasPressed() || gamepad2.dpadRightWasPressed()) {
                         shooterVelocity += 100;
                     }

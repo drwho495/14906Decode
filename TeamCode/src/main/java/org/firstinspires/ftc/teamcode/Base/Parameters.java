@@ -10,8 +10,10 @@ import org.firstinspires.ftc.teamcode.bedroBathing.util.CustomPIDFCoefficients;
 @Config
 public class Parameters {
     public final static double INTAKE_SPEED = 1;
-    public final static double INTAKE_IDLE = .3;
     public final static double SHOOTER_DEFAULT_RPM = 4500;
+    public static final double MIN_SHOOT_DISTANCE = 47;
+    public static final double FAR_ZONE_DISTANCE = 110;
+    public static final double SLOW_TRANSFER = .8;
 
     public static AllianceSides LAST_ALLIANCE_SIDE = AllianceSides.RED;
     public final static Pose RED_CLOSE_START = new Pose(0, 0, Math.toRadians(220));

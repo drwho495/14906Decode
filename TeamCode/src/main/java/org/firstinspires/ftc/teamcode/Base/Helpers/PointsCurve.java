@@ -6,10 +6,15 @@ import org.apache.commons.math3.fitting.WeightedObservedPoints;
 
 public class PointsCurve {
     private final WeightedObservedPoints pointArray = new WeightedObservedPoints();
-//    private Gaussian fittedGaussian = null;
     private double[] coefficients = null;
+    private boolean isBuilt = false;
 
     public void addPoint(double x, double y) {
+        if (isBuilt()) {
+            pointArray.clear();
+            isBuilt = false;
+        }
+
         pointArray.add(x, y);
     }
 
@@ -17,7 +22,11 @@ public class PointsCurve {
         final PolynomialCurveFitter fitter = PolynomialCurveFitter.create(3);
         coefficients = fitter.fit(pointArray.toList());
 
-//        fittedGaussian = new Gaussian(coefficients[0], coefficients[1], coefficients[2]);
+        isBuilt = true;
+    }
+
+    public boolean isBuilt() {
+        return isBuilt;
     }
 
     public double getY(double x) {

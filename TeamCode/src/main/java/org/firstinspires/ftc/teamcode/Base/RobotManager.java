@@ -149,7 +149,6 @@ public class RobotManager {
         intakeSubsystem.initialiseHardware();
 
         follower = new Follower(opMode.hardwareMap);
-//        follower.initialize();
 
         List<LynxModule> hubs = opMode.hardwareMap.getAll(LynxModule.class);
 
@@ -158,9 +157,6 @@ public class RobotManager {
         }
 
         HardwareUtils.previousValues.clear();
-
-        double rpmOffset = 0;
-        double hoodOffset = 0;
 
         Pose closeEndPoint = new Pose(-48, -65);
         Pose closeGoalPoint = new Pose(10, -10);
@@ -178,38 +174,49 @@ public class RobotManager {
 
         robotGeometricRepresentation = Polygon.makeRectangle(12, 18);
 
+        buildRPMCurves();
+    }
+    
+    private void buildRPMCurves() {
         if (shootingStyle == ShootingStyle.STANDARD) {
-            rpmCurve.addPoint(65, 4380 + rpmOffset);
-            hoodCurve.addPoint(65, 55 + hoodOffset);
+            rpmCurve.addPoint(65, 4380);
+            hoodCurve.addPoint(65, 55);
 
-            rpmCurve.addPoint(83, 4650 + rpmOffset);
-            hoodCurve.addPoint(83, 75 + hoodOffset);
+            rpmCurve.addPoint(83, 4650);
+            hoodCurve.addPoint(83, 75);
 
-            rpmCurve.addPoint(100, 4850 + rpmOffset);
-            hoodCurve.addPoint(100, 67 + hoodOffset);
+            rpmCurve.addPoint(100, 4850);
+            hoodCurve.addPoint(100, 67);
 
-            rpmCurve.addPoint(140, 5100 + rpmOffset);
-            hoodCurve.addPoint(140, 70 + hoodOffset);
+            rpmCurve.addPoint(140, 5100);
+            hoodCurve.addPoint(140, 70);
 
             shooterSubsystem.setHoodCompensationMultiplier(4);
         } else if (shootingStyle == ShootingStyle.LARGE_ARC) {
-            rpmCurve.addPoint(65, 3800 + rpmOffset);
-            hoodCurve.addPoint(65, 20 + hoodOffset);
+            rpmCurve.addPoint(65, 3800);
+            hoodCurve.addPoint(65, 20);
 
-            rpmCurve.addPoint(76, 3850 + rpmOffset);
-            hoodCurve.addPoint(76, 20 + hoodOffset);
+            rpmCurve.addPoint(76, 3850);
+            hoodCurve.addPoint(76, 20);
 
-            rpmCurve.addPoint(83, 3980 + rpmOffset);
-            hoodCurve.addPoint(83, 20 + hoodOffset);
+            rpmCurve.addPoint(83, 3980);
+            hoodCurve.addPoint(83, 20);
 
-            rpmCurve.addPoint(100, 4250 + rpmOffset);
-            hoodCurve.addPoint(100, 30 + hoodOffset);
+            rpmCurve.addPoint(100, 4250);
+            hoodCurve.addPoint(100, 30);
 
-            rpmCurve.addPoint(140, 5300 + rpmOffset);
-            hoodCurve.addPoint(140, 75 + hoodOffset);
+            rpmCurve.addPoint(140, 5300);
+            hoodCurve.addPoint(140, 75);
 
             shooterSubsystem.setHoodCompensationMultiplier(7);
+        } else if (shootingStyle == ShootingStyle.UNJAM) {
+            rpmCurve.addPoint(81, 4284);
+            hoodCurve.addPoint(81, 120);
+
+            rpmCurve.addPoint(81, 4284);
+            hoodCurve.addPoint(81, 120);
         }
+
         rpmCurve.buildCurve();
         hoodCurve.buildCurve();
     }
@@ -244,7 +251,7 @@ public class RobotManager {
 
     public void setDrivePowers(double x, double y, double heading, boolean fieldCentric) {
         if (!follower.teleopDriveEnabled()) {
-            follower.breakFollowing();
+            breakFollowing();
             follower.startTeleopDrive();
         }
 
@@ -373,6 +380,15 @@ public class RobotManager {
 
     public void setShootingStyle(ShootingStyle shootingStyle) {
         this.shootingStyle = shootingStyle;
+
+        // rebuild the curves if the driver wants to change how they shoot mid-match
+//        if (rpmCurve.isBuilt() || hoodCurve.isBuilt()) {
+            buildRPMCurves();
+//        }
+    }
+
+    public ShootingStyle getShootingStyle() {
+        return this.shootingStyle;
     }
 
     private void internalRunPath(PathBuilder path, boolean correctAfterFinished) {
@@ -521,6 +537,11 @@ public class RobotManager {
         autoTimer.reset();
     }
 
+    public void clearPathTimeout() {
+        autoTimeout = -1;
+        autoTimer.reset();
+    }
+
     public Pose getVelocityCorrectedPose() {
         return follower.getPose().add(follower.getVelocity().returnMultiplied(.5).toPose());
     }
@@ -540,7 +561,7 @@ public class RobotManager {
     }
 
     public void stopAndAim() {
-        follower.breakFollowing();
+        breakFollowing();
 
         follower.startTeleopDrive();
         follower.setAutoHeadingState(true);
@@ -614,29 +635,6 @@ public class RobotManager {
 
             if (aimAtGoal) {
                 teleopHeadingGoal = getHeadingToGoal();
-
-//                if (!autoTeleShooting || autoTeleShootingHeadingSwitch) {
-//                    teleopHeadingGoal = getHeadingToGoal();
-//                } else {
-//                    Pose shootingTargetPos = getAllianceSide() == AllianceSides.BLUE ? Parameters.BLUE_TELEOP_SHOOTING_GOAL : Parameters.RED_TELEOP_SHOOTING_GOAL;
-//                    Vector robotVelocity = follower.getVelocity();
-//
-//                    double headingGoalAtTargetError = (getHeadingToGoal(shootingTargetPos) - getPose().getHeading());
-//                    double distance = MathFunctions.distance(shootingTargetPos, robotVelocity.toPose());
-//                    double timeToTarget = distance / robotVelocity.getMagnitude();
-//                    double timeToTurn = headingGoalAtTargetError * 2;
-//
-//                    if (Math.abs(MathFunctions.distance(shootingTargetPos, getVelocityCorrectedPose())) <= 20) {
-//                        teleopHeadingGoal = getHeadingToGoal();
-//                        autoTeleShootingHeadingSwitch = true;
-//                    } else {
-//                        teleopHeadingGoal = getHeadingToPose(getPose(), shootingTargetPos);
-//                    }
-//
-//                    opMode.telemetry.addData("time: ", timeToTarget);
-//                    opMode.telemetry.addData("time to turn: ", Math.abs(timeToTurn));
-//                    opMode.telemetry.addData("headingGoalAtTargetError: ", headingGoalAtTargetError);
-//                }
             }
 
             follower.setTeleopHeadingGoal(teleopHeadingGoal);
@@ -708,8 +706,8 @@ public class RobotManager {
                             intakeSubsystem.setIntakePower(1);
                         }
 
-                        if (distanceToGoal >= 47) {
-                            intakeSubsystem.setPowerLimits(1, distanceToGoal < 110 ? transferSpeed : .8);
+                        if (distanceToGoal >= Parameters.MIN_SHOOT_DISTANCE) {
+                            intakeSubsystem.setPowerLimits(1, distanceToGoal < Parameters.FAR_ZONE_DISTANCE ? transferSpeed : Parameters.SLOW_TRANSFER);
                         } else {
                             intakeSubsystem.setPowerLimits(0, 0);
                         }
@@ -830,6 +828,8 @@ public class RobotManager {
 
     public void breakFollowing() {
         follower.breakFollowing();
+
+        clearPathTimeout();
     }
 
     public void breakFollowing(boolean holdPoint) {
@@ -845,7 +845,7 @@ public class RobotManager {
             lastPose = new Pose(lastPoint.getX(), lastPoint.getY(), lastPath.getPathEndHeadingConstraint());
         }
 
-        follower.breakFollowing();
+        breakFollowing();
 
         if (holdPoint) {
             follower.holdPoint(lastPose);
@@ -891,10 +891,6 @@ public class RobotManager {
 
             update();
         }
-    }
-
-    public void holdPoint(Pose point) {
-        follower.holdPoint(point);
     }
 
     public boolean shooterReady() {
