@@ -73,8 +73,10 @@ public class Pose {
      *
      * @param set the heading value
      */
-    public void setHeading(double set) {
+    public Pose setHeading(double set) {
         heading = MathFunctions.normalizeAngle(set);
+
+        return this;
     }
 
     /**

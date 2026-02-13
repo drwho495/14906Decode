@@ -380,8 +380,8 @@ public class RobotManager {
         follower.update();
 
         while (follower.isBusy() && !opMode.isStopRequested() && opMode.opModeIsActive()) {
-            if (autoTimeout > 0 && autoTimer.time(TimeUnit.MILLISECONDS) > autoTimeout) {
-                follower.breakFollowing();
+            if (autoTimeout > 0 && autoTimer.time(TimeUnit.MILLISECONDS) >= autoTimeout) {
+                breakFollowing(correctAfterFinished);
                 break;
             }
 
@@ -401,7 +401,7 @@ public class RobotManager {
 
                     if (startTime - pair.second >= 500) {
                         if (numberOfInstances != 0 && Math.abs(summedVelocity / numberOfInstances) <= 3) {
-                            breakFollowing();
+                            breakFollowing(correctAfterFinished);
                         }
 
                         break;
@@ -419,6 +419,10 @@ public class RobotManager {
 
     public void runBlocking(PathBuilder path) {
         if (!follower.isBusy()) internalRunPath(path, true);
+    }
+
+    public void runPassthrough(PathBuilder path) {
+        follower.followPath(path.build());
     }
 
     /*
@@ -502,6 +506,10 @@ public class RobotManager {
     public void safeSleep(double time) {
         ElapsedTime timer = new ElapsedTime();
 
+        safeSleep(timer, time);
+    }
+
+    public void safeSleep(ElapsedTime timer, double time) {
         while (timer.time(TimeUnit.MILLISECONDS) < time && opMode.opModeIsActive() && !opMode.isStopRequested()) {
             update();
             follower.update();
@@ -528,7 +536,7 @@ public class RobotManager {
     }
 
     public double getHeadingToPose(Pose robotPose, Pose targetPose) {
-        return (Math.atan2(targetPose.getY() - robotPose.getY(), targetPose.getX() - robotPose.getX()) + Math.toRadians(180));
+        return (Math.atan2(targetPose.getY() - robotPose.getY(), targetPose.getX() - robotPose.getX()) + Math.PI);
     }
 
     public void stopAndAim() {
@@ -700,7 +708,7 @@ public class RobotManager {
                             intakeSubsystem.setIntakePower(1);
                         }
 
-                        if (distanceToGoal >= 58) {
+                        if (distanceToGoal >= 47) {
                             intakeSubsystem.setPowerLimits(1, distanceToGoal < 110 ? transferSpeed : .8);
                         } else {
                             intakeSubsystem.setPowerLimits(0, 0);
@@ -824,6 +832,26 @@ public class RobotManager {
         follower.breakFollowing();
     }
 
+    public void breakFollowing(boolean holdPoint) {
+        boolean canHoldPoint = holdPoint && follower.isBusy();
+
+        Path lastPath = null;
+        Point lastPoint = null;
+        Pose lastPose = null;
+
+        if (canHoldPoint) {
+            lastPath = follower.getCurrentPath();
+            lastPoint = lastPath.getLastControlPoint();
+            lastPose = new Pose(lastPoint.getX(), lastPoint.getY(), lastPath.getPathEndHeadingConstraint());
+        }
+
+        follower.breakFollowing();
+
+        if (holdPoint) {
+            follower.holdPoint(lastPose);
+        }
+    }
+
     public double getHoodAngle() {
         return shooterSubsystem.getHoodAngle();
     }
@@ -871,5 +899,18 @@ public class RobotManager {
 
     public boolean shooterReady() {
         return shooterSubsystem.ready();
+    }
+
+    public void turnTo(double headingGoal, double error) {
+        Pose targetPose = getPose();
+
+        targetPose.setHeading(headingGoal);
+
+        follower.holdPoint(targetPose);
+        follower.update();
+
+        while (opMode.opModeIsActive() && Math.abs(follower.headingError) > error) {
+            update();
+        }
     }
 }

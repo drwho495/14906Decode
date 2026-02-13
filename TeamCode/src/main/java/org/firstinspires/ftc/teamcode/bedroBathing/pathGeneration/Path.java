@@ -303,7 +303,7 @@ public class Path {
     public HeadingInterpolation getHeadingInterpolation(double t) {
         HeadingInterpolation currentHeadingInterpolation = null;
 
-        if (headingInterpolations.size() != 0) {
+        if (!headingInterpolations.isEmpty()) {
             for (HeadingInterpolation headingInterpolation : headingInterpolations) {
                 if (headingInterpolation.tInRange(t)) {
                     currentHeadingInterpolation = headingInterpolation;
