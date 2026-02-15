@@ -34,6 +34,7 @@ public class RobotManager {
     private Follower follower = null;
     private AllianceSides side = Parameters.LAST_ALLIANCE_SIDE;
     private double autoTimeout = -1;
+    private Pose goalPos = Parameters.SHOOTER_GOAL_CLOSE;
 
     private final ElapsedTime autoTimer = new ElapsedTime();
     private final ElapsedTime timer = new ElapsedTime();
@@ -205,8 +206,8 @@ public class RobotManager {
             rpmCurve.addPoint(100, 4250);
             hoodCurve.addPoint(100, 30);
 
-            rpmCurve.addPoint(140, 5300);
-            hoodCurve.addPoint(140, 75);
+            rpmCurve.addPoint(140, 5380);
+            hoodCurve.addPoint(140, 77);
 
             shooterSubsystem.setHoodCompensationMultiplier(7);
         } else if (shootingStyle == ShootingStyle.UNJAM) {
@@ -547,12 +548,6 @@ public class RobotManager {
     }
 
     public double getHeadingToGoal(Pose robotPose) {
-        Pose goalPos = Parameters.RED_SHOOTER_GOAL;
-
-        if (side == AllianceSides.BLUE) {
-            goalPos = Parameters.BLUE_SHOOTER_GOAL;
-        }
-
         return getHeadingToPose(robotPose, goalPos);
     }
 
@@ -621,6 +616,11 @@ public class RobotManager {
 
     public void setAllianceSide(AllianceSides newSide) {
         side = newSide;
+        setShooterZone(Parameters.SHOOTER_GOAL_CLOSE);
+    }
+
+    private void setShooterZone(Pose newZone) {
+        goalPos = getFixedPose(newZone);
     }
 
     public void update() {
@@ -707,7 +707,15 @@ public class RobotManager {
                         }
 
                         if (distanceToGoal >= Parameters.MIN_SHOOT_DISTANCE) {
-                            intakeSubsystem.setPowerLimits(1, distanceToGoal < Parameters.FAR_ZONE_DISTANCE ? transferSpeed : Parameters.SLOW_TRANSFER);
+                            if (distanceToGoal < Parameters.FAR_ZONE_DISTANCE) {
+                                shooterSubsystem.usePrimaryPF();
+                                setShooterZone(Parameters.SHOOTER_GOAL_FAR);
+                                intakeSubsystem.setPowerLimits(1, transferSpeed);
+                            } else {
+                                shooterSubsystem.useSecondaryPF();
+                                setShooterZone(Parameters.SHOOTER_GOAL_CLOSE);
+                                intakeSubsystem.setPowerLimits(1, Parameters.SLOW_TRANSFER);
+                            }
                         } else {
                             intakeSubsystem.setPowerLimits(0, 0);
                         }
@@ -859,12 +867,6 @@ public class RobotManager {
     public double getDistanceToGoal() {
         if (resetDistanceToGoal) {
             Pose robotPose = useVelocityCompensation ? getVelocityCorrectedPose() : getPose();
-
-            Pose goalPos = Parameters.RED_SHOOTER_GOAL;
-
-            if (side == AllianceSides.BLUE) {
-                goalPos = Parameters.BLUE_SHOOTER_GOAL;
-            }
 
             resetDistanceToGoal = false;
             distanceToGoal =  MathFunctions.distance(robotPose, goalPos);

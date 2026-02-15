@@ -32,14 +32,35 @@ public class ShooterSubsystem extends Subsystem {
     private double lastVelocity = 0;
     public int numLaunchedBalls = 0;
 
-    public static double shooterP = 0.03;
-    public static double shooterF = 0.00323;
+    private boolean usingSecondaryPF = false;
+    public static double firstShooterP = 0.03;
+    public static double firstShooterF = 0.00323;
+    public static double secondShooterP = 0.036;
+    public static double secondShooterF = 0.00333;
 
     private final double velocityMultiplier = 304.0/6000;
 
     @Override
     public void setLinearTeleop(LinearOpMode newOpMode) {
         thisOpMode = newOpMode;
+    }
+
+    public void useSecondaryPF() {
+        usingSecondaryPF = true;
+    }
+
+    public void usePrimaryPF() {
+        usingSecondaryPF = false;
+    }
+
+    private void updatePF() {
+        if (usingSecondaryPF) {
+            shooterMotor1.setVelocityPIDFCoefficients(secondShooterP, 0, 0, secondShooterF);
+            shooterMotor2.setVelocityPIDFCoefficients(secondShooterP, 0, 0, secondShooterF);
+        } else {
+            shooterMotor1.setVelocityPIDFCoefficients(firstShooterP, 0, 0, firstShooterF);
+            shooterMotor2.setVelocityPIDFCoefficients(firstShooterP, 0, 0, firstShooterF);
+        }
     }
 
     @Override
@@ -58,7 +79,7 @@ public class ShooterSubsystem extends Subsystem {
         shooterMotor2.setReversed(false);
 
         shooterMotor1.useCustomVeloPIDLoop(true);
-        shooterMotor1.setVelocityPIDFCoefficients(shooterP,0,0,shooterF);
+        updatePF();
 //        shooterMotor1.setVelocityPIDFCoefficients(8, 2.5, 0, 0);
         shooterMotor1.setLinkedMotor(shooterMotor2);
 
@@ -137,7 +158,7 @@ public class ShooterSubsystem extends Subsystem {
 
         double hoodServoOffset = 0;
 
-        shooterMotor1.setVelocityPIDFCoefficients(shooterP,0,0,shooterF);
+        updatePF();
 
         if (hoodCompensationEnabled) {
             shooter1Current = shooterMotor1.getCurrent();

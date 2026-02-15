@@ -396,10 +396,17 @@ public class AutoV1 extends LinearOpMode {
 //        }
 
         Pose robotPose = robot.getPose();
+        Pose gatePose = new Pose();
+        Pose intakePose = new Pose();
 
         // values are from test opmode
-        Pose gatePose = robot.getFixedPose(10, -74, Math.toRadians(45));
-        Pose intakePose = robot.getFixedPose(13, -88, Math.toRadians(71));
+        if (robot.getAllianceSide() == AllianceSides.BLUE) {
+            gatePose = robot.getFixedPose(10, -75, Math.toRadians(45));
+            intakePose = robot.getFixedPose(14, -88, Math.toRadians(71));
+        } else {
+            gatePose = robot.getFixedPose(10, -74, Math.toRadians(45));
+            intakePose = robot.getFixedPose(13, -88, Math.toRadians(71));
+        }
 
 //        double pushHeading = robot.getFixedHeading(305);
 //
@@ -694,7 +701,7 @@ public class AutoV1 extends LinearOpMode {
                                         .addLinearHeadingInterpolation(robotPose.getHeading(), robot.getHeadingToGoal(shootingPosition))
                                         .addParametricCallback(.3, () -> robot.powerOffIntake())
                                         .setPathEndTValueConstraint(.95)
-                                        .setZeroPowerAccelerationMultiplier(4)
+                                        .setZeroPowerAccelerationMultiplier(7)
                                 , false);
                     } else {
                         robot.runBlocking(new PathBuilder()
