@@ -35,8 +35,8 @@ public class ShooterSubsystem extends Subsystem {
     private boolean usingSecondaryPF = false;
     public static double firstShooterP = 0.03;
     public static double firstShooterF = 0.00323;
-    public static double secondShooterP = 0.036;
-    public static double secondShooterF = 0.00333;
+    public static double secondShooterP = 0.035;
+    public static double secondShooterF = 0.00313;
 
     private final double velocityMultiplier = 304.0/6000;
 
@@ -162,7 +162,7 @@ public class ShooterSubsystem extends Subsystem {
 
         if (hoodCompensationEnabled) {
             shooter1Current = shooterMotor1.getCurrent();
-            shooter2Current = shooterMotor2.getCurrent();
+//            shooter2Current = shooterMotor2.getCurrent();
 
             if (shooter1Current > 1) {
                 hoodServoOffset = Range.clip((shooter1Current) * hoodCompensationMultiplier, 0, 1000);

@@ -22,7 +22,7 @@ public class Parameters {
     public final static Pose RED_FAR_START = new Pose(-30.5, -125, Math.toRadians(180));
 //    public final static Pose RED_SHOOTER_GOAL = new Pose(20, 0);
     public final static Pose SHOOTER_GOAL_CLOSE = new Pose(20, 6.5);
-    public final static Pose SHOOTER_GOAL_FAR = new Pose(17, 6.5);
+    public final static Pose SHOOTER_GOAL_FAR = new Pose(15, 6.5);
     public final static Pose RED_TELEOP_SHOOTING_GOAL = new Pose(-30, -40);
     public final static Pose BLUE_CLOSE_START = new Pose(-90, 0, RED_CLOSE_START.getMirroredCopy().getHeading());
     public final static Pose BLUE_FAR_START = RED_FAR_START.getMirroredCopy();

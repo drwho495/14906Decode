@@ -33,9 +33,9 @@ public class ShooterTuner extends LinearOpMode {
             if (gamepad1.aWasPressed()) robot.toggleShooter();
 
             if (gamepad1.leftBumperWasPressed()) {
-                robot.enableShooting();
+                robot.shootElements();
             } else if (gamepad1.leftBumperWasReleased()) {
-                robot.disableShooting();
+                robot.cancelShootElements();
             }
 
             robot.setIntakePower(gamepad1.right_trigger);

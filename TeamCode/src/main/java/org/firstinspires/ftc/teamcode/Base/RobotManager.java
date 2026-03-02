@@ -175,6 +175,7 @@ public class RobotManager {
 
         robotGeometricRepresentation = Polygon.makeRectangle(12, 18);
 
+        setAllianceSide(Parameters.LAST_ALLIANCE_SIDE);
         buildRPMCurves();
     }
     
@@ -183,8 +184,8 @@ public class RobotManager {
             rpmCurve.addPoint(65, 4380);
             hoodCurve.addPoint(65, 55);
 
-            rpmCurve.addPoint(83, 4650);
-            hoodCurve.addPoint(83, 75);
+            rpmCurve.addPoint(81, 4590);
+            hoodCurve.addPoint(81, 80);
 
             rpmCurve.addPoint(100, 4850);
             hoodCurve.addPoint(100, 67);
@@ -206,10 +207,10 @@ public class RobotManager {
             rpmCurve.addPoint(100, 4250);
             hoodCurve.addPoint(100, 30);
 
-            rpmCurve.addPoint(140, 5380);
-            hoodCurve.addPoint(140, 77);
+            rpmCurve.addPoint(140, 5400);
+            hoodCurve.addPoint(140, 85);
 
-            shooterSubsystem.setHoodCompensationMultiplier(7);
+            shooterSubsystem.setHoodCompensationMultiplier(25);
         } else if (shootingStyle == ShootingStyle.UNJAM) {
             rpmCurve.addPoint(81, 4284);
             hoodCurve.addPoint(81, 120);
@@ -333,13 +334,13 @@ public class RobotManager {
         shooterSubsystem.powerOff();
     }
 
-    public void enableShooting() {
+    public void shootElements() {
         canShoot = false;
         canShootOveride = false;
         isShooting = true;
     }
 
-    public void disableShooting() {
+    public void cancelShootElements() {
         isShooting = false;
     }
 
@@ -619,7 +620,7 @@ public class RobotManager {
         setShooterZone(Parameters.SHOOTER_GOAL_CLOSE);
     }
 
-    private void setShooterZone(Pose newZone) {
+    public void setShooterZone(Pose newZone) {
         goalPos = getFixedPose(newZone);
     }
 
@@ -709,11 +710,11 @@ public class RobotManager {
                         if (distanceToGoal >= Parameters.MIN_SHOOT_DISTANCE) {
                             if (distanceToGoal < Parameters.FAR_ZONE_DISTANCE) {
                                 shooterSubsystem.usePrimaryPF();
-                                setShooterZone(Parameters.SHOOTER_GOAL_FAR);
+//                                setShooterZone(Parameters.SHOOTER_GOAL_FAR);
                                 intakeSubsystem.setPowerLimits(1, transferSpeed);
                             } else {
                                 shooterSubsystem.useSecondaryPF();
-                                setShooterZone(Parameters.SHOOTER_GOAL_CLOSE);
+//                                setShooterZone(Parameters.SHOOTER_GOAL_CLOSE);
                                 intakeSubsystem.setPowerLimits(1, Parameters.SLOW_TRANSFER);
                             }
                         } else {

@@ -31,6 +31,7 @@ public class MainTeleop extends LinearOpMode {
     private boolean autoStartShootingStopTimed = false;
     private boolean driverNotifiedOf3 = false;
     private ElapsedTime shooterTimer = new ElapsedTime();
+    private Pose customGoalPose = Parameters.SHOOTER_GOAL_CLOSE.copy();
 
     private DcMotorEx leftFront;
     private DcMotorEx leftRear;
@@ -119,17 +120,31 @@ public class MainTeleop extends LinearOpMode {
                 case INTAKE_SCORE:
                     robot.useGoalAimHeading();
 
+                    if (gamepad2.dpadDownWasPressed()) {
+                        customGoalPose = Parameters.SHOOTER_GOAL_CLOSE.copy();
+
+                        robot.setShooterZone(customGoalPose);
+                    } else if (gamepad2.dpadLeftWasPressed()) {
+                        customGoalPose.add(new Pose(robot.getAllianceSide() == AllianceSides.RED ? -1 : 1, 0));
+
+                        robot.setShooterZone(customGoalPose);
+                    } else if (gamepad2.dpadRightWasPressed()) {
+                        customGoalPose.add(new Pose(robot.getAllianceSide() == AllianceSides.RED ? 1 : -1, 0));
+
+                        robot.setShooterZone(customGoalPose);
+                    }
+
 //                    if (gamepad1.aWasPressed()) {
-//                        robot.enableShooting();
+//                        robot.shootElements();
 //                        robot.enableAutomaticTeleopShooting();
 //                        robot.powerOnShooter();
 //                    } else if (gamepad1.aWasReleased()) {
 //                        robot.disableAutomaticTeleopShooting();
-//                        robot.disableShooting();
+//                        robot.cancelShootElements();
 //                    }
 
-                    if (gamepad1.right_trigger > .1) {
-                        robot.setIntakePower(gamepad1.right_trigger);
+                    if (gamepad1.right_trigger > .1 || gamepad2.right_trigger > .1) {
+                        robot.setIntakePower(gamepad1.right_trigger + gamepad2.right_trigger);
                     } else if (gamepad1.left_trigger > .1) {
                         robot.setIntakePower(-gamepad1.left_trigger);
                     } else {
@@ -137,9 +152,9 @@ public class MainTeleop extends LinearOpMode {
                     }
 
                     if (gamepad1.leftBumperWasPressed()) {
-                        robot.enableShooting();
+                        robot.shootElements();
                     } else if (gamepad1.leftBumperWasReleased()) {
-                        robot.disableShooting();
+                        robot.cancelShootElements();
                     }
 
                     if (gamepad1.bWasPressed()) {
@@ -150,17 +165,17 @@ public class MainTeleop extends LinearOpMode {
                         }
                     }
 
-                    if (gamepad1.dpadRightWasPressed() || gamepad2.dpadRightWasPressed()) {
-                        shooterVelocity += 100;
-                    }
+//                    if (gamepad1.dpadRightWasPressed() || gamepad2.dpadRightWasPressed()) {
+//                        shooterVelocity += 100;
+//                    }
 
-                    if (gamepad1.dpadLeftWasPressed() || gamepad2.dpadLeftWasPressed()) {
-                        shooterVelocity -= 100;
-                    }
+//                    if (gamepad1.dpadLeftWasPressed() || gamepad2.dpadLeftWasPressed()) {
+//                        shooterVelocity -= 100;
+//                    }
 
                     shooterVelocity = Range.clip(shooterVelocity, 0, 6000);
 
-                    if (gamepad1.dpadUpWasPressed() || gamepad2.dpadUpWasPressed()) {
+                    if (gamepad1.dpadUpWasPressed()) {
                         robot.toggleShooter();
                     }
 
@@ -227,6 +242,8 @@ public class MainTeleop extends LinearOpMode {
 
             Double[] shooterRPMs = robot.getCurrentShooterVelocities();
 
+            telemetry.addData("Custom Goal X: ", customGoalPose.getX());
+            telemetry.addData("Custom Goal Y: ", customGoalPose.getY());
             telemetry.addData("Is Shooting: ", robot.isShooting());
             telemetry.addData("Angular Velocity: ", robot.getFollower().getAngularVelocity());
             telemetry.addData("Robot Alliance: ", robot.getAllianceSide() == AllianceSides.BLUE ? "Blue Side" : "Red Side");
