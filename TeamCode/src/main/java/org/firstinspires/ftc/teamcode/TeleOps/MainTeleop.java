@@ -89,13 +89,12 @@ public class MainTeleop extends LinearOpMode {
 
         robot.setState(OpModeStates.INTAKE_SCORE);
         robot.setHoodServoPos(Parameters.HOOD_SERVO_DEFAULT);
+        robot.setDriverOffset(robot.getAllianceSide() == AllianceSides.BLUE ? 180 : 0);
 
         while (opModeIsActive() && !isStopRequested()) {
             Pose robotPose = robot.getPose();
 
             if (canDrive) {
-                robot.setDriverOffset(robot.getAllianceSide() == AllianceSides.BLUE ? 180 : 0);
-
                 robot.setDrivePowers(-gamepad1.left_stick_y,
                         -gamepad1.left_stick_x,
                         -gamepad1.right_stick_x,
@@ -103,9 +102,7 @@ public class MainTeleop extends LinearOpMode {
             }
 
             if (gamepad1.optionsWasPressed()) {
-                robotPose.setHeading(0);
-
-                robot.setPose(robotPose);
+                robot.setDriverOffset(Math.toDegrees(robot.getPose().getHeading()));
             }
 
             if (gamepad1.shareWasPressed()) {
@@ -118,10 +115,9 @@ public class MainTeleop extends LinearOpMode {
                 case IDLE:
                     break;
                 case INTAKE_SCORE:
-                    robot.useGoalAimHeading();
-
                     if (gamepad2.dpadDownWasPressed()) {
                         customGoalPose = Parameters.SHOOTER_GOAL_CLOSE.copy();
+                        robot.setDriverOffset(robot.getAllianceSide() == AllianceSides.BLUE ? 180 : 0);
 
                         robot.setShooterZone(customGoalPose);
                     } else if (gamepad2.dpadLeftWasPressed()) {
@@ -134,14 +130,13 @@ public class MainTeleop extends LinearOpMode {
                         robot.setShooterZone(customGoalPose);
                     }
 
-//                    if (gamepad1.aWasPressed()) {
-//                        robot.shootElements();
-//                        robot.enableAutomaticTeleopShooting();
-//                        robot.powerOnShooter();
-//                    } else if (gamepad1.aWasReleased()) {
-//                        robot.disableAutomaticTeleopShooting();
-//                        robot.cancelShootElements();
-//                    }
+                    if (gamepad1.aWasPressed()) {
+                        robot.setConstantTeleopHeading(robot.getFixedHeading(36.5));
+                        robot.enableAutoHeading();
+                    } else if (gamepad1.aWasReleased()) {
+                        robot.useGoalAimHeading();
+                        robot.disableAutoHeading();
+                    }
 
                     if (gamepad1.right_trigger > .1 || gamepad2.right_trigger > .1) {
                         robot.setIntakePower(gamepad1.right_trigger + gamepad2.right_trigger);
@@ -215,6 +210,7 @@ public class MainTeleop extends LinearOpMode {
                     }
 
                     if (gamepad1.rightBumperWasPressed()) {
+                        robot.useGoalAimHeading();
                         robot.enableAutoHeading();
                     } else if (gamepad1.rightBumperWasReleased()) {
                         robot.disableAutoHeading();

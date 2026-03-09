@@ -119,7 +119,7 @@ public class Pose {
     }
 
     public Pose getMirroredCopy() {
-        return new Pose(-93 - getX(), getY(), MathFunctions.normalizeAngle(Math.PI - getHeading()));
+        return new Pose(-94 - getX(), getY(), MathFunctions.normalizeAngle(Math.PI - getHeading()));
     }
 
     /**

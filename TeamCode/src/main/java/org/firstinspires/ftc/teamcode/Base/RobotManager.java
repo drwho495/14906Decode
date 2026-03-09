@@ -195,17 +195,17 @@ public class RobotManager {
 
             shooterSubsystem.setHoodCompensationMultiplier(4);
         } else if (shootingStyle == ShootingStyle.LARGE_ARC) {
-            rpmCurve.addPoint(65, 3800);
+            rpmCurve.addPoint(65, 3900);
             hoodCurve.addPoint(65, 20);
 
-            rpmCurve.addPoint(76, 3850);
+            rpmCurve.addPoint(76, 3950);
             hoodCurve.addPoint(76, 20);
 
-            rpmCurve.addPoint(83, 3980);
+            rpmCurve.addPoint(83, 4030);
             hoodCurve.addPoint(83, 20);
 
-            rpmCurve.addPoint(100, 4250);
-            hoodCurve.addPoint(100, 30);
+            rpmCurve.addPoint(100, 4280);
+            hoodCurve.addPoint(100, 35);
 
             rpmCurve.addPoint(140, 5400);
             hoodCurve.addPoint(140, 85);
@@ -842,16 +842,14 @@ public class RobotManager {
     }
 
     public void breakFollowing(boolean holdPoint) {
-        boolean canHoldPoint = holdPoint && follower.isBusy();
-
         Path lastPath = null;
         Point lastPoint = null;
         Pose lastPose = null;
 
-        if (canHoldPoint) {
+        if (holdPoint && follower.isBusy()) {
             lastPath = follower.getCurrentPath();
             lastPoint = lastPath.getLastControlPoint();
-            lastPose = new Pose(lastPoint.getX(), lastPoint.getY(), lastPath.getPathEndHeadingConstraint());
+            lastPose = new Pose(lastPoint.getX(), lastPoint.getY(), lastPath.getLastHeadingInterpolation().getEndHeading());
         }
 
         breakFollowing();

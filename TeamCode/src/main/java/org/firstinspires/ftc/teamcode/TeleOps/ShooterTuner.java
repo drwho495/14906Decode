@@ -25,6 +25,7 @@ public class ShooterTuner extends LinearOpMode {
         robot.disableAutoTransferStop();
         robot.disableHoodCompensation();
         robot.disableVelocityCompensation();
+        robot.disableOnlyShootInZone();
 
         robot.setAllianceSide(AllianceSides.RED);
 
