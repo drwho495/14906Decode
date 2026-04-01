@@ -2,22 +2,12 @@ package org.firstinspires.ftc.teamcode.TeleOps;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.robot.Robot;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.Base.AllianceSides;
 import org.firstinspires.ftc.teamcode.Base.OpModeStates;
-import org.firstinspires.ftc.teamcode.Base.Parameters;
 import org.firstinspires.ftc.teamcode.Base.RobotManager;
 import org.firstinspires.ftc.teamcode.Base.ShootingStyle;
-import org.firstinspires.ftc.teamcode.bedroBathing.localization.Pose;
-import org.firstinspires.ftc.teamcode.bedroBathing.pathGeneration.BezierCurve;
-import org.firstinspires.ftc.teamcode.bedroBathing.pathGeneration.BezierLine;
-import org.firstinspires.ftc.teamcode.bedroBathing.pathGeneration.Path;
-import org.firstinspires.ftc.teamcode.bedroBathing.pathGeneration.PathBuilder;
-import org.firstinspires.ftc.teamcode.bedroBathing.pathGeneration.Point;
-import org.firstinspires.ftc.teamcode.bedroBathing.tuning.FollowerConstants;
-import org.firstinspires.ftc.teamcode.bedroBathing.util.CustomPIDFCoefficients;
 
 import java.util.concurrent.TimeUnit;
 
@@ -44,7 +34,7 @@ public class AirSortTest extends LinearOpMode {
 
         robot.initialise();
 
-        robot.cancelShootElements();
+        robot.stopScoringCycle();
         robot.update();
 
         waitForStart();
@@ -59,7 +49,7 @@ public class AirSortTest extends LinearOpMode {
                     shotNum = 0;
 
                     robot.setIntakePower(0);
-                    robot.cancelShootElements();
+                    robot.stopScoringCycle();
                 } else {
                     if (timer.time(TimeUnit.MILLISECONDS) >= timePerShot) {
                         shotNum++;
@@ -71,17 +61,17 @@ public class AirSortTest extends LinearOpMode {
                         }
 
 //                        robot.setIntakePower(.5);
-//                        robot.cancelShootElements();
+//                        robot.stopScoringCycle();
 //                        robot.setIntakePower(.5);
                         timer.reset();
                     }
 //                    } else if (timer.time(TimeUnit.MILLISECONDS) >= (timePerShot - 250)) {
 //                        robot.setIntakePower(1);
-//                        robot.shootElements();
+//                        robot.startScoringCycle();
 //                    }
                 }
             } else {
-                robot.cancelShootElements();
+                robot.stopScoringCycle();
 
                 if (robot.isShooterOn() && gamepad1.aWasPressed()) {
                     isAirsorting = true;
@@ -89,9 +79,9 @@ public class AirSortTest extends LinearOpMode {
 
                     robot.setIntakePower(.15);
                     robot.setShootingStyle(ShootingStyle.LARGE_ARC);
-//                    robot.cancelShootElements();
+//                    robot.stopScoringCycle();
 //                    robot.powerOffIntake();
-                    robot.shootElements();
+                    robot.startScoringCycle();
                     robot.setIntakePower(.15);
                     timer.reset();
                 }

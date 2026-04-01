@@ -213,17 +213,6 @@ public class Follower {
     }
 
     /**
-     * This handles the limiting of the drive powers array to the max power.
-     */
-    public void limitDrivePowers() {
-        for (int i = 0; i < drivePowers.length; i++) {
-            if (Math.abs(drivePowers[i]) > maxPower) {
-                drivePowers[i] = maxPower * MathFunctions.getSign(drivePowers[i]);
-            }
-        }
-    }
-
-    /**
      * This gets a Point from the current Path from a specified t-value.
      *
      * @return returns the Point.
@@ -565,9 +554,13 @@ public class Follower {
                 if (holdingPosition) {
                     closestPose = currentPath.getClosestPoint(poseUpdater.getPose(), 1);
 
-                    drivePowers = driveVectorScaler.getDrivePowers(MathFunctions.scalarMultiplyVector(getTranslationalCorrection(), holdPointTranslationalScaling), MathFunctions.scalarMultiplyVector(getHeadingVector(), holdPointHeadingScaling), new Vector(), poseUpdater.getPose().getHeading());
-
-                    limitDrivePowers();
+                    drivePowers = driveVectorScaler.getDrivePowers(
+                            MathFunctions.scalarMultiplyVector(getTranslationalCorrection(), holdPointTranslationalScaling),
+                            MathFunctions.scalarMultiplyVector(getHeadingVector(), holdPointHeadingScaling),
+                            new Vector(),
+                            poseUpdater.getPose().getHeading(),
+                            maxPower
+                    );
 
                     for (int i = 0; i < motors.size(); i++) {
                         motors.get(i).setPower(drivePowers[i] * (12 / voltage));
@@ -581,9 +574,13 @@ public class Follower {
                         Supplier<Double> headingUpdateMethod = getCurrentPath().getVariableHeadingUpdateMethod();
                         if (headingUpdateMethod != null) setPathHeadingGoal(headingUpdateMethod.get());
 
-                        drivePowers = driveVectorScaler.getDrivePowers(getCorrectiveVector(), getHeadingVector(), getDriveVector(), poseUpdater.getPose().getHeading());
-
-                        limitDrivePowers();
+                        drivePowers = driveVectorScaler.getDrivePowers(
+                                getCorrectiveVector(),
+                                getHeadingVector(),
+                                getDriveVector(),
+                                poseUpdater.getPose().getHeading(),
+                                maxPower
+                        );
 
                         for (int i = 0; i < motors.size(); i++) {
                             motors.get(i).setPower(drivePowers[i] * (12 / voltage));
@@ -628,9 +625,13 @@ public class Follower {
 
             calculateAveragedVelocityAndAcceleration();
 
-            drivePowers = driveVectorScaler.getDrivePowers(new Vector(), localHeadingVector, teleopDriveVector, poseUpdater.getPose().getHeading());
-
-            limitDrivePowers();
+            drivePowers = driveVectorScaler.getDrivePowers(
+                    new Vector(),
+                    localHeadingVector,
+                    teleopDriveVector,
+                    poseUpdater.getPose().getHeading(),
+                    maxPower
+            );
 
             for (int i = 0; i < motors.size(); i++) {
                 motors.get(i).setPower(drivePowers[i]); // do NOT apply voltage correction to this!

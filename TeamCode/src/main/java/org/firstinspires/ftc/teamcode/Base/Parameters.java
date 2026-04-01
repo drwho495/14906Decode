@@ -4,7 +4,10 @@ package org.firstinspires.ftc.teamcode.Base;
 
 import com.acmerobotics.dashboard.config.Config;
 
-import org.firstinspires.ftc.teamcode.bedroBathing.localization.Pose;
+//import org.firstinspires.ftc.teamcode.bedroBathing.localization.Pose;
+import com.pedropathing.geometry.Pose;
+
+import org.firstinspires.ftc.teamcode.Base.Helpers.PedroUtils;
 import org.firstinspires.ftc.teamcode.bedroBathing.util.CustomPIDFCoefficients;
 
 @Config
@@ -18,15 +21,15 @@ public class Parameters {
     public static AllianceSides LAST_ALLIANCE_SIDE = AllianceSides.RED;
     public final static Pose RED_CLOSE_START = new Pose(0, 0, Math.toRadians(220));
     public final static Pose RED_CLOSE_AUTO_START = new Pose(9, -11.5, Math.toRadians(220));
-    public final static Pose BLUE_CLOSE_AUTO_START = RED_CLOSE_AUTO_START.getMirroredCopy();
+    public final static Pose BLUE_CLOSE_AUTO_START = PedroUtils.getMirroredPose(RED_CLOSE_AUTO_START);
     public final static Pose RED_FAR_START = new Pose(-30.5, -125, Math.toRadians(180));
 //    public final static Pose RED_SHOOTER_GOAL = new Pose(20, 0);
-    public final static Pose SHOOTER_GOAL_CLOSE = new Pose(20, 6.5);
+    public final static Pose SHOOTER_GOAL_CLOSE = new Pose(20, 3);
     public final static Pose SHOOTER_GOAL_FAR = new Pose(15, 6.5);
     public final static Pose RED_TELEOP_SHOOTING_GOAL = new Pose(-30, -40);
-    public final static Pose BLUE_CLOSE_START = new Pose(-90, 0, RED_CLOSE_START.getMirroredCopy().getHeading());
-    public final static Pose BLUE_FAR_START = RED_FAR_START.getMirroredCopy();
-    public final static Pose BLUE_TELEOP_SHOOTING_GOAL = RED_TELEOP_SHOOTING_GOAL.getMirroredCopy();
+    public final static Pose BLUE_CLOSE_START = new Pose(-90, 0, PedroUtils.getMirroredPose(RED_CLOSE_START).getHeading());
+    public final static Pose BLUE_FAR_START = PedroUtils.getMirroredPose(RED_FAR_START);
+    public final static Pose BLUE_TELEOP_SHOOTING_GOAL = PedroUtils.getMirroredPose(RED_TELEOP_SHOOTING_GOAL);
     public static CustomPIDFCoefficients preciseTurnCoeffs = new CustomPIDFCoefficients(
             2,
             0,

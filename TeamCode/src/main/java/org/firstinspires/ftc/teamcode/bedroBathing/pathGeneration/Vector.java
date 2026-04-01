@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.bedroBathing.pathGeneration;
 
+import com.qualcomm.robotcore.util.Range;
+
 import org.firstinspires.ftc.teamcode.bedroBathing.localization.Pose;
 
 /**
@@ -153,5 +155,19 @@ public class Vector {
         returnVector.setOrthogonalComponents(xComponent * argument, yComponent * argument);
 
         return returnVector;
+    }
+
+    public Vector limitMagnitude(double limitMagnitude) {
+        limitMagnitude = Math.abs(limitMagnitude);
+        magnitude = Range.clip(magnitude, -limitMagnitude, limitMagnitude);
+
+        return this;
+    }
+
+    public Vector limitTheta(double limitTheta) {
+        limitTheta = Math.abs(limitTheta);
+        theta = Range.clip(magnitude, -limitTheta, limitTheta);
+
+        return this;
     }
 }

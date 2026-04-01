@@ -7,6 +7,7 @@ import org.firstinspires.ftc.teamcode.Base.AllianceSides;
 import org.firstinspires.ftc.teamcode.Base.OpModeStates;
 import org.firstinspires.ftc.teamcode.Base.Parameters;
 import org.firstinspires.ftc.teamcode.Base.RobotManager;
+import org.firstinspires.ftc.teamcode.Base.ShooterControlPolicy;
 
 @TeleOp(name = "Debug: Shooter Tuner", group = "Debug")
 public class ShooterTuner extends LinearOpMode {
@@ -17,7 +18,7 @@ public class ShooterTuner extends LinearOpMode {
         robot = new RobotManager(this);
         robot.setState(OpModeStates.INTAKE_SCORE);
         robot.initialise();
-        robot.enableManualShooterControl();
+        robot.setShooterControlPolicy(ShooterControlPolicy.MANUAL);
 
         waitForStart();
 
@@ -34,9 +35,9 @@ public class ShooterTuner extends LinearOpMode {
             if (gamepad1.aWasPressed()) robot.toggleShooter();
 
             if (gamepad1.leftBumperWasPressed()) {
-                robot.shootElements();
+                robot.startScoringCycle();
             } else if (gamepad1.leftBumperWasReleased()) {
-                robot.cancelShootElements();
+                robot.stopScoringCycle();
             }
 
             robot.setIntakePower(gamepad1.right_trigger);

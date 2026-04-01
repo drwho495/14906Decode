@@ -46,12 +46,17 @@ repositories {
     maven {
         url = 'https://maven.brott.dev/'
     }
+
+    maven {
+        url = "https://repo.dairy.foundation/releases"
+    }
 }
 
 dependencies {
     implementation project(':FtcRobotController')
 
     implementation("dev.frozenmilk.sinister:Sloth:0.2.4")
+    implementation("com.bylazar.sloth:fullpanels:0.2.4+1.0.12")
 
     implementation 'org.apache.commons:commons-math3:3.6.1'
 

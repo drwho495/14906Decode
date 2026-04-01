@@ -8,6 +8,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.teamcode.Base.AllianceSides;
+import org.firstinspires.ftc.teamcode.Base.MecanumDrive;
 import org.firstinspires.ftc.teamcode.Base.OpModeStates;
 import org.firstinspires.ftc.teamcode.Base.Parameters;
 import org.firstinspires.ftc.teamcode.Base.RobotManager;
@@ -25,13 +26,13 @@ public class MainTeleop extends LinearOpMode {
     // (callbacks with pedro pathing)
 
     private boolean canDrive = true;
+    private boolean showDebugInfo = false;
     private boolean autoStartShooterEnabled = true;
     private boolean autoStartShooter = false;
     private boolean autoStartShootingStarted = false;
     private boolean autoStartShootingStopTimed = false;
     private boolean driverNotifiedOf3 = false;
     private ElapsedTime shooterTimer = new ElapsedTime();
-    private Pose customGoalPose = Parameters.SHOOTER_GOAL_CLOSE.copy();
 
     private DcMotorEx leftFront;
     private DcMotorEx leftRear;
@@ -61,7 +62,7 @@ public class MainTeleop extends LinearOpMode {
 
         robot.setTransferSpeed(1);
         robot.enableAutoTransferStop();
-        robot.enableHoodCompensation();
+        robot.disableHoodCompensation();
         robot.enableWaitForVelocityToShoot();
         robot.disableOnlyShootInZone();
         robot.enableVelocityCompensation();
@@ -111,35 +112,42 @@ public class MainTeleop extends LinearOpMode {
 
             if (gamepad1.psWasPressed()) robot.setPose(robot.getAllianceSide() == AllianceSides.BLUE ? Parameters.BLUE_CLOSE_START : Parameters.RED_CLOSE_START);
 
+            if (gamepad2.aWasPressed()) {
+                showDebugInfo = !showDebugInfo;
+            }
+
             switch (robot.getState()) {
                 case IDLE:
                     break;
                 case INTAKE_SCORE:
+                    int goalOffsetAddMultiplier = robot.getAllianceSide() == AllianceSides.BLUE ? -1 : 1;
+
                     if (gamepad2.dpadDownWasPressed()) {
-                        customGoalPose = Parameters.SHOOTER_GOAL_CLOSE.copy();
-                        robot.setDriverOffset(robot.getAllianceSide() == AllianceSides.BLUE ? 180 : 0);
-
-                        robot.setShooterZone(customGoalPose);
+                        robot.resetGoalOffset();
                     } else if (gamepad2.dpadLeftWasPressed()) {
-                        customGoalPose.add(new Pose(robot.getAllianceSide() == AllianceSides.RED ? -1 : 1, 0));
-
-                        robot.setShooterZone(customGoalPose);
+                        robot.addGoalOffset(-1 * goalOffsetAddMultiplier);
                     } else if (gamepad2.dpadRightWasPressed()) {
-                        customGoalPose.add(new Pose(robot.getAllianceSide() == AllianceSides.RED ? 1 : -1, 0));
-
-                        robot.setShooterZone(customGoalPose);
+                        robot.addGoalOffset(1 * goalOffsetAddMultiplier);
                     }
 
-                    if (gamepad1.aWasPressed()) {
+                    if (gamepad2.rightBumperWasPressed()) {
+                        robot.disableWaitForVelocityToShoot();
+                    } else if (gamepad2.rightBumperWasReleased()) {
+                        robot.enableWaitForVelocityToShoot();
+                    }
+
+                    if (gamepad1.rightBumperWasPressed()) {
                         robot.setConstantTeleopHeading(robot.getFixedHeading(36.5));
                         robot.enableAutoHeading();
-                    } else if (gamepad1.aWasReleased()) {
+                    } else if (gamepad1.rightBumperWasReleased()) {
                         robot.useGoalAimHeading();
                         robot.disableAutoHeading();
                     }
 
-                    if (gamepad1.right_trigger > .1 || gamepad2.right_trigger > .1) {
-                        robot.setIntakePower(gamepad1.right_trigger + gamepad2.right_trigger);
+                    if (gamepad1.right_trigger > .1 || gamepad1.a) {
+                        robot.setIntakePower(1);
+                    } else if (gamepad2.right_trigger > .1 && !robot.isShooting()) {
+                        robot.setIntakePower(gamepad2.right_trigger);
                     } else if (gamepad1.left_trigger > .1) {
                         robot.setIntakePower(-gamepad1.left_trigger);
                     } else {
@@ -147,9 +155,9 @@ public class MainTeleop extends LinearOpMode {
                     }
 
                     if (gamepad1.leftBumperWasPressed()) {
-                        robot.shootElements();
+                        robot.startScoringCycle();
                     } else if (gamepad1.leftBumperWasReleased()) {
-                        robot.cancelShootElements();
+                        robot.stopScoringCycle();
                     }
 
                     if (gamepad1.bWasPressed()) {
@@ -172,12 +180,6 @@ public class MainTeleop extends LinearOpMode {
 
                     if (gamepad1.dpadUpWasPressed()) {
                         robot.toggleShooter();
-                    }
-
-                    if (gamepad2.rightBumperWasPressed()) {
-                        robot.powerOnShooter();
-                    } else if (gamepad2.leftBumperWasPressed()) {
-                        robot.powerOffShooter();
                     }
 
                     if (autoStartShooterEnabled) {
@@ -209,11 +211,15 @@ public class MainTeleop extends LinearOpMode {
                         }
                     }
 
-                    if (gamepad1.rightBumperWasPressed()) {
+                    if (gamepad1.xWasPressed()) {
                         robot.useGoalAimHeading();
                         robot.enableAutoHeading();
-                    } else if (gamepad1.rightBumperWasReleased()) {
+                    } else if (gamepad1.xWasReleased()) {
                         robot.disableAutoHeading();
+                    }
+
+                    if (gamepad2.leftBumperWasPressed()) {
+                        robot.forceCancelShooting();
                     }
 
                     if (!driverNotifiedOf3) {
@@ -234,27 +240,29 @@ public class MainTeleop extends LinearOpMode {
 
             if (gamepad1.dpadDownWasPressed()) {
                 robot.setAllianceSide(robot.getAllianceSide() == AllianceSides.RED ? AllianceSides.BLUE : AllianceSides.RED);
+                robot.setDriverOffset(robot.getAllianceSide() == AllianceSides.BLUE ? 180 : 0);
             }
 
             Double[] shooterRPMs = robot.getCurrentShooterVelocities();
 
-            telemetry.addData("Custom Goal X: ", customGoalPose.getX());
-            telemetry.addData("Custom Goal Y: ", customGoalPose.getY());
-            telemetry.addData("Is Shooting: ", robot.isShooting());
-            telemetry.addData("Angular Velocity: ", robot.getFollower().getAngularVelocity());
-            telemetry.addData("Robot Alliance: ", robot.getAllianceSide() == AllianceSides.BLUE ? "Blue Side" : "Red Side");
-            telemetry.addData("Transfer Speed: ", robot.getTransferSpeed());
             telemetry.addData("Distance To Goal: ", robot.getDistanceToGoal());
-            telemetry.addData("Target RPM: ", robot.getShooterTargetVelocity());
-            telemetry.addData("Actual RPM 1: ", shooterRPMs[0]);
-            telemetry.addData("Actual RPM 2: ", shooterRPMs[1]);
-            telemetry.addData("Hood Angle: ", robot.getHoodAngle());
-            telemetry.addData("Disable Time: ", robot.getTransferDisableTime());
-            telemetry.addData("Robot X: ", robotPose.getX());
-            telemetry.addData("Robot Y: ", robotPose.getY());
-            telemetry.addData("Robot Heading: ", Math.toDegrees(robotPose.getHeading()));
-            telemetry.addData("Number of Artifacts in the Intake: ", robot.getHeldBallCount());
-            telemetry.addData("Loop Time: ", timer.time(TimeUnit.MILLISECONDS));
+            telemetry.addData("Robot Alliance: ", robot.getAllianceSide() == AllianceSides.BLUE ? "Blue Side" : "Red Side");
+            telemetry.addData("Heading Lock Goal Offset: ", robot.getGoalOffset());
+
+            if (showDebugInfo) {
+                telemetry.addData("Target RPM: ", robot.getShooterTargetVelocity());
+                telemetry.addData("Actual RPM 1: ", shooterRPMs[0]);
+                telemetry.addData("Actual RPM 2: ", shooterRPMs[1]);
+                telemetry.addData("Hood Angle: ", robot.getHoodAngle());
+                telemetry.addData("Is Shooting: ", robot.isShooting());
+                telemetry.addData("Angular Velocity: ", robot.getFollower().getAngularVelocity());
+                telemetry.addData("Disable Time: ", robot.getTransferDisableTime());
+                telemetry.addData("Robot X: ", robotPose.getX());
+                telemetry.addData("Robot Y: ", robotPose.getY());
+                telemetry.addData("Robot Heading: ", Math.toDegrees(robotPose.getHeading()));
+                telemetry.addData("Number of Artifacts in the Intake: ", robot.getHeldBallCount());
+                telemetry.addData("Loop Time: ", timer.time(TimeUnit.MILLISECONDS));
+            }
 
             timer.reset();
 

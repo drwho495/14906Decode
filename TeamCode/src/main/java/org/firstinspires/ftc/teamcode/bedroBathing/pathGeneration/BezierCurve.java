@@ -262,7 +262,7 @@ public class BezierCurve {
     /**
      * Because, for whatever reason, the second derivative returned by the getSecondDerivative(double t)
      * method doesn't return the correct heading of the second derivative, this gets an approximate
-     * second derivative essentially using the limit method. I use this for its heading only.
+     * second derivative essentially using the limitMagnitude method. I use this for its heading only.
      *
      * @param t this is the t value of the parametric curve. t is clamped to be between 0 and 1 inclusive.
      * @return this returns the approximated second derivative.

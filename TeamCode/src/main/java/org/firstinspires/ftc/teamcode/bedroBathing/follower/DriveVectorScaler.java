@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.bedroBathing.follower;
 
+import com.qualcomm.robotcore.util.Range;
+
 import org.firstinspires.ftc.teamcode.bedroBathing.pathGeneration.MathFunctions;
 import org.firstinspires.ftc.teamcode.bedroBathing.pathGeneration.Vector;
 
@@ -51,7 +53,12 @@ public class DriveVectorScaler {
      *                     much power to allocate to each wheel.
      * @return this returns an Array of doubles with a length of 4, which contains the wheel powers.
      */
-    public double[] getDrivePowers(Vector correctivePower, Vector headingPower, Vector pathingPower, double robotHeading) {
+    public double[] getDrivePowers(Vector correctivePower,
+                                   Vector headingPower,
+                                   Vector pathingPower,
+                                   double robotHeading,
+                                   double maxPower)
+    {
         // clamps down the magnitudes of the input vectors
         if (correctivePower.getMagnitude() > maxPowerScaling) correctivePower.setMagnitude(maxPowerScaling);
         if (headingPower.getMagnitude() > maxPowerScaling) headingPower.setMagnitude(maxPowerScaling);
@@ -119,6 +126,12 @@ public class DriveVectorScaler {
             wheelPowers[1] /= wheelPowerMax;
             wheelPowers[2] /= wheelPowerMax;
             wheelPowers[3] /= wheelPowerMax;
+        }
+
+        maxPower = Math.abs(maxPower);
+
+        for (int i = 0; i < wheelPowers.length; i++) {
+            wheelPowers[i] = Range.clip(wheelPowers[i], -maxPower, maxPower);
         }
 
         return wheelPowers;

@@ -34,29 +34,37 @@ public class ComplexServo {
 
     public void rotateByAngle(double angle, AngleUnit angleUnit) {
         angle += this.getAngle(angleUnit);
-        this.turnToAngle(angle, angleUnit);
+        this.turnToAngle(angle, angleUnit, false);
     }
 
     public void rotateByAngle(double degrees) {
         this.rotateByAngle(degrees, AngleUnit.DEGREES);
     }
 
-    public void turnToAngle(double angle, AngleUnit angleUnit) {
+    public void turnToAngle(double angle, AngleUnit angleUnit, boolean force) {
         double angleRadians = Range.clip(this.toRadians(angle, angleUnit), this.minAngle, this.maxAngle);
-        this.setPosition((angleRadians - this.minAngle) / this.getAngleRange(AngleUnit.RADIANS));
+        this.setPosition((angleRadians - this.minAngle) / this.getAngleRange(AngleUnit.RADIANS), force);
+    }
+
+    public void turnToAngle(double degrees, boolean force) {
+        this.turnToAngle(degrees, AngleUnit.DEGREES, force);
     }
 
     public void turnToAngle(double degrees) {
-        this.turnToAngle(degrees, AngleUnit.DEGREES);
+        this.turnToAngle(degrees, false);
     }
 
     public void rotateBy(double position) {
         position += this.getPosition();
-        this.setPosition(position);
+        this.setPosition(position, false);
     }
 
-    public void setPosition(double position) {
-        HardwareUtils.optimizeMethod(Range.clip(position, 0.0, 1.0), servo, servo::setPosition);
+    public void setPosition(double position, boolean force) {
+        if (force) {
+            servo.setPosition(Range.clip(position, 0.0, 1.0));
+        } else {
+            HardwareUtils.optimizeMethod(Range.clip(position, 0.0, 1.0), servo, servo::setPosition);
+        }
     }
 
     public void setRange(double min, double max, AngleUnit angleUnit) {

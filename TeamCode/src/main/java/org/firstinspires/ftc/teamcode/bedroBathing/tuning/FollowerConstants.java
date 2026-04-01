@@ -157,14 +157,14 @@ public class FollowerConstants {
     public static int BEZIER_CURVE_BINARY_STEP_LIMIT = 10;
 
 
-    // These activate / deactivate the secondary PIDs. These take over at errors under a set limit for
+    // These activate / deactivate the secondary PIDs. These take over at errors under a set limitMagnitude for
     // the translational, heading, and drive PIDs.
     public static boolean useSecondaryTranslationalPID = true;
     public static boolean useSecondaryHeadingPID = true;
     public static boolean useSecondaryDrivePID = false;
 
 
-    // the limit at which the translational PIDF switches between the main and secondary translational PIDFs,
+    // the limitMagnitude at which the translational PIDF switches between the main and secondary translational PIDFs,
     // if the secondary PID is active
     public static double translationalPIDFSwitch = 2;
 
@@ -186,7 +186,7 @@ public class FollowerConstants {
     public static double secondaryTranslationalPIDFFeedForward = 0.015;
 
 
-    // the limit at which the heading PIDF switches between the main and secondary heading PIDFs
+    // the limitMagnitude at which the heading PIDF switches between the main and secondary heading PIDFs
     public static double headingPIDFSwitch = Math.PI / 20;
 
     // Secondary heading error PIDF coefficients
@@ -200,7 +200,7 @@ public class FollowerConstants {
     public static double secondaryHeadingPIDFFeedForward = 0.01;
 
 
-    // the limit at which the heading PIDF switches between the main and secondary drive PIDFs
+    // the limitMagnitude at which the heading PIDF switches between the main and secondary drive PIDFs
     public static double drivePIDFSwitch = 20;
 
     // Secondary drive PIDF coefficients

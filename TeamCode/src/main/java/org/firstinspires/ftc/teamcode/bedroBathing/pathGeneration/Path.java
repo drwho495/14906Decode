@@ -153,10 +153,10 @@ public class Path {
 
     /**
      * This gets the closest Point from a specified pose to the BezierCurve with a binary search
-     * that is limited to some specified step limit.
+     * that is limited to some specified step limitMagnitude.
      *
      * @param pose            the pose.
-     * @param searchStepLimit the binary search step limit.
+     * @param searchStepLimit the binary search step limitMagnitude.
      * @return returns the closest Point.
      */
     public Pose getClosestPoint(Pose pose, int searchStepLimit) {

@@ -122,9 +122,9 @@ public class IntakeSubsystem extends Subsystem {
 
         intakeMotor2.update();
 
-        double intakeMotor2Current = intakeMotor2.getCurrent();
+        double intakeMotorCurrent = (intakeMotor2.getCurrent() - Range.clip(intakeMotor1.getCurrent() - 2, 0, 100));
 
-        if (intakeMotor2Current > 3.2 && autoDisableTransfer) {
+        if (intakeMotorCurrent > 3.2 && autoDisableTransfer) {
             if (!transferDisabling) {
                 transferDisabling = true;
                 transferDisableTimeout.reset();

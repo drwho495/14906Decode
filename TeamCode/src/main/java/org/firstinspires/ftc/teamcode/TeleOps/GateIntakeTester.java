@@ -1,9 +1,7 @@
 package org.firstinspires.ftc.teamcode.TeleOps;
 
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.Base.AllianceSides;
 import org.firstinspires.ftc.teamcode.Base.OpModeStates;
@@ -12,14 +10,11 @@ import org.firstinspires.ftc.teamcode.Base.RobotManager;
 import org.firstinspires.ftc.teamcode.Base.ShootingStyle;
 import org.firstinspires.ftc.teamcode.bedroBathing.localization.Pose;
 import org.firstinspires.ftc.teamcode.bedroBathing.pathGeneration.BezierCurve;
-import org.firstinspires.ftc.teamcode.bedroBathing.pathGeneration.BezierLine;
 import org.firstinspires.ftc.teamcode.bedroBathing.pathGeneration.Path;
 import org.firstinspires.ftc.teamcode.bedroBathing.pathGeneration.PathBuilder;
 import org.firstinspires.ftc.teamcode.bedroBathing.pathGeneration.Point;
 import org.firstinspires.ftc.teamcode.bedroBathing.tuning.FollowerConstants;
 import org.firstinspires.ftc.teamcode.bedroBathing.util.CustomPIDFCoefficients;
-
-import java.util.concurrent.TimeUnit;
 
 //@Disabled
 @TeleOp(name = "Debug: Gate Intake Tester", group = "Debug")
@@ -68,11 +63,11 @@ public class GateIntakeTester extends LinearOpMode {
         robot.waitForShooter(1200);
         robot.setIntakePower(1);
         robot.safeSleep(25);
-        robot.shootElements();
+        robot.startScoringCycle();
 
         robot.safeSleep(850);
 
-        robot.cancelShootElements();
+        robot.stopScoringCycle();
         robot.safeSleep(50);
 
         FollowerConstants.useSecondaryHeadingPID = oldUseSecondaryHeading;

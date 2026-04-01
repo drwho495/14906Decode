@@ -23,7 +23,7 @@
   best to deal with the lack of calibration). However, if *any* calibrations are provided for a camera,
   then capture resolutions in those aspect ratios supported by the camera for which any calibrations
   are *not* provided are *not* offered. Thus, if you calibrate a camera but fail to calibrate all
-  the camera's supported aspect ratios, you limit the choices of capture resolutions that Vuforia can
+  the camera's supported aspect ratios, you limitMagnitude the choices of capture resolutions that Vuforia can
   select from.
 
   One image acquisition program that supports control of camera capture resolution is YouCam 7:

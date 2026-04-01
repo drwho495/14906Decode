@@ -32,11 +32,13 @@ public class ShooterSubsystem extends Subsystem {
     private double lastVelocity = 0;
     public int numLaunchedBalls = 0;
 
-    private boolean usingSecondaryPF = false;
-    public static double firstShooterP = 0.03;
-    public static double firstShooterF = 0.00323;
-    public static double secondShooterP = 0.035;
-    public static double secondShooterF = 0.00313;
+    private ShooterPFState pfState = ShooterPFState.WANDERING_LOOP;
+    public static double wanderingShooterP = 0.02;
+    public static double wanderingShooterF = 0.003;
+    public static double transferingShooterP = 0.035;
+    public static double transferingShooterF = 0.00323;
+    public static double fastTransferingShooterP = 0.04;
+    public static double fastTransferingShooterF = 0.00363;
 
     private final double velocityMultiplier = 304.0/6000;
 
@@ -45,21 +47,21 @@ public class ShooterSubsystem extends Subsystem {
         thisOpMode = newOpMode;
     }
 
-    public void useSecondaryPF() {
-        usingSecondaryPF = true;
-    }
-
-    public void usePrimaryPF() {
-        usingSecondaryPF = false;
+    public void setPFState(ShooterPFState newState) {
+        pfState = newState;
+        updatePF();
     }
 
     private void updatePF() {
-        if (usingSecondaryPF) {
-            shooterMotor1.setVelocityPIDFCoefficients(secondShooterP, 0, 0, secondShooterF);
-            shooterMotor2.setVelocityPIDFCoefficients(secondShooterP, 0, 0, secondShooterF);
-        } else {
-            shooterMotor1.setVelocityPIDFCoefficients(firstShooterP, 0, 0, firstShooterF);
-            shooterMotor2.setVelocityPIDFCoefficients(firstShooterP, 0, 0, firstShooterF);
+        if (pfState == ShooterPFState.WANDERING_LOOP) {
+            shooterMotor1.setVelocityPIDFCoefficients(wanderingShooterP, 0, 0, wanderingShooterF);
+            shooterMotor2.setVelocityPIDFCoefficients(wanderingShooterP, 0, 0, wanderingShooterF);
+        } else if (pfState == ShooterPFState.TRANSFER_LOOP) {
+            shooterMotor1.setVelocityPIDFCoefficients(transferingShooterP, 0, 0, transferingShooterF);
+            shooterMotor2.setVelocityPIDFCoefficients(transferingShooterP, 0, 0, transferingShooterF);
+        } else if (pfState == ShooterPFState.FAST_TRANSFER_LOOP) {
+            shooterMotor1.setVelocityPIDFCoefficients(fastTransferingShooterP, 0, 0, fastTransferingShooterF);
+            shooterMotor2.setVelocityPIDFCoefficients(fastTransferingShooterP, 0, 0, fastTransferingShooterF);
         }
     }
 
@@ -92,10 +94,6 @@ public class ShooterSubsystem extends Subsystem {
         hoodServo.setInverted(true);
     }
 
-    public void updatePowerFromPosition(Pose position) {
-        motorVelo = Parameters.SHOOTER_DEFAULT_RPM;
-    }
-
     public boolean ready() {
         return shooterMotor1.atVelocity();
     }
@@ -110,6 +108,11 @@ public class ShooterSubsystem extends Subsystem {
 
     public void closeFinger() {
         fingerServoPos = Parameters.FINGER_SERVO_CLOSED;
+    }
+
+    public void forceCloseFinger() {
+        fingerServoPos = Parameters.FINGER_SERVO_CLOSED;
+        fingerServo.turnToAngle(fingerServoPos, true);
     }
 
     public void setHoodPos(double setPos) {

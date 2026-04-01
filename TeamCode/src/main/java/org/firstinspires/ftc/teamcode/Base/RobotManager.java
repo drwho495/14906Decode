@@ -5,6 +5,7 @@ package org.firstinspires.ftc.teamcode.Base;
 
 import android.util.Pair;
 
+import com.pedropathing.follower.Follower;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -14,13 +15,11 @@ import org.firstinspires.ftc.teamcode.Base.Helpers.HardwareUtils;
 import org.firstinspires.ftc.teamcode.Base.Helpers.PointsCurve;
 import org.firstinspires.ftc.teamcode.Base.Helpers.Polygon;
 import org.firstinspires.ftc.teamcode.Base.Subsystems.IntakeSubsystem;
+import org.firstinspires.ftc.teamcode.Base.Subsystems.ShooterPFState;
 import org.firstinspires.ftc.teamcode.Base.Subsystems.ShooterSubsystem;
-import org.firstinspires.ftc.teamcode.bedroBathing.follower.Follower;
-import org.firstinspires.ftc.teamcode.bedroBathing.localization.Pose;
-import org.firstinspires.ftc.teamcode.bedroBathing.pathGeneration.MathFunctions;
-import org.firstinspires.ftc.teamcode.bedroBathing.pathGeneration.Path;
-import org.firstinspires.ftc.teamcode.bedroBathing.pathGeneration.PathBuilder;
-import org.firstinspires.ftc.teamcode.bedroBathing.pathGeneration.Point;
+import org.firstinspires.ftc.teamcode.pedroPathing.PedroConstants;
+
+import com.pedropathing.geometry.Pose;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,6 +34,7 @@ public class RobotManager {
     private AllianceSides side = Parameters.LAST_ALLIANCE_SIDE;
     private double autoTimeout = -1;
     private Pose goalPos = Parameters.SHOOTER_GOAL_CLOSE;
+    private double goalOffset = 0;
 
     private final ElapsedTime autoTimer = new ElapsedTime();
     private final ElapsedTime timer = new ElapsedTime();
@@ -48,9 +48,9 @@ public class RobotManager {
     List<LynxModule> hubs = null;
 
     private boolean isShooting = false;
-    private boolean manualShooterControl = false;
+    private ShooterControlPolicy shooterControlPolicy = ShooterControlPolicy.ROAMING;
     private boolean waitForVelocityToShoot = true;
-    private boolean onlyShootInZone = true;
+    private boolean onlyShootInZone = false;
 
     private double teleopHeadingGoal = 0;
     private boolean usingAutoHeading = false;
@@ -90,6 +90,14 @@ public class RobotManager {
         opMode = newOpMode;
         shooterSubsystem.setLinearTeleop(this.opMode);
         intakeSubsystem.setLinearTeleop(this.opMode);
+    }
+
+    public void setShooterControlPolicy(ShooterControlPolicy newControlPolicy) {
+        shooterControlPolicy = newControlPolicy;
+    }
+
+    public ShooterControlPolicy getShooterControlPolicy() {
+        return shooterControlPolicy;
     }
 
     public OpModeStates getState() {
@@ -138,10 +146,10 @@ public class RobotManager {
 
     public void printDebugInfo() {
         opMode.telemetry.addData("Robot Heading: ", Math.toDegrees(follower.getPose().getHeading()));
-        opMode.telemetry.addData("Robot Heading Error: ", Math.toDegrees(follower.headingError));
+        opMode.telemetry.addData("Robot Heading Error: ", Math.toDegrees(follower.getHeadingError()));
         opMode.telemetry.addData("Alliance Side: ", side == AllianceSides.BLUE ? "Blue" : "Red");
         opMode.telemetry.addData("Shooter RPM Goal: ", shooterSubsystem.getTargetVelocity());
-        if (follower.isBusy()) opMode.telemetry.addData("Using Variable Heading: ", follower.followerHeadingIsVariable());
+//        if (follower.isBusy()) opMode.telemetry.addData("Using Variable Heading: ", follower.followerHeadingIsVariable());
         opMode.telemetry.update();
     }
 
@@ -178,6 +186,38 @@ public class RobotManager {
         setAllianceSide(Parameters.LAST_ALLIANCE_SIDE);
         buildRPMCurves();
     }
+
+    public void addGoalOffset(double numberToAdd) {
+        goalOffset += numberToAdd;
+    }
+
+    public void resetGoalOffset() {
+        // no default set yet.
+        goalOffset = 0;
+    }
+
+    public void setGoalOffset(double newOffset) {
+        goalOffset = newOffset;
+    }
+
+    public double getGoalOffset() {
+        return goalOffset;
+    }
+
+    private Pose getOffsetedGoalPose() {
+        Pose offsetedPose = goalPos.copy();
+
+        double offsetX = offsetedPose.getX() + goalOffset;
+        double offsetY = offsetedPose.getY() - goalOffset;
+
+        if (offsetY < -6) {
+            offsetedPose.setY(offsetY + 6);
+        } else {
+            offsetedPose.setX(offsetX);
+        }
+
+        return offsetedPose;
+    }
     
     private void buildRPMCurves() {
         if (shootingStyle == ShootingStyle.STANDARD) {
@@ -195,22 +235,22 @@ public class RobotManager {
 
             shooterSubsystem.setHoodCompensationMultiplier(4);
         } else if (shootingStyle == ShootingStyle.LARGE_ARC) {
-            rpmCurve.addPoint(65, 3900);
+            rpmCurve.addPoint(65, 3800);
             hoodCurve.addPoint(65, 20);
 
-            rpmCurve.addPoint(76, 3950);
+            rpmCurve.addPoint(76, 3850);
             hoodCurve.addPoint(76, 20);
 
-            rpmCurve.addPoint(83, 4030);
+            rpmCurve.addPoint(83, 3980);
             hoodCurve.addPoint(83, 20);
 
-            rpmCurve.addPoint(100, 4280);
-            hoodCurve.addPoint(100, 35);
+            rpmCurve.addPoint(100, 4250);
+            hoodCurve.addPoint(100, 30);
 
-            rpmCurve.addPoint(140, 5400);
-            hoodCurve.addPoint(140, 85);
+            rpmCurve.addPoint(140, 5380);
+            hoodCurve.addPoint(140, 77);
 
-            shooterSubsystem.setHoodCompensationMultiplier(25);
+            shooterSubsystem.setHoodCompensationMultiplier(6);
         } else if (shootingStyle == ShootingStyle.UNJAM) {
             rpmCurve.addPoint(81, 4284);
             hoodCurve.addPoint(81, 120);
@@ -233,18 +273,6 @@ public class RobotManager {
 
     public double getTransferDisableTime() {
         return intakeSubsystem.getTransferLockTime();
-    }
-
-    public void enableManualShooterControl() {
-        manualShooterControl = true;
-    }
-
-    public void disableManualShooterControl() {
-        manualShooterControl = false;
-    }
-
-    public boolean isManualShooterMode() {
-        return manualShooterControl;
     }
 
     public boolean isShooterOn() {
@@ -306,10 +334,6 @@ public class RobotManager {
         shooterSubsystem.powerOn();
     }
 
-    public void reverseIntake() {
-        setIntakePower(-1);
-    }
-
     public void powerOffIntake() {
         setIntakePower(0);
     }
@@ -334,13 +358,13 @@ public class RobotManager {
         shooterSubsystem.powerOff();
     }
 
-    public void shootElements() {
+    public void startScoringCycle() {
         canShoot = false;
         canShootOveride = false;
         isShooting = true;
     }
 
-    public void cancelShootElements() {
+    public void stopScoringCycle() {
         isShooting = false;
     }
 
@@ -367,13 +391,13 @@ public class RobotManager {
     }
 
     public void setShooterVelocity(double velocity) {
-        if (manualShooterControl) shooterSubsystem.setVelocity(velocity);
+        if (shooterControlPolicy == ShooterControlPolicy.MANUAL)
+            shooterSubsystem.setVelocity(velocity);
     }
 
     public void setHoodServoPos(double newPos) {
-        if (manualShooterControl) {
+        if (shooterControlPolicy == ShooterControlPolicy.MANUAL)
             shooterSubsystem.setHoodPos(newPos);
-        }
     }
 
     public Pose getPose() {
@@ -549,7 +573,7 @@ public class RobotManager {
     }
 
     public double getHeadingToGoal(Pose robotPose) {
-        return getHeadingToPose(robotPose, goalPos);
+        return getHeadingToPose(robotPose, getOffsetedGoalPose());
     }
 
     public double getHeadingToPose(Pose robotPose, Pose targetPose) {
@@ -617,10 +641,19 @@ public class RobotManager {
 
     public void setAllianceSide(AllianceSides newSide) {
         side = newSide;
-        setShooterZone(Parameters.SHOOTER_GOAL_CLOSE);
+        setShooterGoal(Parameters.SHOOTER_GOAL_CLOSE);
     }
 
-    public void setShooterZone(Pose newZone) {
+    public void updateShooterParameters(double distanceToGoalInput) {
+        shooterSubsystem.setVelocity(rpmCurve.getY(distanceToGoalInput));
+        shooterSubsystem.setHoodPos(hoodCurve.getY(distanceToGoalInput));
+    }
+
+    public void updateShooterParameters(Pose robotPose) {
+        updateShooterParameters(getDistanceToGoal(robotPose));
+    }
+
+    private void setShooterGoal(Pose newZone) {
         goalPos = getFixedPose(newZone);
     }
 
@@ -649,13 +682,10 @@ public class RobotManager {
                 break;
 
             case INTAKE_SCORE:
-                double distanceToGoal = getDistanceToGoal();
-
                 robotGeometricRepresentation.setOffsets(getPose());
 
-                if (!manualShooterControl) {
-                    shooterSubsystem.setVelocity(rpmCurve.getY(distanceToGoal));
-                    shooterSubsystem.setHoodPos(hoodCurve.getY(distanceToGoal));
+                if (shooterControlPolicy == ShooterControlPolicy.ROAMING) {
+                    updateShooterParameters(getDistanceToGoal());
                 }
 
                 boolean inZone = closeZone.contains(robotGeometricRepresentation) || farZone.contains(robotGeometricRepresentation);
@@ -664,9 +694,9 @@ public class RobotManager {
                     boolean needsToWait = false;
 
                     if (waitForVelocityToShoot && !autoTeleShooting) {
-                        if ((!shooterSubsystem.ready() || shooterSubsystem.getRateOfChange() < 1)
+                        if ((!shooterSubsystem.ready())
                                 && !canShootOveride
-                                && !(canShoot && Math.abs(canShootAtVelocity - shooterSubsystem.getTargetVelocity()) < 15))
+                                && !(canShoot && Math.abs(canShootAtVelocity - shooterSubsystem.getTargetVelocity()) < 100))
                         {
                             needsToWait = true;
                         }
@@ -707,14 +737,12 @@ public class RobotManager {
                             intakeSubsystem.setIntakePower(1);
                         }
 
-                        if (distanceToGoal >= Parameters.MIN_SHOOT_DISTANCE) {
-                            if (distanceToGoal < Parameters.FAR_ZONE_DISTANCE) {
-                                shooterSubsystem.usePrimaryPF();
-//                                setShooterZone(Parameters.SHOOTER_GOAL_FAR);
+                        if (getDistanceToGoal() >= Parameters.MIN_SHOOT_DISTANCE) {
+                            if (getDistanceToGoal() < Parameters.FAR_ZONE_DISTANCE) {
+                                shooterSubsystem.setPFState(ShooterPFState.TRANSFER_LOOP);
                                 intakeSubsystem.setPowerLimits(1, transferSpeed);
                             } else {
-                                shooterSubsystem.useSecondaryPF();
-//                                setShooterZone(Parameters.SHOOTER_GOAL_CLOSE);
+                                shooterSubsystem.setPFState(ShooterPFState.FAST_TRANSFER_LOOP);
                                 intakeSubsystem.setPowerLimits(1, Parameters.SLOW_TRANSFER);
                             }
                         } else {
@@ -729,6 +757,7 @@ public class RobotManager {
                         intakeSubsystem.setPowerLimits(.5, 0);
                     }
                 } else {
+                    shooterSubsystem.setPFState(ShooterPFState.WANDERING_LOOP);
                     shooterSubsystem.disableHoodCompensation();
 
                     if (intakePower == 0 && activeHoldLastBallEnabled && lastIntakePower > 0) {
@@ -829,7 +858,7 @@ public class RobotManager {
     }
 
     /*
-     * set the power limit for the drivetrain motors in auto
+     * set the power limitMagnitude for the drivetrain motors in auto
      */
     public void setMaxFollowerPower(double newPower) {
         follower.setMaxPower(newPower);
@@ -873,6 +902,10 @@ public class RobotManager {
         return distanceToGoal;
     }
 
+    public double getDistanceToGoal(Pose robotPosition) {
+        return MathFunctions.distance(robotPosition, goalPos);
+    }
+
     public boolean isTransferStalled() {
         return intakeSubsystem.isTransferStalled();
     }
@@ -909,5 +942,10 @@ public class RobotManager {
         while (opMode.opModeIsActive() && Math.abs(follower.headingError) > error) {
             update();
         }
+    }
+
+    public void forceCancelShooting() {
+        stopScoringCycle();
+        shooterSubsystem.forceCloseFinger();
     }
 }
