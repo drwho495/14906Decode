@@ -5,6 +5,7 @@ import com.pedropathing.follower.FollowerConstants;
 import com.pedropathing.ftc.FollowerBuilder;
 import com.pedropathing.ftc.drivetrains.MecanumConstants;
 import com.pedropathing.ftc.localization.constants.PinpointConstants;
+import com.pedropathing.ftc.localization.localizers.PinpointLocalizer;
 import com.pedropathing.paths.PathConstraints;
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -31,7 +32,7 @@ public class PedroConstants {
                             0
                     )
             )
-            .useSecondaryHeadingPIDF(true)
+            .useSecondaryHeadingPIDF(false)
             .mass(11.34);
 
     public static MecanumConstants driveConstants = new MecanumConstants()
@@ -43,7 +44,8 @@ public class PedroConstants {
             .leftFrontMotorDirection(DcMotorSimple.Direction.REVERSE)
             .leftRearMotorDirection(DcMotorSimple.Direction.REVERSE)
             .rightFrontMotorDirection(DcMotorSimple.Direction.REVERSE)
-            .rightRearMotorDirection(DcMotorSimple.Direction.FORWARD);
+            .rightRearMotorDirection(DcMotorSimple.Direction.FORWARD)
+            .useBrakeModeInTeleOp(true);
 
     public static PinpointConstants localizerConstants = new PinpointConstants()
             .forwardPodY(-34)
@@ -54,13 +56,17 @@ public class PedroConstants {
             .forwardEncoderDirection(GoBildaPinpointDriver.EncoderDirection.FORWARD)
             .strafeEncoderDirection(GoBildaPinpointDriver.EncoderDirection.FORWARD);
 
+    public static PinpointLocalizer pinpointLocalizer = null;
+
     public static PathConstraints pathConstraints = new PathConstraints(0.99, 100, 1, 1);
 
     public static Follower createFollower(HardwareMap hardwareMap) {
+        pinpointLocalizer = new PinpointLocalizer(hardwareMap, localizerConstants);
+
         return new FollowerBuilder(followerConstants, hardwareMap)
                 .pathConstraints(pathConstraints)
                 .mecanumDrivetrain(driveConstants)
-                .pinpointLocalizer(localizerConstants)
+                .setLocalizer(pinpointLocalizer)
                 .build();
     }
 }

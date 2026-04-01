@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.TeleOps;
 
+import com.pedropathing.geometry.Pose;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -13,8 +14,7 @@ import org.firstinspires.ftc.teamcode.Base.OpModeStates;
 import org.firstinspires.ftc.teamcode.Base.Parameters;
 import org.firstinspires.ftc.teamcode.Base.RobotManager;
 import org.firstinspires.ftc.teamcode.Base.ShootingStyle;
-import org.firstinspires.ftc.teamcode.bedroBathing.localization.Pose;
-import org.firstinspires.ftc.teamcode.bedroBathing.tuning.FollowerConstants;
+import org.firstinspires.ftc.teamcode.pedroPathing.PedroConstants;
 
 import java.util.concurrent.TimeUnit;
 
@@ -34,10 +34,6 @@ public class MainTeleop extends LinearOpMode {
     private boolean driverNotifiedOf3 = false;
     private ElapsedTime shooterTimer = new ElapsedTime();
 
-    private DcMotorEx leftFront;
-    private DcMotorEx leftRear;
-    private DcMotorEx rightFront;
-    private DcMotorEx rightRear;
     private final ElapsedTime timer = new ElapsedTime();
 
     private double shooterVelocity = Parameters.SHOOTER_DEFAULT_RPM;
@@ -75,16 +71,6 @@ public class MainTeleop extends LinearOpMode {
 
         robot.setAllianceSide(Parameters.LAST_ALLIANCE_SIDE);
         robot.powerOffShooter();
-
-        leftFront = hardwareMap.get(DcMotorEx.class, FollowerConstants.leftFrontMotorName);
-        leftRear = hardwareMap.get(DcMotorEx.class, FollowerConstants.leftRearMotorName);
-        rightRear = hardwareMap.get(DcMotorEx.class, FollowerConstants.rightRearMotorName);
-        rightFront = hardwareMap.get(DcMotorEx.class, FollowerConstants.rightFrontMotorName);
-
-        leftFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        leftRear.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        rightRear.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        rightFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         robot.disableAutoHeading();
 
