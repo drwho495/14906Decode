@@ -59,7 +59,7 @@ public class PedroConstants {
             .xVelocity(73.04)
             .yVelocity(60.21)
             .useVoltageCompensation(true)
-            .useBrakeModeInTeleOp(false);
+            .useBrakeModeInTeleOp(true);
 
     public static PinpointConstants localizerConstants = new PinpointConstants()
             .forwardPodY(-34)
@@ -86,14 +86,14 @@ public class PedroConstants {
             pinpointLocalizer = new PinpointLocalizer(hardwareMap, localizerConstants);
         }
 
-        if (follower == null) {
-            follower = new FollowerBuilder(followerConstants, hardwareMap)
+        if (PedroConstants.follower == null) {
+            PedroConstants.follower = new FollowerBuilder(followerConstants, hardwareMap)
                     .pathConstraints(pathConstraints)
                     .mecanumDrivetrain(driveConstants)
                     .setLocalizer(pinpointLocalizer)
                     .build();
         }
 
-        return follower;
+        return PedroConstants.follower;
     }
 }
