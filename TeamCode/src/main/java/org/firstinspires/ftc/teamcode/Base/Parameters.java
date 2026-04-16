@@ -39,6 +39,8 @@ public class Parameters {
     public final static double FINGER_SERVO_OPEN = 45;
     public final static double FINGER_SERVO_CLOSED = 100;
 
+    public final static int ROBOT = 1;
+
     public final static double HOOD_SERVO_DOWN = 20;
     public final static double HOOD_SERVO_FAR = 50;
     public final static double HOOD_SERVO_UP = 120;

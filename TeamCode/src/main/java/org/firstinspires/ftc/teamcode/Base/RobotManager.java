@@ -5,7 +5,9 @@ package org.firstinspires.ftc.teamcode.Base;
 
 import android.util.Pair;
 
+import com.pedropathing.VectorCalculator;
 import com.pedropathing.control.PIDFController;
+import com.pedropathing.drivetrain.Drivetrain;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.math.MathFunctions;
 import com.pedropathing.math.Vector;
@@ -38,6 +40,8 @@ public class RobotManager {
     private OpModeStates currentState = OpModeStates.IDLE;
     private LinearOpMode opMode;
     private Follower follower = null;
+    private VectorCalculator vectorCalculator = null;
+    private Drivetrain drivetrain;
     private AllianceSides side = Parameters.LAST_ALLIANCE_SIDE;
     private double autoTimeout = -1;
     private Pose goalPos = Parameters.SHOOTER_GOAL_CLOSE;
@@ -63,6 +67,7 @@ public class RobotManager {
     private boolean usingTeleopHeadingLock = false;
     private boolean autoTeleShooting = false;
     private boolean autoTeleShootingHeadingSwitch = false;
+    private boolean robotAimInPlace = false;
     private double autoTeleShootingMaxSpeed = 1;
     private boolean followerEndStalePathEnabled = true;
     private double teleopHeadingOffset = 0;
@@ -153,7 +158,7 @@ public class RobotManager {
 
     public void printDebugInfo() {
         opMode.telemetry.addData("Robot Heading: ", Math.toDegrees(follower.getPose().getHeading()));
-        opMode.telemetry.addData("Robot Heading Error: ", Math.toDegrees(follower.getHeadingError()));
+//        opMode.telemetry.addData("Robot Heading Error: ", Math.toDegrees(follower.getHeadingError()));
         opMode.telemetry.addData("Alliance Side: ", side == AllianceSides.BLUE ? "Blue" : "Red");
         opMode.telemetry.addData("Shooter RPM Goal: ", shooterSubsystem.getTargetVelocity());
 //        if (follower.isBusy()) opMode.telemetry.addData("Using Variable Heading: ", follower.followerHeadingIsVariable());
@@ -164,7 +169,9 @@ public class RobotManager {
         shooterSubsystem.initialiseHardware();
         intakeSubsystem.initialiseHardware();
 
-        follower = PedroConstants.createFollower(opMode.hardwareMap);
+        follower = PedroConstants.getFollower(opMode.hardwareMap);
+        vectorCalculator = follower.getVectorCalculator();
+        drivetrain = follower.getDrivetrain();
 
         List<LynxModule> hubs = opMode.hardwareMap.getAll(LynxModule.class);
 
@@ -178,15 +185,15 @@ public class RobotManager {
         Pose closeGoalPoint = new Pose(10, -10);
         Pose farEndPoint = new Pose(-55, -100);
 
-//        closeZone.addPoint(closeEndPoint);
-//        closeZone.addPoint(closeGoalPoint);
-//        closeZone.addPoint(closeGoalPoint.getMirroredCopy());
-//        closeZone.addPoint(closeEndPoint);
+        closeZone.addPoint(closeEndPoint);
+        closeZone.addPoint(closeGoalPoint);
+        closeZone.addPoint(PedroUtils.getMirroredPose(closeGoalPoint));
+        closeZone.addPoint(closeEndPoint);
 
-//        farZone.addPoint(farEndPoint);
-//        farZone.addPoint(new Pose(-20, -131));
-//        farZone.addPoint(new Pose(-85, -131));
-//        farZone.addPoint(farEndPoint);
+        farZone.addPoint(farEndPoint);
+        farZone.addPoint(new Pose(-20, -131));
+        farZone.addPoint(new Pose(-85, -131));
+        farZone.addPoint(farEndPoint);
 
         robotGeometricRepresentation = Polygon.makeRectangle(12, 18);
 
@@ -242,13 +249,13 @@ public class RobotManager {
 
             shooterSubsystem.setHoodCompensationMultiplier(4);
         } else if (shootingStyle == ShootingStyle.LARGE_ARC) {
-            rpmCurve.addPoint(65, 3800);
+            rpmCurve.addPoint(65, 3700);
             hoodCurve.addPoint(65, 20);
 
-            rpmCurve.addPoint(76, 3850);
+            rpmCurve.addPoint(76, 3800);
             hoodCurve.addPoint(76, 20);
 
-            rpmCurve.addPoint(83, 3980);
+            rpmCurve.addPoint(83, 3900);
             hoodCurve.addPoint(83, 20);
 
             rpmCurve.addPoint(100, 4250);
@@ -287,9 +294,8 @@ public class RobotManager {
     }
 
     public void setDrivePowers(double x, double y, double heading, boolean fieldCentric) {
-        if (!follower.isTeleopDrive()) {
-            breakFollowing();
-            follower.startTeleopDrive();
+        if (follower.isBusy()) {
+            breakFollowing(false);
         }
 
         if (autoTeleShooting) {
@@ -297,25 +303,41 @@ public class RobotManager {
             y = Range.clip(y, -autoTeleShootingMaxSpeed, autoTeleShootingMaxSpeed);
         }
 
+        Pose robotPose = getPose();
+        Vector headingVector = new Vector();
+        Vector driveVector = new Vector();
+
         if (usingTeleopHeadingLock) {
-            PIDFController headingPIDF;
+            double robotHeading = MathFunctions.normalizeAngle(robotPose.getHeading());
+            double direction = MathFunctions.getTurnDirection(robotHeading, teleopHeadingGoal);
 
-            double robotHeading = follower.getHeading();
-            double headingError = robotHeading - teleopHeadingGoal;
+            teleopHeadingGoal = MathFunctions.normalizeAngle(teleopHeadingGoal);
 
-            if (Math.abs(headingError) <= PedroConstants.followerConstants.headingPIDFSwitch && PedroConstants.followerConstants.useSecondaryHeadingPIDF) {
-                headingPIDF = new PIDFController(PedroConstants.followerConstants.coefficientsSecondaryHeadingPIDF);
-            } else {
-                headingPIDF = new PIDFController(PedroConstants.followerConstants.coefficientsHeadingPIDF);
-            }
-
-            headingPIDF.updateFeedForwardInput(MathFunctions.getTurnDirection(robotHeading, teleopHeadingGoal));
-            headingPIDF.updateError(headingError);
-
-            heading = headingPIDF.run();
+            headingVector = vectorCalculator.getHeadingVector(
+                    MathFunctions.getSmallestAngleDifference(robotHeading, teleopHeadingGoal) * direction,
+                    robotPose,
+                    teleopHeadingGoal
+            );
+        } else {
+            headingVector.setComponents(heading, getPose().getHeading());
         }
 
-        follower.setTeleOpDrive(x, y, heading, !fieldCentric, teleopHeadingOffset);
+        driveVector.setOrthogonalComponents(x, y);
+        driveVector.setMagnitude(Range.clip(driveVector.getMagnitude(), 0, 1));
+
+        if (fieldCentric) {
+            driveVector.rotateVector(teleopHeadingOffset);
+        } else {
+            driveVector.rotateVector(robotPose.getHeading());
+        }
+
+        drivetrain.runDrive(
+                new Vector(),
+                headingVector,
+                driveVector,
+                robotPose.getHeading(),
+                follower.getVelocity()
+        );
     }
 
     public void enableAutoHeading() {
@@ -440,6 +462,8 @@ public class RobotManager {
     }
 
     private void internalRunPath(PathBuilder path, boolean correctAfterFinished) {
+        breakFollowing();
+
         follower.followPath(path.build(), correctAfterFinished);
         follower.update();
 
@@ -486,6 +510,8 @@ public class RobotManager {
     }
 
     public void runPassthrough(PathBuilder path) {
+        breakFollowing();
+
         follower.followPath(path.build());
     }
 
@@ -513,6 +539,14 @@ public class RobotManager {
         } else {
             return PedroUtils.getMirroredPose(builtPose);
         }
+    }
+
+    /*
+     * This will get a copy of the inputted x and y values that will/won't be mirrored
+     * depending on the robot's alliance
+     */
+    public Pose getFixedPose(double x, double y) {
+        return getFixedPose(x, y, 0);
     }
 
     /*
@@ -577,12 +611,8 @@ public class RobotManager {
     }
 
     public void stopAndAim() {
-        breakFollowing();
-
-        follower.startTeleopDrive();
-
-        enableAutoHeading();
-        useGoalAimHeading();
+        breakFollowing(false);
+        robotAimInPlace = true;
     }
 
     public void enableOnlyShootInZone() {
@@ -664,7 +694,29 @@ public class RobotManager {
             clearCache();
         }
 
-        if (usingTeleopHeadingLock) {
+        if (robotAimInPlace) {
+            if (follower.isBusy())
+                breakFollowing(false, false);
+
+            Pose robotPose = getPose();
+
+            double robotHeading = robotPose.getHeading();
+            double direction = MathFunctions.getTurnDirection(robotHeading, getHeadingToGoal());
+
+            Vector headingVector = vectorCalculator.getHeadingVector(
+                    MathFunctions.getSmallestAngleDifference(robotHeading, getHeadingToGoal()) * direction,
+                    robotPose,
+                    teleopHeadingGoal
+            );
+
+            drivetrain.runDrive(
+                    new Vector(),
+                    headingVector.times(.5),
+                    new Vector(),
+                    robotHeading,
+                    follower.getVelocity()
+            );
+        } else if (usingTeleopHeadingLock) {
             if (aimAtGoal) {
                 teleopHeadingGoal = getHeadingToGoal();
             }
@@ -676,7 +728,7 @@ public class RobotManager {
                 break;
 
             case INTAKE_SCORE:
-//                robotGeometricRepresentation.setOffsets(getPose());
+                robotGeometricRepresentation.setOffsets(getPose());
 
                 if (shooterControlPolicy == ShooterControlPolicy.ROAMING) {
                     updateShooterParameters(getDistanceToGoal());
@@ -859,19 +911,25 @@ public class RobotManager {
     }
 
     public void breakFollowing() {
-        follower.breakFollowing();
-
-        clearPathTimeout();
+        breakFollowing(false);
     }
 
     public void breakFollowing(boolean holdPoint) {
+        breakFollowing(holdPoint, true);
+    }
+
+    public void breakFollowing(boolean holdPoint, boolean resetAimInPlace) {
         Pose lastPose = null;
 
         if (holdPoint && follower.isBusy()) {
             lastPose = follower.getCurrentPath().endPose();
         }
 
-        breakFollowing();
+        follower.breakFollowing();
+        clearPathTimeout();
+
+        if (resetAimInPlace)
+            robotAimInPlace = false;
 
         if (holdPoint) {
             follower.holdPoint(lastPose);
@@ -922,16 +980,15 @@ public class RobotManager {
     }
 
     public void turnTo(double headingGoal, double error) {
-        Pose targetPose = getPose();
+        breakFollowing();
 
-        targetPose.setHeading(headingGoal);
-
-        follower.holdPoint(targetPose);
+        follower.turnTo(headingGoal);
         follower.update();
 
         while (opMode.opModeIsActive() && Math.abs(follower.getHeadingError()) > error) {
             update();
         }
+        follower.breakFollowing();
     }
 
     public void forceCancelShooting() {

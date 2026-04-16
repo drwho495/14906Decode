@@ -234,6 +234,7 @@ public class MainTeleop extends LinearOpMode {
             telemetry.addData("Distance To Goal: ", robot.getDistanceToGoal());
             telemetry.addData("Robot Alliance: ", robot.getAllianceSide() == AllianceSides.BLUE ? "Blue Side" : "Red Side");
             telemetry.addData("Heading Lock Goal Offset: ", robot.getGoalOffset());
+            telemetry.addData("Loop Time: ", timer.time(TimeUnit.MILLISECONDS));
 
             if (showDebugInfo) {
                 telemetry.addData("Target RPM: ", robot.getShooterTargetVelocity());
@@ -247,7 +248,6 @@ public class MainTeleop extends LinearOpMode {
                 telemetry.addData("Robot Y: ", robotPose.getY());
                 telemetry.addData("Robot Heading: ", Math.toDegrees(robotPose.getHeading()));
                 telemetry.addData("Number of Artifacts in the Intake: ", robot.getHeldBallCount());
-                telemetry.addData("Loop Time: ", timer.time(TimeUnit.MILLISECONDS));
             }
 
             timer.reset();

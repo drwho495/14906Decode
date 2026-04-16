@@ -10,7 +10,6 @@ import org.firstinspires.ftc.teamcode.Base.HardwareBases.ComplexMotor;
 import org.firstinspires.ftc.teamcode.Base.HardwareBases.ComplexMotorModes;
 import org.firstinspires.ftc.teamcode.Base.HardwareBases.ComplexServo;
 import org.firstinspires.ftc.teamcode.Base.Parameters;
-import org.firstinspires.ftc.teamcode.bedroBathing.localization.Pose;
 
 @Config
 public class ShooterSubsystem extends Subsystem {
@@ -30,15 +29,14 @@ public class ShooterSubsystem extends Subsystem {
     private boolean hoodCompensationEnabled = false;
     private double hoodCompensationMultiplier = 9;
     private double lastVelocity = 0;
-    public int numLaunchedBalls = 0;
 
     private ShooterPFState pfState = ShooterPFState.WANDERING_LOOP;
-    public static double wanderingShooterP = 0.02;
-    public static double wanderingShooterF = 0.003;
-    public static double transferingShooterP = 0.035;
-    public static double transferingShooterF = 0.00323;
-    public static double fastTransferingShooterP = 0.04;
-    public static double fastTransferingShooterF = 0.00363;
+    public static double wanderingShooterP = 0.03;
+    public static double wanderingShooterF = 0.0032;
+    public static double transferringShooterP = 0.032;
+    public static double transferringShooterF = 0.00323;
+    public static double fastTransferringShooterP = 0.04;
+    public static double fastTransferringShooterF = 0.00363;
 
     private final double velocityMultiplier = 304.0/6000;
 
@@ -57,11 +55,11 @@ public class ShooterSubsystem extends Subsystem {
             shooterMotor1.setVelocityPIDFCoefficients(wanderingShooterP, 0, 0, wanderingShooterF);
             shooterMotor2.setVelocityPIDFCoefficients(wanderingShooterP, 0, 0, wanderingShooterF);
         } else if (pfState == ShooterPFState.TRANSFER_LOOP) {
-            shooterMotor1.setVelocityPIDFCoefficients(transferingShooterP, 0, 0, transferingShooterF);
-            shooterMotor2.setVelocityPIDFCoefficients(transferingShooterP, 0, 0, transferingShooterF);
+            shooterMotor1.setVelocityPIDFCoefficients(transferringShooterP, 0, 0, transferringShooterF);
+            shooterMotor2.setVelocityPIDFCoefficients(transferringShooterP, 0, 0, transferringShooterF);
         } else if (pfState == ShooterPFState.FAST_TRANSFER_LOOP) {
-            shooterMotor1.setVelocityPIDFCoefficients(fastTransferingShooterP, 0, 0, fastTransferingShooterF);
-            shooterMotor2.setVelocityPIDFCoefficients(fastTransferingShooterP, 0, 0, fastTransferingShooterF);
+            shooterMotor1.setVelocityPIDFCoefficients(fastTransferringShooterP, 0, 0, fastTransferringShooterF);
+            shooterMotor2.setVelocityPIDFCoefficients(fastTransferringShooterP, 0, 0, fastTransferringShooterF);
         }
     }
 
@@ -81,9 +79,9 @@ public class ShooterSubsystem extends Subsystem {
         shooterMotor2.setReversed(false);
 
         shooterMotor1.useCustomVeloPIDLoop(true);
-        updatePF();
-//        shooterMotor1.setVelocityPIDFCoefficients(8, 2.5, 0, 0);
         shooterMotor1.setLinkedMotor(shooterMotor2);
+
+        updatePF();
 
         vSensor = thisOpMode.hardwareMap.voltageSensor.iterator().next();
 
@@ -151,10 +149,6 @@ public class ShooterSubsystem extends Subsystem {
         hoodCompensationMultiplier = newMult;
     }
 
-    public double getRateOfChange() {
-        return getVelocities()[0] / lastVelocity;
-    }
-
     @Override
     public void update() {
         if (!thisOpMode.opModeIsActive() || thisOpMode.isStopRequested()) return;
@@ -165,7 +159,6 @@ public class ShooterSubsystem extends Subsystem {
 
         if (hoodCompensationEnabled) {
             shooter1Current = shooterMotor1.getCurrent();
-//            shooter2Current = shooterMotor2.getCurrent();
 
             if (shooter1Current > 1) {
                 hoodServoOffset = Range.clip((shooter1Current) * hoodCompensationMultiplier, 0, 1000);

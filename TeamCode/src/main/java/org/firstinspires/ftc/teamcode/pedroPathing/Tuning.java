@@ -79,10 +79,10 @@ public class Tuning extends SelectableOpMode {
     @Override
     public void onSelect() {
         if (follower == null) {
-            follower = PedroConstants.createFollower(hardwareMap);
+            follower = PedroConstants.getFollower(hardwareMap);
             PanelsConfigurables.INSTANCE.refreshClass(this);
         } else {
-            follower = PedroConstants.createFollower(hardwareMap);
+            follower = PedroConstants.getFollower(hardwareMap);
         }
 
         follower.setStartingPose(new Pose());
@@ -329,7 +329,7 @@ class TurnTuner extends OpMode {
  */
 class ForwardVelocityTuner extends OpMode {
     private final ArrayList<Double> velocities = new ArrayList<>();
-    public static double DISTANCE = 48;
+    public static double DISTANCE = 35;
     public static double RECORD_NUMBER = 10;
 
     private boolean end;
@@ -436,7 +436,7 @@ class ForwardVelocityTuner extends OpMode {
 class LateralVelocityTuner extends OpMode {
     private final ArrayList<Double> velocities = new ArrayList<>();
 
-    public static double DISTANCE = 48;
+    public static double DISTANCE = 40;
     public static double RECORD_NUMBER = 10;
 
     private boolean end;

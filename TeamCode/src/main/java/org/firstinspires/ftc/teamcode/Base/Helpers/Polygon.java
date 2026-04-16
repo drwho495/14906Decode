@@ -1,9 +1,6 @@
 package org.firstinspires.ftc.teamcode.Base.Helpers;
 
-import org.firstinspires.ftc.teamcode.bedroBathing.localization.Pose;
-import org.firstinspires.ftc.teamcode.bedroBathing.pathGeneration.MathFunctions;
-import org.firstinspires.ftc.teamcode.bedroBathing.pathGeneration.Vector;
-import org.opencv.core.Mat;
+import com.pedropathing.geometry.Pose;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -95,7 +92,7 @@ public class Polygon {
     }
 
     public Pose getTransformedCenter() {
-        return getCenter().add(new Pose(offsetX, offsetY));
+        return getCenter().plus(new Pose(offsetX, offsetY));
     }
 
     public boolean contains(Pose point) {
@@ -162,9 +159,9 @@ public class Polygon {
     }
 
     public static double distancePointToSegment(Pose point, Pose segmentA, Pose segmentB) {
-        double segmentLengthSq = Math.pow(MathFunctions.distance(segmentA, segmentB), 2);
+        double segmentLengthSq = Math.pow(segmentA.distanceFrom(segmentB), 2);
 
-        if (segmentLengthSq == 0.0) return MathFunctions.distance(point, segmentA);
+        if (segmentLengthSq == 0.0) return point.distanceFrom(segmentA);
 
         double t = ((point.getX() - segmentA.getX())
                 * (segmentB.getX() - segmentA.getX())
@@ -185,7 +182,7 @@ public class Polygon {
             );
         }
 
-        return MathFunctions.distance(point, closest);
+        return point.distanceFrom(closest);
     }
 
 

@@ -143,7 +143,7 @@ public class ComplexMotor {
 
     public boolean atVelocity() {
         if (currentMode == ComplexMotorModes.USE_VELOCITY_PID) {
-            return abs(currentVelocity - targetVelocity) <= 2;
+            return abs(currentVelocity - targetVelocity) <= 4;
         }
         return true;
     }

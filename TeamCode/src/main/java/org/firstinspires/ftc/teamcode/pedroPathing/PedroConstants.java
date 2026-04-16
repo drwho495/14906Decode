@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.pedroPathing;
 
+import com.bylazar.configurables.annotations.Configurable;
+import com.pedropathing.control.PredictiveBrakingCoefficients;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.follower.FollowerConstants;
 import com.pedropathing.ftc.FollowerBuilder;
@@ -13,7 +15,9 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.pedropathing.control.PIDFCoefficients;
 
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.teamcode.Base.Parameters;
 
+@Configurable
 public class PedroConstants {
     public static FollowerConstants followerConstants = new FollowerConstants()
             .headingPIDFCoefficients(
@@ -32,7 +36,14 @@ public class PedroConstants {
                             0
                     )
             )
-            .useSecondaryHeadingPIDF(false)
+            .useSecondaryHeadingPIDF(true)
+            .predictiveBrakingCoefficients(
+                    new PredictiveBrakingCoefficients(
+                            0.13,
+                            .194302517631,
+                            .0014581433
+                    )
+            )
             .mass(11.34);
 
     public static MecanumConstants driveConstants = new MecanumConstants()
@@ -43,8 +54,11 @@ public class PedroConstants {
             .leftFrontMotorName("motorLF")
             .leftFrontMotorDirection(DcMotorSimple.Direction.REVERSE)
             .leftRearMotorDirection(DcMotorSimple.Direction.REVERSE)
-            .rightFrontMotorDirection(DcMotorSimple.Direction.REVERSE)
+            .rightFrontMotorDirection(Parameters.ROBOT == 0 ? DcMotorSimple.Direction.REVERSE : DcMotorSimple.Direction.FORWARD) // the old chassis is messed up
             .rightRearMotorDirection(DcMotorSimple.Direction.FORWARD)
+            .xVelocity(73.04)
+            .yVelocity(60.21)
+            .useVoltageCompensation(true)
             .useBrakeModeInTeleOp(true);
 
     public static PinpointConstants localizerConstants = new PinpointConstants()
@@ -58,15 +72,28 @@ public class PedroConstants {
 
     public static PinpointLocalizer pinpointLocalizer = null;
 
-    public static PathConstraints pathConstraints = new PathConstraints(0.99, 100, 1, 1);
+    public static PathConstraints pathConstraints = new PathConstraints(
+            0.95,
+            0,
+            1.6,
+            .3
+    );
 
-    public static Follower createFollower(HardwareMap hardwareMap) {
-        pinpointLocalizer = new PinpointLocalizer(hardwareMap, localizerConstants);
+    private static Follower follower = null;
 
-        return new FollowerBuilder(followerConstants, hardwareMap)
-                .pathConstraints(pathConstraints)
-                .mecanumDrivetrain(driveConstants)
-                .setLocalizer(pinpointLocalizer)
-                .build();
+    public static Follower getFollower(HardwareMap hardwareMap) {
+        if (pinpointLocalizer == null) {
+            pinpointLocalizer = new PinpointLocalizer(hardwareMap, localizerConstants);
+        }
+
+        if (PedroConstants.follower == null) {
+            PedroConstants.follower = new FollowerBuilder(followerConstants, hardwareMap)
+                    .pathConstraints(pathConstraints)
+                    .mecanumDrivetrain(driveConstants)
+                    .setLocalizer(pinpointLocalizer)
+                    .build();
+        }
+
+        return PedroConstants.follower;
     }
 }
