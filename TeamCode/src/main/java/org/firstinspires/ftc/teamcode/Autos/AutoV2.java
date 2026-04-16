@@ -625,7 +625,7 @@ public class AutoV2 extends LinearOpMode {
                                             )
                                     ))
                                     .setLinearHeadingInterpolation(robotPose.getHeading(), robot.getHeadingToGoal(shootingPosition))
-                                    .addParametricCallback(.3, () -> robot.powerOffIntake())
+                                    .addParametricCallback(.15, () -> robot.powerOffIntake())
                                     .setTValueConstraint(.95)
                             , false);
                 } else if (cycleNumber == 2) {
@@ -638,7 +638,7 @@ public class AutoV2 extends LinearOpMode {
                                             )
                                     ))
                                     .setLinearHeadingInterpolation(robotPose.getHeading(), robot.getHeadingToGoal(shootingPosition))
-                                    .addParametricCallback(.3, () -> robot.powerOffIntake())
+                                    .addParametricCallback(.15, () -> robot.powerOffIntake())
                                     .setTValueConstraint(.95)
                             , false);
                 } else if (cycleNumber == 3) {
@@ -652,7 +652,7 @@ public class AutoV2 extends LinearOpMode {
                                                 )
                                         ))
                                         .setLinearHeadingInterpolation(robotPose.getHeading(), robot.getHeadingToGoal(shootingPosition))
-                                        .addParametricCallback(.3, () -> robot.powerOffIntake())
+                                        .addParametricCallback(.15, () -> robot.powerOffIntake())
                                         .setTValueConstraint(.95)
                                 , false);
                     } else {
@@ -664,7 +664,7 @@ public class AutoV2 extends LinearOpMode {
                                                 )
                                         ))
                                         .setLinearHeadingInterpolation(robotPose.getHeading(), robot.getHeadingToGoal(shootingPosition))
-                                        .addParametricCallback(.3, () -> robot.powerOffIntake())
+                                        .addParametricCallback(.15, () -> robot.powerOffIntake())
                                         .setTValueConstraint(.95)
                                 , false);
                     }
@@ -711,7 +711,7 @@ public class AutoV2 extends LinearOpMode {
         robot.safeSleep(25);
         robot.startScoringCycle();
         robot.setIntakePower(1);
-        headingErrors.add(Double.toString(Math.toDegrees(robot.getFollower().getHeadingError())));
+//        headingErrors.add(Double.toString(Math.toDegrees(robot.getFollower().getHeadingError())));
 
         robot.safeSleep(autoStartPos == AutoStartPos.CLOSE_ZONE ? 750 : 2200);
 

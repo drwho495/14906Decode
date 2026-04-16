@@ -40,8 +40,6 @@ public class RobotManager {
     private OpModeStates currentState = OpModeStates.IDLE;
     private LinearOpMode opMode;
     private Follower follower = null;
-    private VectorCalculator vectorCalculator = null;
-    private Drivetrain drivetrain;
     private AllianceSides side = Parameters.LAST_ALLIANCE_SIDE;
     private double autoTimeout = -1;
     private Pose goalPos = Parameters.SHOOTER_GOAL_CLOSE;
@@ -158,7 +156,7 @@ public class RobotManager {
 
     public void printDebugInfo() {
         opMode.telemetry.addData("Robot Heading: ", Math.toDegrees(follower.getPose().getHeading()));
-//        opMode.telemetry.addData("Robot Heading Error: ", Math.toDegrees(follower.getHeadingError()));
+        opMode.telemetry.addData("Robot Aim in Place: ", robotAimInPlace);
         opMode.telemetry.addData("Alliance Side: ", side == AllianceSides.BLUE ? "Blue" : "Red");
         opMode.telemetry.addData("Shooter RPM Goal: ", shooterSubsystem.getTargetVelocity());
 //        if (follower.isBusy()) opMode.telemetry.addData("Using Variable Heading: ", follower.followerHeadingIsVariable());
@@ -170,8 +168,7 @@ public class RobotManager {
         intakeSubsystem.initialiseHardware();
 
         follower = PedroConstants.getFollower(opMode.hardwareMap);
-        vectorCalculator = follower.getVectorCalculator();
-        drivetrain = follower.getDrivetrain();
+        follower.startTeleopDrive();
 
         List<LynxModule> hubs = opMode.hardwareMap.getAll(LynxModule.class);
 
@@ -313,7 +310,7 @@ public class RobotManager {
 
             teleopHeadingGoal = MathFunctions.normalizeAngle(teleopHeadingGoal);
 
-            headingVector = vectorCalculator.getHeadingVector(
+            headingVector = follower.getVectorCalculator().getHeadingVector(
                     MathFunctions.getSmallestAngleDifference(robotHeading, teleopHeadingGoal) * direction,
                     robotPose,
                     teleopHeadingGoal
@@ -331,7 +328,7 @@ public class RobotManager {
             driveVector.rotateVector(robotPose.getHeading());
         }
 
-        drivetrain.runDrive(
+        follower.getDrivetrain().runDrive(
                 new Vector(),
                 headingVector,
                 driveVector,
@@ -452,9 +449,7 @@ public class RobotManager {
         this.shootingStyle = shootingStyle;
 
         // rebuild the curves if the driver wants to change how they shoot mid-match
-//        if (rpmCurve.isBuilt() || hoodCurve.isBuilt()) {
         buildRPMCurves();
-//        }
     }
 
     public ShootingStyle getShootingStyle() {
@@ -695,27 +690,28 @@ public class RobotManager {
         }
 
         if (robotAimInPlace) {
-            if (follower.isBusy())
-                breakFollowing(false, false);
+//            if (follower.isBusy())
+//                breakFollowing(false, false);
 
-            Pose robotPose = getPose();
+//            Pose robotPose = getPose();
+//
+//            double robotHeading = robotPose.getHeading();
+//            double headingGoal = getHeadingToGoal(robotPose);
+//            double direction = MathFunctions.getTurnDirection(robotHeading, headingGoal);
 
-            double robotHeading = robotPose.getHeading();
-            double direction = MathFunctions.getTurnDirection(robotHeading, getHeadingToGoal());
+//            Vector headingVector = follower.getVectorCalculator().getHeadingVector(
+//                    MathFunctions.getSmallestAngleDifference(robotHeading, headingGoal) * direction,
+//                    robotPose,
+//                    teleopHeadingGoal
+//            );
 
-            Vector headingVector = vectorCalculator.getHeadingVector(
-                    MathFunctions.getSmallestAngleDifference(robotHeading, getHeadingToGoal()) * direction,
-                    robotPose,
-                    teleopHeadingGoal
-            );
-
-            drivetrain.runDrive(
-                    new Vector(),
-                    headingVector.times(.5),
-                    new Vector(),
-                    robotHeading,
-                    follower.getVelocity()
-            );
+//            follower.getDrivetrain().runDrive(
+//                    new Vector(),
+//                    headingVector,
+//                    new Vector(),
+//                    robotHeading,
+//                    follower.getVelocity()
+//            );
         } else if (usingTeleopHeadingLock) {
             if (aimAtGoal) {
                 teleopHeadingGoal = getHeadingToGoal();
@@ -848,9 +844,7 @@ public class RobotManager {
         stateStart = false;
         resetDistanceToGoal = true;
 
-        Parameters.OPMODE_END_POSITION = follower.getPose();
-
-        if (follower != null) follower.update();
+        follower.update();
         shooterSubsystem.update();
         intakeSubsystem.update();
     }
@@ -931,7 +925,7 @@ public class RobotManager {
         if (resetAimInPlace)
             robotAimInPlace = false;
 
-        if (holdPoint) {
+        if (holdPoint && lastPose != null) {
             follower.holdPoint(lastPose);
         }
     }
