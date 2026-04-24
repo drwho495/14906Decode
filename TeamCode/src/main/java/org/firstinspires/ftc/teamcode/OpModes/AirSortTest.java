@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.TeleOps;
+package org.firstinspires.ftc.teamcode.OpModes;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -27,7 +27,7 @@ public class AirSortTest extends LinearOpMode {
         robot.disableAutoTransferStop();
         robot.setShootingStyle(ShootingStyle.LARGE_ARC);
         robot.setTransferSpeed(.7);
-        robot.enableAutomaticTeleopShooting();
+        robot.enableAutoShooterControl();
         robot.disableWaitForVelocityToShoot();
         robot.setState(OpModeStates.INTAKE_SCORE);
         robot.setAllianceSide(AllianceSides.RED);
@@ -54,11 +54,7 @@ public class AirSortTest extends LinearOpMode {
                     if (timer.time(TimeUnit.MILLISECONDS) >= timePerShot) {
                         shotNum++;
 
-                        if (shotNum == 1) {
-                            robot.setShootingStyle(ShootingStyle.STANDARD);
-                        } else if (shotNum == 2) {
-                            robot.setShootingStyle(ShootingStyle.LARGE_ARC);
-                        }
+                        robot.setShootingStyle(ShootingStyle.LARGE_ARC);
 
 //                        robot.setIntakePower(.5);
 //                        robot.stopScoringCycle();

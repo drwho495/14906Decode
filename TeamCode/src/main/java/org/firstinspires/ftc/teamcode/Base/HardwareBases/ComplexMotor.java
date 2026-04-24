@@ -6,6 +6,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
@@ -24,10 +25,18 @@ public class ComplexMotor {
     private double currentVelocity;
     private final PIDFController velocityController = new PIDFController(0, 0, 0, 0);
     private boolean useCustomVelocity = true;
+    private VoltageSensor vSensor = null;
     private ComplexMotor childMotor = null;
 
     public ComplexMotor(String hwName, LinearOpMode newOpMode) {
-        opMode = newOpMode;
+        this.opMode = newOpMode;
+        this.thisMotor = this.opMode.hardwareMap.get(DcMotorEx.class, hwName);
+        this.thisMotor.setMotorEnable();
+    }
+
+    public ComplexMotor(String hwName, LinearOpMode newOpMode, VoltageSensor vSensor) {
+        this.opMode = newOpMode;
+        this.vSensor = vSensor;
         this.thisMotor = this.opMode.hardwareMap.get(DcMotorEx.class, hwName);
         this.thisMotor.setMotorEnable();
     }
@@ -73,6 +82,9 @@ public class ComplexMotor {
     public void setMode(ComplexMotorModes newMode) {
         currentMode = newMode;
     }
+    public ComplexMotorModes getMode() {
+        return currentMode;
+    }
 
     public void setVelocity(double newVelo) {
         targetVelocity = newVelo;
@@ -98,7 +110,13 @@ public class ComplexMotor {
                     velocityController.setSetPoint(targetVelocity);
                     motorPower = velocityController.calculate(currentVelocity);
 
-                    HardwareUtils.optimizeMethod(motorPower, thisMotor, thisMotor::setPower);
+                    double voltageMultiplier = 1;
+
+                    if (vSensor != null) {
+                        voltageMultiplier = (12 / vSensor.getVoltage());
+                    }
+
+                    HardwareUtils.optimizeMethod(motorPower * voltageMultiplier, thisMotor, thisMotor::setPower);
 
                     if (childMotor != null) {
                         HardwareUtils.optimizeMethod(motorPower, childMotor, childMotor::setPower);
@@ -126,7 +144,7 @@ public class ComplexMotor {
             HardwareUtils.optimizeMethod(motorPower, thisMotor, thisMotor::setPower);
 
             if (childMotor != null) {
-                HardwareUtils.optimizeMethod(motorPower, childMotor, childMotor::setPower);
+                childMotor.setPower(motorPower);
             }
         }
     }
@@ -141,9 +159,9 @@ public class ComplexMotor {
         }
     }
 
-    public boolean atVelocity() {
+    public boolean atVelocity(double error) {
         if (currentMode == ComplexMotorModes.USE_VELOCITY_PID) {
-            return abs(currentVelocity - targetVelocity) <= 4;
+            return abs(currentVelocity - targetVelocity) <= error;
         }
         return true;
     }

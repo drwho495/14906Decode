@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.Autos;
+package org.firstinspires.ftc.teamcode.OpModes;
 
 import com.pedropathing.geometry.BezierCurve;
 import com.pedropathing.geometry.BezierLine;
@@ -9,6 +9,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.Base.AllianceSides;
+import org.firstinspires.ftc.teamcode.Base.Auto.AutoStartSide;
 import org.firstinspires.ftc.teamcode.Base.OpModeStates;
 import org.firstinspires.ftc.teamcode.Base.Parameters;
 import org.firstinspires.ftc.teamcode.Base.RobotManager;
@@ -17,11 +18,6 @@ import org.firstinspires.ftc.teamcode.Base.ShootingStyle;
 
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
-
-enum AutoStartPos {
-    CLOSE_ZONE,
-    FAR_ZONE
-}
 
 enum AutoType {
     FIFTEEN_ARTIFACT,
@@ -37,7 +33,7 @@ enum AutoType {
 @Autonomous(name = "Auto V2", group = "1", preselectTeleOp = "0: Main Teleop")
 public class AutoV2 extends LinearOpMode {
     private RobotManager robot;
-    private AutoStartPos autoStartPos = AutoStartPos.CLOSE_ZONE;
+    private AutoStartSide autoStartPos = AutoStartSide.CLOSE_ZONE;
     private boolean clearGate = true;
     private boolean grabFromLine0 = true;
     private boolean grabFromHumanPlayer = true;
@@ -47,7 +43,7 @@ public class AutoV2 extends LinearOpMode {
     private boolean robotStartIsSet = false;
     private boolean shootLastCycleOffTape = false;
     private boolean debugPark = false;
-    private AutoType autoType = AutoType.EIGHTEEN_ARTIFACT;
+    private AutoType autoType = Parameters.ROBOT == 0 ? AutoType.FIFTEEN_ARTIFACT : AutoType.EIGHTEEN_ARTIFACT;
 
     private ElapsedTime timer = new ElapsedTime();
     private ArrayList<String> headingErrors = new ArrayList<>();
@@ -57,7 +53,6 @@ public class AutoV2 extends LinearOpMode {
         robot = new RobotManager(this);
 
         robot.setState(OpModeStates.INTAKE_SCORE);
-        robot.setTransferSpeed(1);
         robot.setShooterControlPolicy(ShooterControlPolicy.MANUAL);
         robot.enableAutoTransferStop();
         robot.disableDebugPrinting();
@@ -72,8 +67,6 @@ public class AutoV2 extends LinearOpMode {
         robot.recalibrateIMU();
 
         robot.startScoringCycle();
-        robot.update();
-        robot.update();
         robot.update();
 
         int autoTypeSelection = autoType.ordinal();
@@ -126,65 +119,68 @@ public class AutoV2 extends LinearOpMode {
         timer.reset();
         Parameters.LAST_ALLIANCE_SIDE = robot.getAllianceSide();
 
-        shootBalls(0, false, false);
+        scoreArtifacts(0, false, false);
 
-        if (autoStartPos == AutoStartPos.CLOSE_ZONE) {
+        if (autoStartPos == AutoStartSide.CLOSE_ZONE) {
             if (grabFromGateCycles == 0) {
                 if (grabFromLine0) {
-                    intakeFromTape(0);
-                    shootBalls(1, false, false);
+                    lineIntake(0);
+                    scoreArtifacts(1, false, false);
                 }
-                intakeFromTape(1);
-                shootBalls(2, false, false);
-                intakeFromTape(2);
-                shootBalls(3, false, false);
+                lineIntake(1);
+                scoreArtifacts(2, false, false);
+                lineIntake(2);
+                scoreArtifacts(3, false, false);
 
                 if (grabFromHumanPlayer && clearGate) {
-                    intakeFromHumanPlayer();
-                    shootBalls(3, false, false);
+                    humanPlayerIntake();
+                    scoreArtifacts(3, false, false, .4);
                 }
             } else if (grabFromGateCycles > 0) {
-                intakeFromTape(1);
-                shootBalls(2, false, false);
+                lineIntake(1);
+                scoreArtifacts(2, false, false);
 
                 if (delayedSecondGateCycle) {
-                    intakeFromGate(gateCycleNumber++);
-                    shootBalls(3, true, false);
+                    gateIntake(gateCycleNumber++);
+                    scoreArtifacts(3, true, false);
 
                     grabFromGateCycles--;
                 } else {
                     for (int i = 0; i < grabFromGateCycles; i++) {
-                        intakeFromGate(gateCycleNumber++);
-                        shootBalls(3, true, false);
+                        gateIntake(gateCycleNumber++);
+                        scoreArtifacts(3, true, false);
                     }
                 }
 
                 if (grabFromLine0) {
-                    intakeFromTape(0);
-                    shootBalls(1, false, false);
+                    lineIntake(0);
+                    scoreArtifacts(1, false, false);
                 }
 
                 if (grabFromHumanPlayer) {
-                    intakeFromHumanPlayer();
-                    shootBalls(3, false, false);
+                    humanPlayerIntake();
+                    scoreArtifacts(3, false, false, .4);
                 }
 
-                intakeFromTape(2);
+                lineIntake(2);
 
                 if (clearGate || grabFromGateCycles != 0) {
-                    shootBalls(3, false, shootLastCycleOffTape && !delayedSecondGateCycle);
+                    scoreArtifacts(3, false, shootLastCycleOffTape && !delayedSecondGateCycle);
                 }
 
                 if (delayedSecondGateCycle && grabFromGateCycles > 0) {
                     for (int i = 0; i < grabFromGateCycles; i++) {
-                        intakeFromGate(gateCycleNumber++);
-                        shootBalls(3, true, shootLastCycleOffTape);
+                        gateIntake(gateCycleNumber++);
+                        scoreArtifacts(3, true, shootLastCycleOffTape);
                     }
                 }
             }
 
-            if (!shootLastCycleOffTape)
+            if (!shootLastCycleOffTape) {
                 park();
+            } else {
+                robot.breakFollowing(false);
+            }
 
             if (debugPark) {
                 robot.powerOffShooter();
@@ -208,18 +204,18 @@ public class AutoV2 extends LinearOpMode {
                                 .setTValueConstraint(.92)
                 );
             }
-        } else if (autoStartPos == AutoStartPos.FAR_ZONE) {
+        } else if (autoStartPos == AutoStartSide.FAR_ZONE) {
             int shootOffset = 0;
 
             if (farGrabFromLine) {
                 shootOffset = 1;
 
-                intakeFromTape(0);
-                shootBalls(1, false, false);
+                lineIntake(0);
+                scoreArtifacts(1, false, false);
             }
 
-            intakeFromHumanPlayer();
-            shootBalls(1 + shootOffset, false, false);
+            humanPlayerIntake();
+            scoreArtifacts(1 + shootOffset, false, false, .2);
 
             robot.powerOffShooter();
             robot.powerOffIntake();
@@ -242,16 +238,14 @@ public class AutoV2 extends LinearOpMode {
             telemetry.addData("Heading Errors: ", String.join(", ", headingErrors));
             telemetry.update();
         }
-
-        Parameters.OPMODE_END_POSITION = robot.getPose();
     }
 
     private Pose getStartPose() {
         Pose startPose = new Pose();
 
-        if (autoStartPos == AutoStartPos.CLOSE_ZONE) {
+        if (autoStartPos == AutoStartSide.CLOSE_ZONE) {
             startPose = robot.getAllianceSide() == AllianceSides.RED ? Parameters.RED_CLOSE_START : Parameters.BLUE_CLOSE_START;
-        } else if (autoStartPos == AutoStartPos.FAR_ZONE) {
+        } else if (autoStartPos == AutoStartSide.FAR_ZONE) {
             startPose = robot.getAllianceSide() == AllianceSides.RED ? Parameters.RED_FAR_START : Parameters.BLUE_FAR_START;
         }
 
@@ -273,7 +267,7 @@ public class AutoV2 extends LinearOpMode {
         switch (autoType) {
             case TWELVE_ARTIFACT:
                 clearGate = true;
-                autoStartPos = AutoStartPos.CLOSE_ZONE;
+                autoStartPos = AutoStartSide.CLOSE_ZONE;
                 grabFromHumanPlayer = false;
                 grabFromGateCycles = 0;
                 delayedSecondGateCycle = false;
@@ -283,7 +277,7 @@ public class AutoV2 extends LinearOpMode {
                 break;
             case FIFTEEN_ARTIFACT:
                 clearGate = true;
-                autoStartPos = AutoStartPos.CLOSE_ZONE;
+                autoStartPos = AutoStartSide.CLOSE_ZONE;
                 grabFromHumanPlayer = true;
                 grabFromGateCycles = 0;
                 delayedSecondGateCycle = false;
@@ -293,7 +287,7 @@ public class AutoV2 extends LinearOpMode {
                 break;
             case FIFTEEN_ALLIANCE_FRIENDLY:
                 clearGate = false;
-                autoStartPos = AutoStartPos.CLOSE_ZONE;
+                autoStartPos = AutoStartSide.CLOSE_ZONE;
                 grabFromHumanPlayer = false;
                 grabFromGateCycles = 2;
                 delayedSecondGateCycle = true;
@@ -303,7 +297,7 @@ public class AutoV2 extends LinearOpMode {
                 break;
             case EIGHTEEN_ARTIFACT:
                 clearGate = false;
-                autoStartPos = AutoStartPos.CLOSE_ZONE;
+                autoStartPos = AutoStartSide.CLOSE_ZONE;
                 grabFromHumanPlayer = false;
                 grabFromGateCycles = 2;
                 delayedSecondGateCycle = false;
@@ -313,7 +307,7 @@ public class AutoV2 extends LinearOpMode {
                 break;
             case EIGHTEEN_ALLIANCE_FRIENDLY:
                 clearGate = false;
-                autoStartPos = AutoStartPos.CLOSE_ZONE;
+                autoStartPos = AutoStartSide.CLOSE_ZONE;
                 grabFromHumanPlayer = false;
                 grabFromGateCycles = 3;
                 delayedSecondGateCycle = false;
@@ -323,7 +317,7 @@ public class AutoV2 extends LinearOpMode {
                 break;
             case GATE_INTAKE_DEBUG:
                 clearGate = false;
-                autoStartPos = AutoStartPos.CLOSE_ZONE;
+                autoStartPos = AutoStartSide.CLOSE_ZONE;
                 grabFromHumanPlayer = false;
                 grabFromGateCycles = 6;
                 delayedSecondGateCycle = false;
@@ -333,7 +327,7 @@ public class AutoV2 extends LinearOpMode {
                 break;
             case CLOSE_ZONE_9:
                 clearGate = false;
-                autoStartPos = AutoStartPos.FAR_ZONE;
+                autoStartPos = AutoStartSide.FAR_ZONE;
                 grabFromHumanPlayer = true;
                 grabFromGateCycles = 0;
                 delayedSecondGateCycle = false;
@@ -343,7 +337,7 @@ public class AutoV2 extends LinearOpMode {
                 break;
             case CLOSE_ZONE_6:
                 clearGate = false;
-                autoStartPos = AutoStartPos.FAR_ZONE;
+                autoStartPos = AutoStartSide.FAR_ZONE;
                 grabFromHumanPlayer = true;
                 grabFromGateCycles = 0;
                 delayedSecondGateCycle = false;
@@ -352,10 +346,22 @@ public class AutoV2 extends LinearOpMode {
                 debugPark = false;
                 break;
         }
+
+        if (robot.getAllianceSide() == AllianceSides.BLUE) {
+            robot.setGoalOffset(4);
+        }
+
+        if (autoStartPos == AutoStartSide.CLOSE_ZONE) {
+            robot.setTransferSpeed(1);
+            robot.resetGoalOffset();
+        } else if (autoStartPos == AutoStartSide.FAR_ZONE) {
+            robot.setTransferSpeed(.2);
+            robot.setGoalOffset(-8);
+        }
     }
 
     // 0 is the line furthest from the goal
-    private void intakeFromTape(double number) {
+    private void lineIntake(double number) {
         robot.stopScoringCycle();
         robot.setIntakePower(1);
         robot.setMaxFollowerPower(1);
@@ -363,17 +369,46 @@ public class AutoV2 extends LinearOpMode {
 
         Pose robotPose = robot.getPose();
 
+        double wallX;
+        double goalX;
+
+        if (Parameters.ROBOT == 0) {
+            if (robot.getAllianceSide() == AllianceSides.RED) {
+                wallX = 17;
+                goalX = 9;
+            } else {
+                wallX = 16;
+                goalX = 7;
+            }
+        } else {
+            if (robot.getAllianceSide() == AllianceSides.RED) {
+                wallX = 17;
+                goalX = 9;
+            } else {
+                wallX = 14;
+                goalX = 6;
+            }
+        }
+
         if (number == 0) {
+            Pose middlePose = new Pose(-25, -102);
+            double endT = .7;
+
+            if (autoStartPos == AutoStartSide.FAR_ZONE) {
+                middlePose = new Pose(-47, -95);
+                endT = .4;
+            }
+
             robot.addPathTimeout(2000);
             robot.runBlocking(robot.pathBuilder()
                             .addPath(new Path(
                                     new BezierCurve(
                                             robotPose,
-                                            robot.getFixedPose(-25, -102),
-                                            robot.getFixedPose(14, -98)
+                                            robot.getFixedPose(middlePose),
+                                            robot.getFixedPose(wallX, -98)
                                     )
                             ))
-                            .setLinearHeadingInterpolation(robotPose.getHeading(), robot.getFixedHeading(0), .7)
+                            .setLinearHeadingInterpolation(robotPose.getHeading(), robot.getFixedHeading(0), endT)
                             .setTValueConstraint(.99)
                             .setVelocityConstraint(1000)
                     , true);
@@ -383,11 +418,11 @@ public class AutoV2 extends LinearOpMode {
                             .addPath(new Path(
                                     new BezierCurve(
                                             robotPose,
-                                            robot.getFixedPose(-25, -76),
-                                            robot.getFixedPose(14, -74)
+                                            robot.getFixedPose(-25, -75),
+                                            robot.getFixedPose(wallX, -77)
                                     )
                             ))
-                            .setLinearHeadingInterpolation(robotPose.getHeading(), robot.getFixedHeading(0), .7)
+                            .setLinearHeadingInterpolation(robotPose.getHeading(), robot.getFixedHeading(0), .6)
                             .setTValueConstraint(.99)
                             .setVelocityConstraint(1000)
                     , true);
@@ -404,7 +439,7 @@ public class AutoV2 extends LinearOpMode {
                             .addPath(new Path(
                                     new BezierLine(
                                             robotPose,
-                                            robot.getFixedPose(6, -50)
+                                            robot.getFixedPose(goalX, -50)
                                     )
                             ))
                             .setLinearHeadingInterpolation(robotPose.getHeading(), robot.getFixedHeading(0), .4)
@@ -415,23 +450,29 @@ public class AutoV2 extends LinearOpMode {
             robot.setMaxFollowerPower(1);
         }
 
+        robot.setMaxFollowerPower(1);
+
         if (number == 1) {
             if (clearGate) {
                 clearGate();
             }
-
-            return;
         }
-
-        robot.setMaxFollowerPower(1);
     }
 
-    private void intakeFromGate(int cycleNumber) {
+    private void gateIntake(int cycleNumber) {
         Pose robotPose = robot.getPose();
 
         double gateHeading = 25;
-        double gateX = 13;
-        double gateY = -75;
+        double gateX;
+        double gateY;
+
+        if (robot.getAllianceSide() == AllianceSides.RED) {
+            gateX = 12;
+            gateY = -75.9;
+        } else {
+            gateX = 10;
+            gateY = -73.3;
+        }
 
         robot.setMaxFollowerPower(1);
         robot.setIntakePower(1);
@@ -469,7 +510,7 @@ public class AutoV2 extends LinearOpMode {
                         .setTValueConstraint(1)
         );
 
-        robot.safeSleep(1250);
+        robot.safeSleep(cycleNumber == 0 ? 1000 : 1250);
         robot.breakFollowing(false);
         robot.clearPathTimeout();
     }
@@ -490,7 +531,7 @@ public class AutoV2 extends LinearOpMode {
                                 new BezierCurve(
                                         robotPose,
                                         robot.getFixedPose(-6, -70),
-                                        robot.getFixedPose(9, -59)
+                                        robot.getFixedPose(9, -63)
                                 )
                         ))
                         .setLinearHeadingInterpolation(robotPose.getHeading(), pushHeading)
@@ -504,7 +545,7 @@ public class AutoV2 extends LinearOpMode {
                 .addPath(new Path(
                         new BezierLine(
                                 robotPose,
-                                robot.getFixedPose(18, -59)
+                                robot.getFixedPose(18, -63)
                         )
                 ))
                 .setLinearHeadingInterpolation(robotPose.getHeading(), pushHeading)
@@ -516,7 +557,7 @@ public class AutoV2 extends LinearOpMode {
         robot.setMaxFollowerPower(1);
     }
 
-    private void intakeFromHumanPlayer() {
+    private void humanPlayerIntake() {
         Pose robotPose = robot.getPose();
 
         robot.stopScoringCycle();
@@ -524,35 +565,54 @@ public class AutoV2 extends LinearOpMode {
         robot.setMaxFollowerPower(1);
         robot.update();
 
-        final double wallY = 14.5; // 14.2
-        double endHeading = robot.getFixedHeading(280);
+        double wallX;
+        double wallY;
 
-        robot.setMaxFollowerPower(.8);
+        if (autoStartPos == AutoStartSide.CLOSE_ZONE) {
+            wallY = -124;
+        } else {
+            wallY = -126;
+        }
 
-        if (autoStartPos == AutoStartPos.CLOSE_ZONE) {
+        if (Parameters.ROBOT == 0) {
+            if (robot.getAllianceSide() == AllianceSides.RED) {
+                wallX = 21;
+            } else {
+                wallX = 20;
+            }
+        } else {
+            if (robot.getAllianceSide() == AllianceSides.RED) {
+                wallX = 21;
+            } else {
+                wallX = 19;
+            }
+        }
+
+        if (autoStartPos == AutoStartSide.CLOSE_ZONE) {
             robot.runBlocking(robot.pathBuilder()
                             .addPath(new Path(
                                     new BezierCurve(
                                             robotPose,
-                                            robot.getFixedPose(-40, -80),
-                                            robot.getFixedPose(wallY, -94)
+                                            robot.getFixedPose(-38, wallY + 10),
+                                            robot.getFixedPose(wallX, wallY)
                                     )
                             ))
-                            .setLinearHeadingInterpolation(robotPose.getHeading(), endHeading, 1)
-                            .setTValueConstraint(.9)
+                            .setLinearHeadingInterpolation(robotPose.getHeading(), robot.getFixedHeading(0), 1)
+                            .setTValueConstraint(.95)
                             .setVelocityConstraint(100)
                             .setTimeoutConstraint(0),
-                    true
+                    false
             );
-        } else if (autoStartPos == AutoStartPos.FAR_ZONE) {
+        } else if (autoStartPos == AutoStartSide.FAR_ZONE) {
             robot.runBlocking(robot.pathBuilder()
                             .addPath(new Path(
-                                    new BezierLine(
+                                    new BezierCurve(
                                             robotPose,
-                                            robot.getFixedPose(wallY, -94)
+                                            robot.getFixedPose(-10, -80f),
+                                            robot.getFixedPose(wallX, wallY)
                                     )
                             ))
-                            .setLinearHeadingInterpolation(robotPose.getHeading(), endHeading, 1)
+                            .setLinearHeadingInterpolation(robotPose.getHeading(), robot.getFixedHeading(0), .5)
                             .setTValueConstraint(.9)
                             .setVelocityConstraint(100)
                             .setTimeoutConstraint(0),
@@ -560,33 +620,25 @@ public class AutoV2 extends LinearOpMode {
             );
         }
 
-        robot.setMaxFollowerPower(.95);
-        robot.addPathTimeout(1500);
-        robot.runBlocking(robot.pathBuilder()
-                        .addPath(new Path(
-                                new BezierLine(
-                                        robot.getFixedPose(wallY, -94),
-                                        robot.getFixedPose(wallY, -118)
-                                )
-                        ))
-                        .setLinearHeadingInterpolation(robot.getPose().getHeading(), endHeading, 1)
-                        .setTValueConstraint(.95)
-                        .setVelocityConstraint(100),
-                false
-        );
-
-        robot.safeSleep(750);
-        robot.powerOffIntake();
+        robot.safeSleep(100);
     }
 
-    private void shootBalls(double cycleNumber, boolean afterGate, boolean shootOffTape) {
+    private void scoreArtifacts(double cycleNumber, boolean afterGate, boolean shootOffTape) {
+        scoreArtifacts(cycleNumber, afterGate, shootOffTape, -1);
+    }
+
+    private void scoreArtifacts(double cycleNumber, boolean afterGate, boolean shootOffTape, double intakeShutoffT) {
         Pose shootingPosition;
         Pose robotPose = robot.getPose();
 
         robot.powerOnShooter();
         robot.setMaxFollowerPower(1);
 
-        if (autoStartPos == AutoStartPos.CLOSE_ZONE) {
+        if (intakeShutoffT == -1) {
+            intakeShutoffT = .1;
+        }
+
+        if (autoStartPos == AutoStartSide.CLOSE_ZONE) {
             if (cycleNumber == 0) {
                 robot.startScoringCycle(); // make sure that servo opens!
                 robot.update();
@@ -608,7 +660,10 @@ public class AutoV2 extends LinearOpMode {
                         , false);
             } else {
                 if (shootOffTape) {
-                    shootingPosition = robot.getFixedPose(-28, -28, Math.toRadians(180));
+                    shootingPosition = robot.getFixedPose(
+                            robot.getAllianceSide() == AllianceSides.RED ? -28 : -32,
+                            -28, Math.toRadians(180)
+                    );
                 } else {
                     shootingPosition = robot.getFixedPose(-30, -40, Math.toRadians(180));
                 }
@@ -625,7 +680,7 @@ public class AutoV2 extends LinearOpMode {
                                             )
                                     ))
                                     .setLinearHeadingInterpolation(robotPose.getHeading(), robot.getHeadingToGoal(shootingPosition))
-                                    .addParametricCallback(.3, () -> robot.powerOffIntake())
+                                    .addParametricCallback(intakeShutoffT, () -> robot.powerOffIntake())
                                     .setTValueConstraint(.95)
                             , false);
                 } else if (cycleNumber == 2) {
@@ -638,7 +693,7 @@ public class AutoV2 extends LinearOpMode {
                                             )
                                     ))
                                     .setLinearHeadingInterpolation(robotPose.getHeading(), robot.getHeadingToGoal(shootingPosition))
-                                    .addParametricCallback(.3, () -> robot.powerOffIntake())
+                                    .addParametricCallback(intakeShutoffT, () -> robot.powerOffIntake())
                                     .setTValueConstraint(.95)
                             , false);
                 } else if (cycleNumber == 3) {
@@ -652,7 +707,7 @@ public class AutoV2 extends LinearOpMode {
                                                 )
                                         ))
                                         .setLinearHeadingInterpolation(robotPose.getHeading(), robot.getHeadingToGoal(shootingPosition))
-                                        .addParametricCallback(.3, () -> robot.powerOffIntake())
+                                        .addParametricCallback(intakeShutoffT, () -> robot.powerOffIntake())
                                         .setTValueConstraint(.95)
                                 , false);
                     } else {
@@ -664,15 +719,18 @@ public class AutoV2 extends LinearOpMode {
                                                 )
                                         ))
                                         .setLinearHeadingInterpolation(robotPose.getHeading(), robot.getHeadingToGoal(shootingPosition))
-                                        .addParametricCallback(.3, () -> robot.powerOffIntake())
+                                        .addParametricCallback(intakeShutoffT, () -> robot.powerOffIntake())
                                         .setTValueConstraint(.95)
                                 , false);
                     }
                 }
             }
-        } else if (autoStartPos == AutoStartPos.FAR_ZONE) {
+        } else if (autoStartPos == AutoStartSide.FAR_ZONE) {
             shootingPosition = robot.getFixedPose(-35, -115, 0);
-            robot.updateShooterParameters(shootingPosition);
+
+            robot.setShooterVelocity(Parameters.SHOOTER_FAR_ZONE_VELOCITY);
+            robot.setHoodServoPos(Parameters.SHOOTER_FAR_ZONE_HOOD_ANGLE);
+            robot.update();
 
             robot.runBlocking(robot.pathBuilder()
                             .addPath(new Path(
@@ -687,19 +745,18 @@ public class AutoV2 extends LinearOpMode {
                     , false);
         }
 
-        robot.setIntakePower(1);
         robot.stopAndAim();
-        robot.setIntakePower(1);
 
-        if (autoStartPos == AutoStartPos.CLOSE_ZONE) {
+        if (autoStartPos == AutoStartSide.CLOSE_ZONE) {
+            robot.setIntakePower(1); // this probably shouldnt be here
             if (cycleNumber == 0) {
                 robot.waitForShooter(1200);
             } else {
                 robot.waitForShooter(150);
             }
-        } else if (autoStartPos == AutoStartPos.FAR_ZONE) {
+        } else if (autoStartPos == AutoStartSide.FAR_ZONE) {
             if (cycleNumber == 0) {
-                robot.waitForShooter(1600);
+                robot.waitForShooter();
             } else {
                 robot.waitForShooter(600);
             }
@@ -713,7 +770,7 @@ public class AutoV2 extends LinearOpMode {
         robot.setIntakePower(1);
         headingErrors.add(Double.toString(Math.toDegrees(robot.getFollower().getHeadingError())));
 
-        robot.safeSleep(autoStartPos == AutoStartPos.CLOSE_ZONE ? 750 : 2200);
+        robot.safeSleep(autoStartPos == AutoStartSide.CLOSE_ZONE ? 750 : 1500);
 
         robot.stopScoringCycle();
         robot.safeSleep(50);
@@ -729,7 +786,7 @@ public class AutoV2 extends LinearOpMode {
                         .addPath(new Path(
                                 new BezierLine(
                                         robotPose,
-                                        robot.getFixedPose(-25, autoStartPos == AutoStartPos.FAR_ZONE ? -95 : -75)
+                                        robot.getFixedPose(-25, autoStartPos == AutoStartSide.FAR_ZONE ? -95 : -75)
                                 )
                         ))
                         .setLinearHeadingInterpolation(robotPose.getHeading(), robot.getFixedHeading(0))

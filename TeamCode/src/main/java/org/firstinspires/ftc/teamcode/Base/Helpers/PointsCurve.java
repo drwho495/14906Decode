@@ -1,12 +1,14 @@
 package org.firstinspires.ftc.teamcode.Base.Helpers;
 
-import org.apache.commons.math3.analysis.function.Gaussian;
 import org.apache.commons.math3.fitting.PolynomialCurveFitter;
+import org.apache.commons.math3.fitting.WeightedObservedPoint;
 import org.apache.commons.math3.fitting.WeightedObservedPoints;
 
+import java.util.List;
+
 public class PointsCurve {
-    private final WeightedObservedPoints pointArray = new WeightedObservedPoints();
-    private double[] coefficients = null;
+    public final WeightedObservedPoints pointArray = new WeightedObservedPoints();
+    public double[] coefficients = null;
     private boolean isBuilt = false;
 
     public void addPoint(double x, double y) {
@@ -19,10 +21,14 @@ public class PointsCurve {
     }
 
     public void buildCurve() {
-        final PolynomialCurveFitter fitter = PolynomialCurveFitter.create(3);
-        coefficients = fitter.fit(pointArray.toList());
+        List<WeightedObservedPoint> pointsList = pointArray.toList();
 
-        isBuilt = true;
+        if (!pointsList.isEmpty()) {
+            final PolynomialCurveFitter fitter = PolynomialCurveFitter.create(3);
+            coefficients = fitter.fit(pointsList);
+
+            isBuilt = true;
+        }
     }
 
     public boolean isBuilt() {
@@ -34,5 +40,11 @@ public class PointsCurve {
             return coefficients[0] + (coefficients[1] * x) + (coefficients[2] * (x*x)) + (coefficients[3] * (x*x*x));
         }
         return -1;
+    }
+
+    public void clear() {
+        pointArray.clear();
+        coefficients = null;
+        isBuilt = false;
     }
 }

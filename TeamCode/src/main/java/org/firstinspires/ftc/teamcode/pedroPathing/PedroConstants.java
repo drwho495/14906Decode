@@ -2,12 +2,14 @@ package org.firstinspires.ftc.teamcode.pedroPathing;
 
 import com.bylazar.configurables.annotations.Configurable;
 import com.pedropathing.control.PredictiveBrakingCoefficients;
+import com.pedropathing.drivetrain.Drivetrain;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.follower.FollowerConstants;
 import com.pedropathing.ftc.FollowerBuilder;
 import com.pedropathing.ftc.drivetrains.MecanumConstants;
 import com.pedropathing.ftc.localization.constants.PinpointConstants;
 import com.pedropathing.ftc.localization.localizers.PinpointLocalizer;
+import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.PathConstraints;
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -39,11 +41,14 @@ public class PedroConstants {
             .useSecondaryHeadingPIDF(true)
             .predictiveBrakingCoefficients(
                     new PredictiveBrakingCoefficients(
-                            0.13,
+                            0.14,
                             .194302517631,
                             .0014581433
                     )
             )
+            .holdPointHeadingScaling(1)
+            .stuckTValue(.6)
+            .stuckTimeout(750)
             .mass(11.34);
 
     public static MecanumConstants driveConstants = new MecanumConstants()
@@ -79,20 +84,29 @@ public class PedroConstants {
             .3
     );
 
-    private static Follower follower = null;
+    public static Follower follower = null;
 
     public static Follower getFollower(HardwareMap hardwareMap) {
+        Pose startingPosition = new Pose();
+
         if (pinpointLocalizer == null) {
             pinpointLocalizer = new PinpointLocalizer(hardwareMap, localizerConstants);
         }
 
-        if (PedroConstants.follower == null) {
-            PedroConstants.follower = new FollowerBuilder(followerConstants, hardwareMap)
-                    .pathConstraints(pathConstraints)
-                    .mecanumDrivetrain(driveConstants)
-                    .setLocalizer(pinpointLocalizer)
-                    .build();
+        if (PedroConstants.follower != null) {
+            PedroConstants.follower.update();
+
+            startingPosition = PedroConstants.follower.getPose();
         }
+
+        PedroConstants.follower = new FollowerBuilder(followerConstants, hardwareMap)
+                .pathConstraints(pathConstraints)
+                .mecanumDrivetrain(driveConstants)
+                .setLocalizer(pinpointLocalizer)
+                .build();
+
+        PedroConstants.follower.setPose(startingPosition);
+        PedroConstants.follower.update();
 
         return PedroConstants.follower;
     }

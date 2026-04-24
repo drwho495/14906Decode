@@ -62,7 +62,7 @@
 //        robot.update();
 //    }
 //
-//    private void gateIntake() {
+//    private void intakeGate() {
 //        Pose robotPose = robot.getPose();
 //
 //        robot.setMaxFollowerPower(1);
@@ -95,7 +95,7 @@
 //        robot.disableAutoTransferStop();
 //        robot.disableHoodCompensation();
 //        robot.disableVelocityCompensation();
-//        robot.enableAutomaticTeleopShooting();
+//        robot.enableAutoShooterControl();
 //        robot.resetIMU();
 //        robot.recalibrateIMU();
 //        robot.resetIMU();
@@ -164,10 +164,10 @@
 //
 //                    shootBalls();
 //                    robot.safeSleep(1000);
-//                    gateIntake();
+//                    intakeGate();
 //                    shootBalls();
 //                } else {
-//                    gateIntake();
+//                    intakeGate();
 //                    shootBalls();
 //                }
 //            }

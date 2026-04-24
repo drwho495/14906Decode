@@ -58,11 +58,6 @@ public class IntakeSubsystem extends Subsystem {
         sensorTimer.reset();
     }
 
-    public void powerIntakeOn() {
-        intakeMotor1Power = Parameters.INTAKE_SPEED;
-        intakeMotor2Power = Parameters.INTAKE_SPEED;
-    }
-
     public double getIntakePower() {
         return (intakeMotor1Power + intakeMotor2Power) / 2;
     }

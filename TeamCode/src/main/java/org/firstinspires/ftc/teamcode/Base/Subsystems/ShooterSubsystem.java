@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.Base.Subsystems;
 
 import com.acmerobotics.dashboard.config.Config;
+import com.bylazar.configurables.annotations.Configurable;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.qualcomm.robotcore.util.Range;
@@ -12,6 +13,7 @@ import org.firstinspires.ftc.teamcode.Base.HardwareBases.ComplexServo;
 import org.firstinspires.ftc.teamcode.Base.Parameters;
 
 @Config
+@Configurable
 public class ShooterSubsystem extends Subsystem {
     private LinearOpMode thisOpMode = null;
     private ComplexMotor shooterMotor1;
@@ -31,12 +33,12 @@ public class ShooterSubsystem extends Subsystem {
     private double lastVelocity = 0;
 
     private ShooterPFState pfState = ShooterPFState.WANDERING_LOOP;
-    public static double wanderingShooterP = 0.03;
-    public static double wanderingShooterF = 0.0032;
-    public static double transferringShooterP = 0.032;
-    public static double transferringShooterF = 0.00323;
-    public static double fastTransferringShooterP = 0.04;
-    public static double fastTransferringShooterF = 0.00363;
+    public static double wanderingShooterP;
+    public static double wanderingShooterF;
+    public static double transferringShooterP;
+    public static double transferringShooterF;
+    public static double fastTransferringShooterP;
+    public static double fastTransferringShooterF;
 
     private final double velocityMultiplier = 304.0/6000;
 
@@ -48,6 +50,15 @@ public class ShooterSubsystem extends Subsystem {
     public void setPFState(ShooterPFState newState) {
         pfState = newState;
         updatePF();
+    }
+
+    public ShooterSubsystem() {
+        wanderingShooterP = 0.04;
+        wanderingShooterF = 0.0037;
+        transferringShooterP = Parameters.ROBOT == 0 ? .0335 : .022;
+        transferringShooterF = 0.004;
+        fastTransferringShooterP = 0.025;
+        fastTransferringShooterF = 0.004;
     }
 
     private void updatePF() {
@@ -65,8 +76,18 @@ public class ShooterSubsystem extends Subsystem {
 
     @Override
     public void initialiseHardware() {
-        shooterMotor1 = new ComplexMotor("shooterMotor1", thisOpMode);
-        shooterMotor2 = new ComplexMotor("shooterMotor2", thisOpMode);
+        vSensor = thisOpMode.hardwareMap.voltageSensor.iterator().next();
+
+        shooterMotor1 = new ComplexMotor(
+                "shooterMotor1",
+                thisOpMode,
+                vSensor
+        );
+        shooterMotor2 = new ComplexMotor(
+                "shooterMotor2",
+                thisOpMode,
+                vSensor
+        );
 
         shooterMotor1.enableBrake();
         shooterMotor1.setEncoderState(true);
@@ -83,8 +104,6 @@ public class ShooterSubsystem extends Subsystem {
 
         updatePF();
 
-        vSensor = thisOpMode.hardwareMap.voltageSensor.iterator().next();
-
         fingerServo = new ComplexServo(thisOpMode.hardwareMap, "fingerServo", 0, 180, AngleUnit.DEGREES);
         fingerServo.setInverted(true);
 
@@ -93,7 +112,7 @@ public class ShooterSubsystem extends Subsystem {
     }
 
     public boolean ready() {
-        return shooterMotor1.atVelocity();
+        return shooterMotor1.atVelocity(30 * velocityMultiplier);
     }
 
     public Double[] getVelocities() {

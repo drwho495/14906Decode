@@ -5,49 +5,54 @@ package org.firstinspires.ftc.teamcode.Base;
 import com.acmerobotics.dashboard.config.Config;
 
 //import org.firstinspires.ftc.teamcode.bedroBathing.localization.Pose;
+import com.bylazar.configurables.annotations.Configurable;
 import com.pedropathing.geometry.Pose;
 
 import org.firstinspires.ftc.teamcode.Base.Helpers.PedroUtils;
+import org.firstinspires.ftc.teamcode.Base.Helpers.ShooterCurve;
 import org.firstinspires.ftc.teamcode.bedroBathing.util.CustomPIDFCoefficients;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+
 @Config
+@Configurable
 public class Parameters {
-    public final static double INTAKE_SPEED = 1;
-    public final static double SHOOTER_DEFAULT_RPM = 4500;
-    public static final double MIN_SHOOT_DISTANCE = 47;
-    public static final double FAR_ZONE_DISTANCE = 110;
-    public static final double SLOW_TRANSFER = .8;
+    public static double SHOOTER_DEFAULT_RPM = 4500;
+    public static double MIN_SHOOT_DISTANCE = 47;
+    public static double FAR_ZONE_DISTANCE = 120;
+    public static double SLOW_TRANSFER = .8;
 
     public static AllianceSides LAST_ALLIANCE_SIDE = AllianceSides.RED;
-    public final static Pose RED_CLOSE_START = new Pose(0, 0, Math.toRadians(220));
-    public final static Pose RED_CLOSE_AUTO_START = new Pose(9, -11.5, Math.toRadians(220));
-    public final static Pose BLUE_CLOSE_AUTO_START = PedroUtils.getMirroredPose(RED_CLOSE_AUTO_START);
-    public final static Pose RED_FAR_START = new Pose(-30.5, -125, Math.toRadians(180));
-//    public final static Pose RED_SHOOTER_GOAL = new Pose(20, 0);
-    public final static Pose SHOOTER_GOAL_CLOSE = new Pose(20, 3);
-    public final static Pose SHOOTER_GOAL_FAR = new Pose(15, 6.5);
-    public final static Pose RED_TELEOP_SHOOTING_GOAL = new Pose(-30, -40);
-    public final static Pose BLUE_CLOSE_START = new Pose(-90, 0, PedroUtils.getMirroredPose(RED_CLOSE_START).getHeading());
-    public final static Pose BLUE_FAR_START = PedroUtils.getMirroredPose(RED_FAR_START);
-    public final static Pose BLUE_TELEOP_SHOOTING_GOAL = PedroUtils.getMirroredPose(RED_TELEOP_SHOOTING_GOAL);
+    public static Pose RED_CLOSE_START = new Pose(0, 0, Math.toRadians(220));
+    public static Pose RED_FAR_START = new Pose(-29.66, -120.83, Math.toRadians(-90));
+    //    public static Pose RED_SHOOTER_GOAL = new Pose(20, 0);
+    public static Pose SHOOTER_GOAL_CLOSE = new Pose(18, 4);
+    public static Pose BLUE_CLOSE_START = new Pose(-92.7, 0, PedroUtils.getMirroredPose(RED_CLOSE_START).getHeading());
+    public static Pose BLUE_FAR_START = PedroUtils.getMirroredPose(RED_FAR_START);
     public static CustomPIDFCoefficients preciseTurnCoeffs = new CustomPIDFCoefficients(
             2,
             0,
             0.02,
             0);
 
-    public final static double FINGER_SERVO_OPEN = 45;
-    public final static double FINGER_SERVO_CLOSED = 100;
+    public static double FINGER_SERVO_OPEN = 45;
+    public static double FINGER_SERVO_CLOSED = 100;
 
-    public final static int ROBOT = 1;
+    // 0 is the robot with the unpocketed chassis, 1 is the robot with the pocketed chassis
+    public static int ROBOT = 1;
 
-    public final static double HOOD_SERVO_DOWN = 20;
-    public final static double HOOD_SERVO_FAR = 50;
-    public final static double HOOD_SERVO_UP = 120;
-    public final static double HOOD_SERVO_DEFAULT = HOOD_SERVO_FAR;
+    public static double HOOD_SERVO_DOWN = 20;
+    public static double HOOD_SERVO_FAR = 50;
+    public static double HOOD_SERVO_UP = 120;
+    public static double HOOD_SERVO_DEFAULT = HOOD_SERVO_FAR;
 
-    public static boolean IMU_RECALIBRATED = false;
-    public static Pose OPMODE_END_POSITION = new Pose();
+    public static double DEFAULT_AIM_OFFSET_RED = 0;
+    public static double DEFAULT_AIM_OFFSET_BLUE = 6;
 
-    public final static double BALL_SENSOR_TOLERANCE = 130;
+    public static double SHOOTER_FAR_ZONE_VELOCITY = 4950;
+    public static double SHOOTER_FAR_ZONE_HOOD_ANGLE = 55;
+    public static ShooterCurve CLOSE_ZONE_CURVE = new ShooterCurve();
+    public static ShooterCurve FAR_ZONE_CURVE = new ShooterCurve();
 }

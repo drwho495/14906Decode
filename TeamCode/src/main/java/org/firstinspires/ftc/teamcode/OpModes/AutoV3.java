@@ -1,0 +1,269 @@
+package org.firstinspires.ftc.teamcode.OpModes;
+
+import com.pedropathing.geometry.Pose;
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+
+import org.firstinspires.ftc.teamcode.Base.AllianceSides;
+import org.firstinspires.ftc.teamcode.Base.Auto.AutoCommandRepository;
+import org.firstinspires.ftc.teamcode.Base.Auto.AutoProgram;
+import org.firstinspires.ftc.teamcode.Base.Auto.AutoStartSide;
+import org.firstinspires.ftc.teamcode.Base.OpModeStates;
+import org.firstinspires.ftc.teamcode.Base.Parameters;
+import org.firstinspires.ftc.teamcode.Base.RobotManager;
+import org.firstinspires.ftc.teamcode.Base.ShooterControlPolicy;
+import org.firstinspires.ftc.teamcode.Base.ShootingStyle;
+
+import java.util.ArrayList;
+
+enum V3AutoDefault {
+    EIGHTEEN_ARTIFACT,
+    EIGHTEEN_ARTIFACT_ALLIANCE_FRIENDLY,
+    FIFTEEN_ARTIFACT,
+    FIFTEEN_ARTIFACT_GATE_INTAKE,
+    FIFTEEN_ARTIFACT_ALLIANCE_FRIENDLY,
+    TWELVE_ARTIFACT,
+    TWELVE_ARTIFACT_ALLIANCE_FRIENDLY,
+}
+
+@Autonomous(name = "Auto V3", group = "1", preselectTeleOp = "0: Main Teleop")
+public class AutoV3 extends LinearOpMode {
+    private boolean useDefault = true;
+    private boolean robotStartIsSet = false;
+    private V3AutoDefault defaultAuto = V3AutoDefault.EIGHTEEN_ARTIFACT;
+    private RobotManager robot;
+    private AutoStartSide startSide = AutoStartSide.CLOSE_ZONE;
+    private AutoProgram internalProgram;
+    private ArrayList<AutoCommandRepository.AutoCommand> commands = new ArrayList<>();
+
+    private void setupFromDefault() {
+        commands.clear();
+
+        switch (defaultAuto) {
+            case EIGHTEEN_ARTIFACT:
+                commands.add(new AutoCommandRepository.ScoreArtifacts(true));
+                commands.add(new AutoCommandRepository.IntakeMidLine());
+                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
+
+                for (int i = 0; i < 2; i++) {
+                    commands.add(new AutoCommandRepository.IntakeGate(true));
+                    commands.add(new AutoCommandRepository.ScoreArtifacts(false));
+                }
+
+                commands.add(new AutoCommandRepository.IntakeFarLine());
+                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
+                commands.add(new AutoCommandRepository.IntakeCloseLine());
+                commands.add(new AutoCommandRepository.ScoreArtifactsAndPark());
+
+                startSide = AutoStartSide.CLOSE_ZONE;
+                break;
+            case EIGHTEEN_ARTIFACT_ALLIANCE_FRIENDLY:
+                commands.add(new AutoCommandRepository.ScoreArtifacts(true));
+                commands.add(new AutoCommandRepository.IntakeMidLine());
+                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
+
+                for (int i = 0; i < 3; i++) {
+                    commands.add(new AutoCommandRepository.IntakeGate(true));
+                    commands.add(new AutoCommandRepository.ScoreArtifacts(false));
+                }
+
+                commands.add(new AutoCommandRepository.IntakeCloseLine());
+                commands.add(new AutoCommandRepository.ScoreArtifactsAndPark());
+
+                startSide = AutoStartSide.CLOSE_ZONE;
+                break;
+            case FIFTEEN_ARTIFACT:
+                commands.add(new AutoCommandRepository.ScoreArtifacts(true));
+                commands.add(new AutoCommandRepository.IntakeFarLine());
+                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
+                commands.add(new AutoCommandRepository.IntakeMidLine());
+                commands.add(new AutoCommandRepository.ClearGate());
+                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
+                commands.add(new AutoCommandRepository.IntakeCloseLine());
+                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
+                commands.add(new AutoCommandRepository.IntakeHumanPlayer());
+                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
+                commands.add(new AutoCommandRepository.Park());
+
+                startSide = AutoStartSide.CLOSE_ZONE;
+                break;
+            case FIFTEEN_ARTIFACT_GATE_INTAKE:
+                commands.add(new AutoCommandRepository.ScoreArtifacts(true));
+                commands.add(new AutoCommandRepository.IntakeMidLine());
+                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
+                commands.add(new AutoCommandRepository.IntakeGate(true));
+                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
+                commands.add(new AutoCommandRepository.IntakeFarLine());
+                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
+                commands.add(new AutoCommandRepository.IntakeCloseLine());
+                commands.add(new AutoCommandRepository.ScoreArtifactsAndPark());
+
+                startSide = AutoStartSide.CLOSE_ZONE;
+                break;
+            case FIFTEEN_ARTIFACT_ALLIANCE_FRIENDLY:
+                commands.add(new AutoCommandRepository.ScoreArtifacts(true));
+                commands.add(new AutoCommandRepository.IntakeMidLine());
+                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
+
+                for (int i = 0; i < 2; i++) {
+                    commands.add(new AutoCommandRepository.IntakeGate(true));
+                    commands.add(new AutoCommandRepository.ScoreArtifacts(false));
+                }
+
+                commands.add(new AutoCommandRepository.IntakeCloseLine());
+                commands.add(new AutoCommandRepository.ScoreArtifactsAndPark());
+
+                startSide = AutoStartSide.CLOSE_ZONE;
+                break;
+            case TWELVE_ARTIFACT:
+                commands.add(new AutoCommandRepository.ScoreArtifacts(true));
+                commands.add(new AutoCommandRepository.IntakeFarLine());
+                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
+                commands.add(new AutoCommandRepository.IntakeMidLine());
+                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
+                commands.add(new AutoCommandRepository.IntakeCloseLine());
+                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
+                commands.add(new AutoCommandRepository.Park());
+
+                startSide = AutoStartSide.CLOSE_ZONE;
+                break;
+            case TWELVE_ARTIFACT_ALLIANCE_FRIENDLY:
+                commands.add(new AutoCommandRepository.ScoreArtifacts(true));
+                commands.add(new AutoCommandRepository.IntakeMidLine());
+                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
+                commands.add(new AutoCommandRepository.IntakeGate(true));
+                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
+                commands.add(new AutoCommandRepository.IntakeCloseLine());
+                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
+                commands.add(new AutoCommandRepository.Park());
+
+                startSide = AutoStartSide.CLOSE_ZONE;
+                break;
+        }
+    }
+
+    private String getDefaultUserLabel(V3AutoDefault ofType) {
+        switch (ofType) {
+            case EIGHTEEN_ARTIFACT:
+                return "18 Artifact Auto";
+            case EIGHTEEN_ARTIFACT_ALLIANCE_FRIENDLY:
+                return "18 Artifact Alliance Friendly Auto";
+            case FIFTEEN_ARTIFACT:
+                return "15 Artifact Auto";
+            case FIFTEEN_ARTIFACT_GATE_INTAKE:
+                return "15 Artifact Gate Intake Auto";
+            case FIFTEEN_ARTIFACT_ALLIANCE_FRIENDLY:
+                return "15 Artifact Alliance Friendly Auto";
+            case TWELVE_ARTIFACT:
+                return "12 Artifact Auto";
+            case TWELVE_ARTIFACT_ALLIANCE_FRIENDLY:
+                return "12 Artifact Alliance Friendly Auto";
+        }
+
+        return "Unimplemented Default Auto";
+    }
+
+    @Override
+    public void runOpMode() throws InterruptedException {
+        robot = new RobotManager(this);
+
+
+        robot.setState(OpModeStates.INTAKE_SCORE);
+        robot.setShooterControlPolicy(ShooterControlPolicy.MANUAL);
+        robot.enableAutoTransferStop();
+        robot.disableDebugPrinting();
+        robot.disableVelocityCompensation();
+        robot.setShootingStyle(ShootingStyle.LARGE_ARC);
+        robot.disableHoodCompensation();
+        robot.disableOnlyShootInZone();
+        robot.disableWaitForVelocityToShoot();
+        robot.disablePoweredHold();
+
+        robot.initialise();
+        robot.recalibrateIMU();
+
+        int defaultSelection = defaultAuto.ordinal();
+        boolean defaultUpdated = true;
+
+        while (opModeInInit()) {
+            if (gamepad1.yWasPressed())
+                robot.setAllianceSide(robot.getAllianceSide() == AllianceSides.BLUE ? AllianceSides.RED : AllianceSides.BLUE);
+
+            telemetry.addLine("Press Δ to change the robot's alliance.");
+            telemetry.addLine("Press DPad Up/Down to change Autonomous Mode.");
+
+            if (gamepad1.dpadUpWasPressed()) {
+                defaultSelection++;
+                defaultUpdated = true;
+            } else if (gamepad1.dpadDownWasPressed()) {
+                defaultSelection--;
+                defaultUpdated = true;
+            }
+
+            if (defaultUpdated) {
+                if (defaultSelection >= V3AutoDefault.values().length) {
+                    defaultSelection = 0;
+                } else if (defaultSelection < 0) {
+                    defaultSelection = (V3AutoDefault.values().length - 1);
+                }
+
+                defaultAuto = V3AutoDefault.values()[defaultSelection];
+
+                setupFromDefault();
+
+                defaultUpdated = false;
+                useDefault = true;
+            }
+
+            telemetry.addData("Alliance Side: ", robot.getAllianceSide() == AllianceSides.BLUE ? "Blue" : "Red");
+            telemetry.addData("Autonomous Default: ", getDefaultUserLabel(defaultAuto));
+            telemetry.addData("Robot Heading: ", robot.getPose().getHeading());
+            telemetry.addLine();
+            telemetry.addLine("Auto Program:");
+            telemetry.addData("Starting Side: ", startSide);
+
+            for(AutoCommandRepository.AutoCommand command : commands) {
+                telemetry.addData("Command", command.getUserLabel());
+            }
+
+            updateRobotStart();
+
+            robot.update();
+            telemetry.update();
+        }
+
+        waitForStart();
+        updateRobotStart();
+
+        internalProgram = new AutoProgram(robot);
+
+        if (useDefault)
+            setupFromDefault();
+
+        internalProgram.setCommands(commands);
+        internalProgram.execute(startSide, getStartPose());
+    }
+
+    private void updateRobotStart() {
+        if (opModeIsActive()) {
+            if (robotStartIsSet) return;
+            robotStartIsSet = true;
+        } else {
+            robotStartIsSet = false;
+        }
+
+        robot.setPose(getStartPose());
+    }
+
+    private Pose getStartPose() {
+        Pose startPose = new Pose();
+
+        if (startSide == AutoStartSide.CLOSE_ZONE) {
+            startPose = robot.getAllianceSide() == AllianceSides.RED ? Parameters.RED_CLOSE_START : Parameters.BLUE_CLOSE_START;
+        } else if (startSide == AutoStartSide.FAR_ZONE) {
+            startPose = robot.getAllianceSide() == AllianceSides.RED ? Parameters.RED_FAR_START : Parameters.BLUE_FAR_START;
+        }
+
+        return startPose;
+    }
+}

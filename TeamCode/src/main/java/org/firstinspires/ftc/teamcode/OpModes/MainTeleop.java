@@ -1,20 +1,16 @@
-package org.firstinspires.ftc.teamcode.TeleOps;
+package org.firstinspires.ftc.teamcode.OpModes;
 
 import com.pedropathing.geometry.Pose;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.teamcode.Base.AllianceSides;
-import org.firstinspires.ftc.teamcode.Base.MecanumDrive;
 import org.firstinspires.ftc.teamcode.Base.OpModeStates;
 import org.firstinspires.ftc.teamcode.Base.Parameters;
 import org.firstinspires.ftc.teamcode.Base.RobotManager;
 import org.firstinspires.ftc.teamcode.Base.ShootingStyle;
-import org.firstinspires.ftc.teamcode.pedroPathing.PedroConstants;
 
 import java.util.concurrent.TimeUnit;
 
@@ -26,7 +22,7 @@ public class MainTeleop extends LinearOpMode {
     // (callbacks with pedro pathing)
 
     private boolean canDrive = true;
-    private boolean showDebugInfo = false;
+    private boolean showDebugInfo = true;
     private boolean autoStartShooterEnabled = true;
     private boolean autoStartShooter = false;
     private boolean autoStartShootingStarted = false;
@@ -43,18 +39,10 @@ public class MainTeleop extends LinearOpMode {
         RobotManager robot = new RobotManager(this);
         robot.setShootingStyle(ShootingStyle.LARGE_ARC);
         robot.initialise();
-//        ElapsedTime resetIMUTimer = null;
-//
-//        if (!Parameters.IMU_RECALIBRATED) {
-//            robot.resetIMU();
-//            telemetry.addLine("Resetting IMU...");
-//            telemetry.update();
-//            resetIMUTimer = new ElapsedTime();
-//
-//            Parameters.IMU_RECALIBRATED = true;
-//        }
 
         waitForStart();
+
+        robot.getFollower().breakFollowing();
 
         robot.setTransferSpeed(1);
         robot.enableAutoTransferStop();
@@ -62,12 +50,6 @@ public class MainTeleop extends LinearOpMode {
         robot.enableWaitForVelocityToShoot();
         robot.disableOnlyShootInZone();
         robot.enableVelocityCompensation();
-
-//        if (resetIMUTimer != null) {
-//            while (resetIMUTimer.time(TimeUnit.MILLISECONDS) < 3000 && opModeIsActive()) {
-//                robot.update();
-//            }
-//        }
 
         robot.setAllianceSide(Parameters.LAST_ALLIANCE_SIDE);
         robot.powerOffShooter();
@@ -98,6 +80,11 @@ public class MainTeleop extends LinearOpMode {
 
             if (gamepad1.psWasPressed()) robot.setPose(robot.getAllianceSide() == AllianceSides.BLUE ? Parameters.BLUE_CLOSE_START : Parameters.RED_CLOSE_START);
 
+            if (gamepad1.bWasPressed()) {
+                Parameters.CLOSE_ZONE_CURVE.build();
+                Parameters.FAR_ZONE_CURVE.build();
+            }
+
             if (gamepad2.aWasPressed()) {
                 showDebugInfo = !showDebugInfo;
             }
@@ -110,9 +97,9 @@ public class MainTeleop extends LinearOpMode {
 
                     if (gamepad2.dpadDownWasPressed()) {
                         robot.resetGoalOffset();
-                    } else if (gamepad2.dpadLeftWasPressed()) {
+                    } else if (gamepad1.dpadLeftWasPressed() || gamepad2.dpadLeftWasPressed()) {
                         robot.addGoalOffset(-1 * goalOffsetAddMultiplier);
-                    } else if (gamepad2.dpadRightWasPressed()) {
+                    } else if (gamepad1.dpadRightWasPressed() || gamepad2.dpadRightWasPressed()) {
                         robot.addGoalOffset(1 * goalOffsetAddMultiplier);
                     }
 
@@ -146,13 +133,13 @@ public class MainTeleop extends LinearOpMode {
                         robot.stopScoringCycle();
                     }
 
-                    if (gamepad1.bWasPressed()) {
-                        if (robot.getShootingStyle() != ShootingStyle.UNJAM) {
-                            robot.setShootingStyle(ShootingStyle.UNJAM);
-                        } else {
-                            robot.setShootingStyle(ShootingStyle.LARGE_ARC);
-                        }
-                    }
+//                    if (gamepad1.bWasPressed()) {
+//                        if (robot.getShootingStyle() != ShootingStyle.UNJAM) {
+//                            robot.setShootingStyle(ShootingStyle.UNJAM);
+//                        } else {
+//                            robot.setShootingStyle(ShootingStyle.LARGE_ARC);
+//                        }
+//                    }
 
 //                    if (gamepad1.dpadRightWasPressed() || gamepad2.dpadRightWasPressed()) {
 //                        shooterVelocity += 100;
@@ -237,6 +224,9 @@ public class MainTeleop extends LinearOpMode {
             telemetry.addData("Loop Time: ", timer.time(TimeUnit.MILLISECONDS));
 
             if (showDebugInfo) {
+                telemetry.addLine("! DEBUG !");
+                telemetry.addData("Is Busy: ", robot.getFollower().isBusy());
+                telemetry.addData("Is Teleop: ", robot.getFollower().isTeleopDrive());
                 telemetry.addData("Target RPM: ", robot.getShooterTargetVelocity());
                 telemetry.addData("Actual RPM 1: ", shooterRPMs[0]);
                 telemetry.addData("Actual RPM 2: ", shooterRPMs[1]);
