@@ -80,7 +80,9 @@ public class MainTeleop extends LinearOpMode {
 
             if (gamepad1.psWasPressed()) robot.setPose(robot.getAllianceSide() == AllianceSides.BLUE ? Parameters.BLUE_CLOSE_START : Parameters.RED_CLOSE_START);
 
-            if (gamepad1.bWasPressed()) {
+            if (gamepad1.bWasPressed() || Parameters.TELEOP_UPDATE_SHOOTER_PARAMS) {
+                Parameters.TELEOP_UPDATE_SHOOTER_PARAMS = false;
+
                 Parameters.CLOSE_ZONE_CURVE.build();
                 Parameters.FAR_ZONE_CURVE.build();
             }
@@ -156,7 +158,7 @@ public class MainTeleop extends LinearOpMode {
                     }
 
                     if (autoStartShooterEnabled) {
-                        if ((robot.isTransferStalled() || robot.getTransferDisableTime() >= 250 || gamepad1.left_bumper || gamepad1.right_bumper) && !autoStartShooter) {
+                        if ((robot.isTransferStopped() || robot.transferOverCurrentTime() > 300 || gamepad1.left_bumper || gamepad1.x) && !autoStartShooter) {
                             autoStartShooter = true;
                             autoStartShootingStarted = false;
                             autoStartShootingStopTimed = false;
@@ -194,18 +196,6 @@ public class MainTeleop extends LinearOpMode {
                     if (gamepad2.leftBumperWasPressed()) {
                         robot.forceCancelShooting();
                     }
-
-                    if (!driverNotifiedOf3) {
-                        if (robot.getHeldBallCount() == 3){
-                            gamepad1.rumble(500);
-                            driverNotifiedOf3 = true;
-                        }
-                    } else {
-                        if (robot.getHeldBallCount() != 3) {
-                            driverNotifiedOf3 = false;
-                        }
-                    }
-
                     break;
                 case PARK:
                     break;
@@ -225,19 +215,15 @@ public class MainTeleop extends LinearOpMode {
 
             if (showDebugInfo) {
                 telemetry.addLine("! DEBUG !");
-                telemetry.addData("Is Busy: ", robot.getFollower().isBusy());
-                telemetry.addData("Is Teleop: ", robot.getFollower().isTeleopDrive());
                 telemetry.addData("Target RPM: ", robot.getShooterTargetVelocity());
                 telemetry.addData("Actual RPM 1: ", shooterRPMs[0]);
                 telemetry.addData("Actual RPM 2: ", shooterRPMs[1]);
                 telemetry.addData("Hood Angle: ", robot.getHoodAngle());
                 telemetry.addData("Is Shooting: ", robot.isShooting());
                 telemetry.addData("Angular Velocity: ", robot.getFollower().getAngularVelocity());
-                telemetry.addData("Disable Time: ", robot.getTransferDisableTime());
                 telemetry.addData("Robot X: ", robotPose.getX());
                 telemetry.addData("Robot Y: ", robotPose.getY());
                 telemetry.addData("Robot Heading: ", Math.toDegrees(robotPose.getHeading()));
-                telemetry.addData("Number of Artifacts in the Intake: ", robot.getHeldBallCount());
             }
 
             timer.reset();

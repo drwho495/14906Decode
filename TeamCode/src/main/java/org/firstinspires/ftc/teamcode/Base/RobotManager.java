@@ -15,9 +15,9 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
+import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.teamcode.Base.Helpers.HardwareUtils;
 import org.firstinspires.ftc.teamcode.Base.Helpers.PedroUtils;
-import org.firstinspires.ftc.teamcode.Base.Helpers.PointsCurve;
 import org.firstinspires.ftc.teamcode.Base.Helpers.Polygon;
 import org.firstinspires.ftc.teamcode.Base.Subsystems.IntakeSubsystem;
 import org.firstinspires.ftc.teamcode.Base.Subsystems.ShooterPFState;
@@ -39,7 +39,6 @@ public class RobotManager {
     private Drivetrain drivetrain;
     private AllianceSides side = Parameters.LAST_ALLIANCE_SIDE;
     private double autoTimeout = -1;
-    private Pose goalPos = Parameters.SHOOTER_GOAL_CLOSE;
     private double goalOffset = 0;
 
     private final ElapsedTime autoTimer = new ElapsedTime();
@@ -67,7 +66,7 @@ public class RobotManager {
     private double transferSpeed = 1;
     private boolean activeHoldLastBallEnabled = true;
     private boolean activeHoldingLastBall = false;
-    private ElapsedTime activeHoldingLastBallTimer = new ElapsedTime();
+    private final ElapsedTime activeHoldingLastBallTimer = new ElapsedTime();
 
     private boolean aimHoldPoint = false;
     private boolean aimAtGoal = true;
@@ -75,14 +74,17 @@ public class RobotManager {
     private boolean useVelocityCompensation = true;
     private boolean stateStart = true;
     private boolean resetDistanceToGoal = false;
-    private double distanceToGoal = 0;
     private boolean autoTransferStopEnabled = true;
     private boolean printDebugEnabled = false;
-    private double pathGetHeadingToGoalTrackT = .75;
     private ShootingStyle shootingStyle = ShootingStyle.LARGE_ARC;
     private boolean canShoot = false;
     private boolean canShootOveride = false;
+    private boolean isTransferStopped = false;
+    private final ElapsedTime transferStopTimer = new ElapsedTime();
+    private boolean transferStopTimerPaused = true;
     private double canShootAtVelocity = 0;
+    private double pathGetHeadingToGoalTrackT = .75;
+    private double distanceToGoal = 0;
 
     // do NOT add a constructor to any of the subsystems!
     private final ShooterSubsystem shooterSubsystem = new ShooterSubsystem();
@@ -207,7 +209,7 @@ public class RobotManager {
     }
 
     private Pose getOffsetedGoalPose() {
-        Pose offsetedPose = getFixedPose(goalPos.copy());
+        Pose offsetedPose = getFixedPose(getGoalPosition().copy());
 
         double offsetX = offsetedPose.getX() + (goalOffset + 6);
         double offsetY = offsetedPose.getY() - goalOffset;
@@ -226,11 +228,11 @@ public class RobotManager {
         Parameters.FAR_ZONE_CURVE.clear();
 
         if (shootingStyle == ShootingStyle.LARGE_ARC) {
-            Parameters.CLOSE_ZONE_CURVE.addPoint(55,  20, 3370);
-            Parameters.CLOSE_ZONE_CURVE.addPoint(65,  20, 3670);
-            Parameters.CLOSE_ZONE_CURVE.addPoint(76,  20, 3805);
-            Parameters.CLOSE_ZONE_CURVE.addPoint(83,  20, 3950);
-            Parameters.CLOSE_ZONE_CURVE.addPoint(100, 30, 4350);
+            Parameters.CLOSE_ZONE_CURVE.addPoint(55, 20, 3400);
+            Parameters.CLOSE_ZONE_CURVE.addPoint(65, 20, 3520);
+            Parameters.CLOSE_ZONE_CURVE.addPoint(76, 20, 3580);
+            Parameters.CLOSE_ZONE_CURVE.addPoint(83, 20, 3780);
+            Parameters.CLOSE_ZONE_CURVE.addPoint(100, 30, 4300);
 
             Parameters.FAR_ZONE_CURVE.addPoint(110, 90, 5400);
             Parameters.FAR_ZONE_CURVE.addPoint(120, 90, 5450);
@@ -249,10 +251,6 @@ public class RobotManager {
         for (LynxModule hub : hubs) {
             hub.clearBulkCache();
         }
-    }
-
-    public double getTransferDisableTime() {
-        return intakeSubsystem.getTransferLockTime();
     }
 
     public boolean isShooterOn() {
@@ -549,11 +547,12 @@ public class RobotManager {
     }
 
     public Pose getVelocityCorrectedPose() {
-        final double multiplier = .5;
+        final double multiplier = .6;
 
         Vector velocity = follower.getVelocity();
+        Pose robotPose = getPose();
 
-        return follower.getPose()
+        return robotPose
                 .plus(
                         new Pose(
                                 velocity.getXComponent() * multiplier,
@@ -629,9 +628,23 @@ public class RobotManager {
         return transferSpeed;
     }
 
+    public boolean isTransferStopped() {
+        return isTransferStopped;
+    }
+
+    public double transferOverCurrentTime() {
+        if (transferStopTimerPaused) {
+            return 0;
+        } else {
+            return transferStopTimer.time(TimeUnit.MILLISECONDS);
+        }
+    }
+
     public void setAllianceSide(AllianceSides newSide) {
         side = newSide;
-        setShooterGoal(Parameters.SHOOTER_GOAL_CLOSE);
+        resetGoalOffset();
+
+        Parameters.LAST_ALLIANCE_SIDE = newSide;
     }
 
     public void updateShooterParameters(double distanceToGoalInput) {
@@ -648,16 +661,11 @@ public class RobotManager {
         updateShooterParameters(getDistanceToGoal(robotPose));
     }
 
-    private void setShooterGoal(Pose newGoal) {
-        goalPos = getFixedPose(newGoal);
-        resetGoalOffset();
-    }
-
     public void update() {
         if ((!opMode.opModeIsActive() && !opMode.opModeInInit()) || opMode.isStopRequested())
             return;
 
-        if (timer.time(TimeUnit.MILLISECONDS) % 7 == 0) {
+        if (timer.time(TimeUnit.MILLISECONDS) % 5 == 0) {
             clearCache();
         }
 
@@ -684,6 +692,9 @@ public class RobotManager {
                 if (isShooting) {
                     boolean needsToWait = false;
 
+                    isTransferStopped = false;
+                    transferStopTimerPaused = true;
+
                     if (waitForVelocityToShoot) {
                         if (!shooterSubsystem.ready() && !canShootOveride) {
                             needsToWait = true;
@@ -698,7 +709,6 @@ public class RobotManager {
 
                     activeHoldingLastBall = false;
 
-                    intakeSubsystem.disableAutoDisableTransfer();
                     intakeSubsystem.setIntakePower(intakePower);
 
                     if (useHoodCompensation) {
@@ -715,13 +725,14 @@ public class RobotManager {
 
                         if (intakeSubsystem.getIntakePower() >= .1) {
                             canShootOveride = true;
+                            double distanceToGoal = getDistanceToGoal();
 
-                            if (getDistanceToGoal() >= Parameters.MIN_SHOOT_DISTANCE) {
-                                if (getDistanceToGoal() < Parameters.FAR_ZONE_DISTANCE) {
+                            if (distanceToGoal >= Parameters.MIN_SHOOT_DISTANCE) {
+                                if (distanceToGoal < Parameters.FAR_ZONE_DISTANCE) {
                                     shooterSubsystem.setPFState(ShooterPFState.TRANSFER_LOOP);
                                     intakeSubsystem.setPowerLimits(1, transferSpeed);
                                 } else {
-                                    double localTransferSpeed = Parameters.SLOW_TRANSFER;
+                                    double localTransferSpeed = Parameters.FAR_ZONE_TRANSFER_SPEED;
 
                                     if (transferSpeed < localTransferSpeed)
                                         localTransferSpeed = transferSpeed;
@@ -761,17 +772,40 @@ public class RobotManager {
                     } else {
                         activeHoldingLastBall = false;
 
-                        intakeSubsystem.setIntakePower(intakePower);
-                    }
+                        double intakeMotor2Power = intakePower;
 
-                    if (intakePower > 0) {
-                        if (autoTransferStopEnabled) {
-                            intakeSubsystem.enableAutoDisableTransfer();
+                        if (intakePower > 0) {
+                            if (autoTransferStopEnabled) {
+                                if (isTransferStopped) {
+                                    intakeMotor2Power = 0;
+                                } else {
+                                    if (intakeSubsystem.isTransferOverCurrent(CurrentUnit.AMPS, 3)) {
+                                        if (transferStopTimerPaused) {
+                                            transferStopTimer.reset();
+                                            transferStopTimerPaused = false;
+                                        }
+
+                                        if (transferStopTimer.time(TimeUnit.MILLISECONDS) >= 650) {
+                                            isTransferStopped = true;
+                                            transferStopTimerPaused = true;
+
+                                            intakeMotor2Power = 0;
+                                        }
+                                    } else {
+                                        transferStopTimerPaused = true;
+                                    }
+                                }
+                            } else {
+                                isTransferStopped = false;
+                                transferStopTimerPaused = true;
+                            }
                         } else {
-                            intakeSubsystem.disableAutoDisableTransfer();
+                            isTransferStopped = false;
+                            transferStopTimerPaused = true;
+                            intakeSubsystem.setIntakePower(intakePower);
                         }
-                    } else if (intakePower < 0) {
-                        intakeSubsystem.disableAutoDisableTransfer();
+
+                        intakeSubsystem.setIntakePowers(intakePower, intakeMotor2Power);
                     }
 
                     intakeSubsystem.setPowerLimits(1, 1);
@@ -873,26 +907,43 @@ public class RobotManager {
         return shooterSubsystem.getHoodAngle();
     }
 
+    public Pose getGoalPosition(boolean checkDistance) {
+        Pose robotPose = new Pose();
+
+        if (checkDistance)
+            robotPose = getPose();
+
+        if (getAllianceSide() == AllianceSides.RED) {
+            if (!checkDistance || robotPose.distanceFrom(Parameters.SHOOTER_GOAL_CLOSE_RED) < Parameters.FAR_ZONE_DISTANCE) {
+                return Parameters.SHOOTER_GOAL_CLOSE_RED;
+            } else {
+                return Parameters.SHOOTER_GOAL_FAR_RED;
+            }
+        } else {
+            if (!checkDistance || robotPose.distanceFrom(Parameters.SHOOTER_GOAL_CLOSE_BLUE) < Parameters.FAR_ZONE_DISTANCE) {
+                return Parameters.SHOOTER_GOAL_CLOSE_BLUE;
+            } else {
+                return Parameters.SHOOTER_GOAL_FAR_BLUE;
+            }
+        }
+    }
+
+    public Pose getGoalPosition() {
+        return getGoalPosition(true);
+    }
+
     public double getDistanceToGoal() {
         if (resetDistanceToGoal) {
             Pose robotPose = useVelocityCompensation ? getVelocityCorrectedPose() : getPose();
 
             resetDistanceToGoal = false;
-            distanceToGoal = robotPose.distanceFrom(goalPos);
+            distanceToGoal = robotPose.distanceFrom(getGoalPosition());
         }
         return distanceToGoal;
     }
 
     public double getDistanceToGoal(Pose robotPosition) {
-        return robotPosition.distanceFrom(goalPos);
-    }
-
-    public boolean isTransferStalled() {
-        return intakeSubsystem.isTransferStalled();
-    }
-
-    public int getHeldBallCount() {
-        return intakeSubsystem.getHeldBallCount();
+        return robotPosition.distanceFrom(getGoalPosition(false));
     }
 
     public void waitForShooter() {

@@ -4,6 +4,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
+import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.Base.HardwareBases.ColorRangefinder;
 import org.firstinspires.ftc.teamcode.Base.HardwareBases.ComplexMotor;
@@ -20,16 +21,6 @@ public class IntakeSubsystem extends Subsystem {
     private double intakeMotor2Power = 0;
     private double intakeMotor1Limit = 1;
     private double intakeMotor2Limit = 1;
-    private boolean autoDisableTransfer = true;
-    private boolean transferDisabled = false;
-    private ElapsedTime sensorTimer = new ElapsedTime();
-    private ElapsedTime transferDisableTimeout = new ElapsedTime();
-    private boolean transferDisabling = false;
-    private boolean ballCount3Started = false;
-    private ElapsedTime ballCountTimer = new ElapsedTime();
-    private ColorRangefinder colorSensor1;
-//    private ColorRangefinder colorSensor2;
-    private int ballCount = 0;
 
     @Override
     public void setLinearTeleop(LinearOpMode newOpMode) {
@@ -54,8 +45,6 @@ public class IntakeSubsystem extends Subsystem {
         intakeMotor2.setReversed(true);
         intakeMotor2.enableBrake();
         intakeMotor2.setPower(0);
-
-        sensorTimer.reset();
     }
 
     public double getIntakePower() {
@@ -66,17 +55,9 @@ public class IntakeSubsystem extends Subsystem {
         return (intakeMotor1Power != 0 && intakeMotor2Power != 0);
     }
 
-    public double getTransferLockTime() {
-        return (transferDisabling && autoDisableTransfer) ? transferDisableTimeout.time(TimeUnit.MILLISECONDS) : -1;
-    }
-
     public void powerIntakeOff() {
         intakeMotor1Power = 0;
         intakeMotor2Power = 0;
-    }
-
-    public boolean isAutoTransferOffEnabled() {
-        return autoDisableTransfer;
     }
 
     public void setPowerLimits(double motor1Limit, double motor2Limit) {
@@ -84,73 +65,15 @@ public class IntakeSubsystem extends Subsystem {
         intakeMotor2Limit = motor2Limit;
     }
 
-    public void enableAutoDisableTransfer() {
-        if (!autoDisableTransfer) {
-            autoDisableTransfer = true;
-            transferDisabled = false;
-            transferDisabling = false;
-            ballCount = 0;
-        }
-    }
-
-    public void disableAutoDisableTransfer() {
-        if (autoDisableTransfer) {
-            autoDisableTransfer = false;
-            transferDisabled = false;
-            transferDisabling = false;
-            ballCount = 0;
-        }
-    }
-
     @Override
     public void update() {
         if (!thisOpMode.opModeIsActive() || thisOpMode.isStopRequested()) return;
 
         intakeMotor1.setPower(Range.clip(intakeMotor1Power, -1, intakeMotor1Limit));
+        intakeMotor2.setPower(Range.clip(intakeMotor2Power, -1, intakeMotor2Limit));
         intakeMotor1.update();
 
-        if (transferDisabled && autoDisableTransfer) {
-            intakeMotor2.setPower(0);
-        } else {
-            intakeMotor2.setPower(Range.clip(intakeMotor2Power, -1, intakeMotor2Limit));
-        }
-
         intakeMotor2.update();
-
-        double intakeMotorCurrent = (intakeMotor2.getCurrent() - Range.clip(intakeMotor1.getCurrent() - 2, 0, 100));
-
-        if (intakeMotorCurrent > 3.2 && autoDisableTransfer) {
-            if (!transferDisabling) {
-                transferDisabling = true;
-                transferDisableTimeout.reset();
-            }
-
-            if (transferDisableTimeout.time(TimeUnit.MILLISECONDS) > 750) {
-                transferDisabled = true;
-                ballCount = 2;
-            }
-        } else {
-            transferDisabling = false;
-        }
-
-//        if (sensor1Distance <= Parameters.BALL_SENSOR_TOLERANCE || sensor2Distance <= Parameters.BALL_SENSOR_TOLERANCE) {
-//            if (ballCount != 3) {
-//                if (transferDisabled)
-//                    ballCount = 3;
-//
-//                if (!ballCount3Started) {
-//                    ballCountTimer.reset();
-//                    ballCount3Started = true;
-//                }
-//
-//                if (ballCountTimer.time(TimeUnit.MILLISECONDS) >= 750) {
-//                    ballCount3Started = false;
-//                    ballCount = 3;
-//                }
-//            }
-//        } else {
-//            ballCount3Started = false;
-//        }
     }
 
     public void setIntakePower(double newPower) {
@@ -158,16 +81,12 @@ public class IntakeSubsystem extends Subsystem {
         intakeMotor2Power = newPower;
     }
 
-    public boolean isTransferStalled() {
-        return transferDisabled;
-    }
-
-    public int getHeldBallCount() {
-        return ballCount;
-    }
-
-    public void setIntakePowers(double motor1Power, int motor2Power) {
+    public void setIntakePowers(double motor1Power, double motor2Power) {
         intakeMotor1Power = motor1Power;
         intakeMotor2Power = motor2Power;
+    }
+
+    public boolean isTransferOverCurrent(CurrentUnit unit, double value) {
+        return intakeMotor2.isOverCurrent(unit, value);
     }
 }

@@ -24,6 +24,9 @@ enum V3AutoDefault {
     FIFTEEN_ARTIFACT_ALLIANCE_FRIENDLY,
     TWELVE_ARTIFACT,
     TWELVE_ARTIFACT_ALLIANCE_FRIENDLY,
+    FAR_ZONE_6_ARTIFACT_FROM_HP,
+    FAR_ZONE_9_ARTIFACT_FROM_HP_SM,
+    FAR_ZONE_9_ARTIFACT_FROM_HP
 }
 
 @Autonomous(name = "Auto V3", group = "1", preselectTeleOp = "0: Main Teleop")
@@ -44,12 +47,10 @@ public class AutoV3 extends LinearOpMode {
                 commands.add(new AutoCommandRepository.ScoreArtifacts(true));
                 commands.add(new AutoCommandRepository.IntakeMidLine());
                 commands.add(new AutoCommandRepository.ScoreArtifacts(false));
-
-                for (int i = 0; i < 2; i++) {
-                    commands.add(new AutoCommandRepository.IntakeGate(true));
-                    commands.add(new AutoCommandRepository.ScoreArtifacts(false));
-                }
-
+                commands.add(new AutoCommandRepository.IntakeGate(true));
+                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
+                commands.add(new AutoCommandRepository.IntakeGate(false));
+                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
                 commands.add(new AutoCommandRepository.IntakeFarLine());
                 commands.add(new AutoCommandRepository.ScoreArtifacts(false));
                 commands.add(new AutoCommandRepository.IntakeCloseLine());
@@ -61,13 +62,13 @@ public class AutoV3 extends LinearOpMode {
                 commands.add(new AutoCommandRepository.ScoreArtifacts(true));
                 commands.add(new AutoCommandRepository.IntakeMidLine());
                 commands.add(new AutoCommandRepository.ScoreArtifacts(false));
-
-                for (int i = 0; i < 3; i++) {
-                    commands.add(new AutoCommandRepository.IntakeGate(true));
-                    commands.add(new AutoCommandRepository.ScoreArtifacts(false));
-                }
-
-                commands.add(new AutoCommandRepository.IntakeCloseLine());
+                commands.add(new AutoCommandRepository.IntakeGate(true));
+                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
+                commands.add(new AutoCommandRepository.IntakeCloseLine(true));
+                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
+                commands.add(new AutoCommandRepository.IntakeGate(false));
+                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
+                commands.add(new AutoCommandRepository.IntakeGate(false));
                 commands.add(new AutoCommandRepository.ScoreArtifactsAndPark());
 
                 startSide = AutoStartSide.CLOSE_ZONE;
@@ -104,12 +105,10 @@ public class AutoV3 extends LinearOpMode {
                 commands.add(new AutoCommandRepository.ScoreArtifacts(true));
                 commands.add(new AutoCommandRepository.IntakeMidLine());
                 commands.add(new AutoCommandRepository.ScoreArtifacts(false));
-
-                for (int i = 0; i < 2; i++) {
-                    commands.add(new AutoCommandRepository.IntakeGate(true));
-                    commands.add(new AutoCommandRepository.ScoreArtifacts(false));
-                }
-
+                commands.add(new AutoCommandRepository.IntakeGate(true));
+                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
+                commands.add(new AutoCommandRepository.IntakeGate(false));
+                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
                 commands.add(new AutoCommandRepository.IntakeCloseLine());
                 commands.add(new AutoCommandRepository.ScoreArtifactsAndPark());
 
@@ -139,25 +138,56 @@ public class AutoV3 extends LinearOpMode {
 
                 startSide = AutoStartSide.CLOSE_ZONE;
                 break;
+            case FAR_ZONE_6_ARTIFACT_FROM_HP:
+                commands.add(new AutoCommandRepository.ScoreArtifacts(true));
+                commands.add(new AutoCommandRepository.IntakeHumanPlayer());
+                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
+
+                startSide = AutoStartSide.FAR_ZONE;
+                break;
+            case FAR_ZONE_9_ARTIFACT_FROM_HP_SM:
+                commands.add(new AutoCommandRepository.ScoreArtifacts(true));
+                commands.add(new AutoCommandRepository.IntakeFarLine());
+                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
+                commands.add(new AutoCommandRepository.IntakeHumanPlayer());
+                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
+
+                startSide = AutoStartSide.FAR_ZONE;
+                break;
+            case FAR_ZONE_9_ARTIFACT_FROM_HP:
+                commands.add(new AutoCommandRepository.ScoreArtifacts(true));
+                commands.add(new AutoCommandRepository.IntakeHumanPlayer());
+                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
+                commands.add(new AutoCommandRepository.IntakeHumanPlayer(true));
+                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
+
+                startSide = AutoStartSide.FAR_ZONE;
+                break;
         }
     }
 
     private String getDefaultUserLabel(V3AutoDefault ofType) {
         switch (ofType) {
             case EIGHTEEN_ARTIFACT:
-                return "18 Artifact Auto";
+                return "Close Zone: 18 Artifact Auto";
             case EIGHTEEN_ARTIFACT_ALLIANCE_FRIENDLY:
-                return "18 Artifact Alliance Friendly Auto";
+                return "Close Zone: 18 Artifact Alliance Friendly Auto";
             case FIFTEEN_ARTIFACT:
-                return "15 Artifact Auto";
+                return "Close Zone: 15 Artifact Auto";
             case FIFTEEN_ARTIFACT_GATE_INTAKE:
-                return "15 Artifact Gate Intake Auto";
+                return "Close Zone: 15 Artifact Gate Intake Auto";
             case FIFTEEN_ARTIFACT_ALLIANCE_FRIENDLY:
-                return "15 Artifact Alliance Friendly Auto";
+                return "Close Zone: 15 Artifact Alliance Friendly Auto";
             case TWELVE_ARTIFACT:
-                return "12 Artifact Auto";
+                return "Close Zone: 12 Artifact Auto";
             case TWELVE_ARTIFACT_ALLIANCE_FRIENDLY:
-                return "12 Artifact Alliance Friendly Auto";
+                return "Close Zone: 12 Artifact Alliance Friendly Auto";
+            case FAR_ZONE_9_ARTIFACT_FROM_HP:
+                return "Far Zone: 9 Artifact (all from human player station)";
+            case FAR_ZONE_9_ARTIFACT_FROM_HP_SM:
+                return "Far Zone: 9 Artifact (from far spike mark and human player station)";
+            case FAR_ZONE_6_ARTIFACT_FROM_HP:
+                return "Far Zone: 6 Artifact (all from human player station)";
         }
 
         return "Unimplemented Default Auto";

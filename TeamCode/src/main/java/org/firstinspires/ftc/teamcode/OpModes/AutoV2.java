@@ -5,6 +5,7 @@ import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.Path;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -30,6 +31,7 @@ enum AutoType {
     GATE_INTAKE_DEBUG,
 }
 
+@Disabled
 @Autonomous(name = "Auto V2", group = "1", preselectTeleOp = "0: Main Teleop")
 public class AutoV2 extends LinearOpMode {
     private RobotManager robot;

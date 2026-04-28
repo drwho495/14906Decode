@@ -26,7 +26,7 @@ public class PedroConstants {
                     new PIDFCoefficients(
                             1,
                             0,
-                            0.07,
+                            0.09,
                             0
                     )
             )
@@ -34,7 +34,7 @@ public class PedroConstants {
                     new PIDFCoefficients(
                             1.75,
                             0,
-                            0.05,
+                            0.08,
                             0
                     )
             )

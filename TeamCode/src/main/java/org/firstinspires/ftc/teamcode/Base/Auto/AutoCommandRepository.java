@@ -84,7 +84,7 @@ public class AutoCommandRepository {
 
         @Override
         public void execute(RobotManager robot, Pose startPose, AutoStartSide startSide, AutoCommand lastCommand) {
-            PathingMethods.lineIntake(
+            PathingMethods.intakeLine(
                     robot,
                     startSide,
                     0
@@ -100,7 +100,7 @@ public class AutoCommandRepository {
 
         @Override
         public void execute(RobotManager robot, Pose startPose, AutoStartSide startSide, AutoCommand lastCommand) {
-            PathingMethods.lineIntake(
+            PathingMethods.intakeLine(
                     robot,
                     startSide,
                     1
@@ -109,6 +109,15 @@ public class AutoCommandRepository {
     }
 
     public static class IntakeCloseLine extends AutoCommand {
+        private boolean clearGateWhileMoving = false;
+
+        public IntakeCloseLine(boolean clearGateWhileMoving) {
+            this.clearGateWhileMoving = clearGateWhileMoving;
+        }
+
+        public IntakeCloseLine() {
+        }
+
         @Override
         public AutoCommandTypes getType() {
             return AutoCommandTypes.INTAKE_CLOSE_LINE;
@@ -116,16 +125,17 @@ public class AutoCommandRepository {
 
         @Override
         public void execute(RobotManager robot, Pose startPose, AutoStartSide startSide, AutoCommand lastCommand) {
-            PathingMethods.lineIntake(
+            PathingMethods.intakeLine(
                     robot,
                     startSide,
-                    2
+                    2,
+                    clearGateWhileMoving
             );
         }
     }
 
     public static class ScoreArtifacts extends AutoCommand {
-        private boolean initialCycle;
+        private final boolean initialCycle;
 
         @Override
         public AutoCommandTypes getType() {
@@ -138,7 +148,7 @@ public class AutoCommandRepository {
 
         @Override
         public void execute(RobotManager robot, Pose startPose, AutoStartSide startSide, AutoCommand lastCommand) {
-            double intakeEndT = .1;
+            double intakeEndT = .15;
 
             if (lastCommand != null && lastCommand.getType() == AutoCommandTypes.INTAKE_HUMAN_PLAYER) {
                 intakeEndT = .5;
@@ -223,16 +233,27 @@ public class AutoCommandRepository {
 //    }
 
     public static class IntakeHumanPlayer extends AutoCommand {
+        private boolean sweepZone;
+
         @Override
         public AutoCommandTypes getType() {
             return AutoCommandTypes.INTAKE_HUMAN_PLAYER;
+        }
+
+        public IntakeHumanPlayer(boolean sweep) {
+            this.sweepZone = sweep;
+        }
+
+        public IntakeHumanPlayer() {
+            this.sweepZone = false;
         }
 
         @Override
         public void execute(RobotManager robot, Pose startPose, AutoStartSide startSide, AutoCommand lastCommand) {
             PathingMethods.intakeHumanPlayer(
                     robot,
-                    startSide
+                    startSide,
+                    sweepZone
             );
         }
     }

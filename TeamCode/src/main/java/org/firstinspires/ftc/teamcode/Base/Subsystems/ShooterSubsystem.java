@@ -23,7 +23,7 @@ public class ShooterSubsystem extends Subsystem {
     private VoltageSensor vSensor;
 
     private double motorVelo = Parameters.SHOOTER_DEFAULT_RPM;
-    private boolean powerOff = true;
+    private boolean poweredOff = true;
     private double fingerServoPos = Parameters.FINGER_SERVO_OPEN;
     private double hoodServoPos = Parameters.HOOD_SERVO_DOWN;
     private double shooter1Current = 0;
@@ -54,24 +54,28 @@ public class ShooterSubsystem extends Subsystem {
 
     public ShooterSubsystem() {
         wanderingShooterP = 0.04;
-        wanderingShooterF = 0.0037;
-        transferringShooterP = Parameters.ROBOT == 0 ? .0335 : .022;
-        transferringShooterF = 0.004;
-        fastTransferringShooterP = 0.025;
-        fastTransferringShooterF = 0.004;
+        wanderingShooterF = 0.0037; // 0.0037
+        transferringShooterP = 0.028; // 0.027
+        transferringShooterF = 0.0048; // 0.0038
+        fastTransferringShooterP = 0.028;
+        fastTransferringShooterF = 0.0038;
     }
 
     private void updatePF() {
         if (pfState == ShooterPFState.WANDERING_LOOP) {
             shooterMotor1.setVelocityPIDFCoefficients(wanderingShooterP, 0, 0, wanderingShooterF);
-            shooterMotor2.setVelocityPIDFCoefficients(wanderingShooterP, 0, 0, wanderingShooterF);
         } else if (pfState == ShooterPFState.TRANSFER_LOOP) {
             shooterMotor1.setVelocityPIDFCoefficients(transferringShooterP, 0, 0, transferringShooterF);
-            shooterMotor2.setVelocityPIDFCoefficients(transferringShooterP, 0, 0, transferringShooterF);
         } else if (pfState == ShooterPFState.FAST_TRANSFER_LOOP) {
             shooterMotor1.setVelocityPIDFCoefficients(fastTransferringShooterP, 0, 0, fastTransferringShooterF);
-            shooterMotor2.setVelocityPIDFCoefficients(fastTransferringShooterP, 0, 0, fastTransferringShooterF);
         }
+
+        double[] coeffs = shooterMotor1.getVelocityPIDFCoefficients();
+
+        thisOpMode.telemetry.addData("p: ", coeffs[0]);
+        thisOpMode.telemetry.addData("i: ", coeffs[1]);
+        thisOpMode.telemetry.addData("d: ", coeffs[2]);
+        thisOpMode.telemetry.addData("f: ", coeffs[3]);
     }
 
     @Override
@@ -112,7 +116,7 @@ public class ShooterSubsystem extends Subsystem {
     }
 
     public boolean ready() {
-        return shooterMotor1.atVelocity(30 * velocityMultiplier);
+        return !poweredOff && shooterMotor1.atVelocity(Parameters.SHOOTER_READY_TOLERANCE * velocityMultiplier);
     }
 
     public Double[] getVelocities() {
@@ -137,11 +141,11 @@ public class ShooterSubsystem extends Subsystem {
     }
 
     public void powerOff() {
-        powerOff = true;
+        poweredOff = true;
     }
 
     public void powerOn() {
-        powerOff = false;
+        poweredOff = false;
     }
 
     public void setVelocity(double newVelo) {
@@ -153,7 +157,7 @@ public class ShooterSubsystem extends Subsystem {
     }
 
     public void toggleShooterPower() {
-        powerOff = !powerOff;
+        poweredOff = !poweredOff;
     }
 
     public void enableHoodCompensation() {
@@ -184,7 +188,7 @@ public class ShooterSubsystem extends Subsystem {
             }
         }
 
-        if (powerOff) {
+        if (poweredOff) {
             shooterMotor1.setVelocity(0);
             shooterMotor2.setVelocity(0);
         } else {
@@ -202,7 +206,7 @@ public class ShooterSubsystem extends Subsystem {
     }
 
     public boolean isPoweredOn() {
-        return !powerOff;
+        return !poweredOff;
     }
 
     public double getHoodAngle() {

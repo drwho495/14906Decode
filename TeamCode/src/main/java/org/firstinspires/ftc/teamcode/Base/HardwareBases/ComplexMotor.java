@@ -6,6 +6,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -13,6 +14,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.teamcode.Base.Helpers.HardwareUtils;
 import org.firstinspires.ftc.teamcode.Base.Helpers.PIDFController;
+import org.firstinspires.ftc.teamcode.Base.Parameters;
 
 import java.util.concurrent.TimeUnit;
 
@@ -23,10 +25,13 @@ public class ComplexMotor {
     private double motorPower = 0;
     private double targetVelocity = 0;
     private double currentVelocity;
+    private double voltageTarget = 12.0;
     private final PIDFController velocityController = new PIDFController(0, 0, 0, 0);
     private boolean useCustomVelocity = true;
     private VoltageSensor vSensor = null;
     private ComplexMotor childMotor = null;
+    private double currentLimit = 0;
+    private CurrentUnit currentLimitUnit = CurrentUnit.AMPS;
 
     public ComplexMotor(String hwName, LinearOpMode newOpMode) {
         this.opMode = newOpMode;
@@ -79,6 +84,16 @@ public class ComplexMotor {
         }
     }
 
+    public double[] getVelocityPIDFCoefficients() {
+        if (useCustomVelocity) {
+            return velocityController.getCoefficients();
+        } else {
+            PIDFCoefficients coefficients = thisMotor.getPIDFCoefficients(thisMotor.getMode());
+
+            return new double[]{coefficients.p, coefficients.i, coefficients.d, coefficients.f};
+        }
+    }
+
     public void setMode(ComplexMotorModes newMode) {
         currentMode = newMode;
     }
@@ -110,13 +125,11 @@ public class ComplexMotor {
                     velocityController.setSetPoint(targetVelocity);
                     motorPower = velocityController.calculate(currentVelocity);
 
-                    double voltageMultiplier = 1;
-
                     if (vSensor != null) {
-                        voltageMultiplier = (12 / vSensor.getVoltage());
+                        motorPower *= (Parameters.SHOOTER_VOLTAGE_TARGET / vSensor.getVoltage());
                     }
 
-                    HardwareUtils.optimizeMethod(motorPower * voltageMultiplier, thisMotor, thisMotor::setPower);
+                    HardwareUtils.optimizeMethod(motorPower, thisMotor, thisMotor::setPower);
 
                     if (childMotor != null) {
                         HardwareUtils.optimizeMethod(motorPower, childMotor, childMotor::setPower);
@@ -164,5 +177,20 @@ public class ComplexMotor {
             return abs(currentVelocity - targetVelocity) <= error;
         }
         return true;
+    }
+
+    public void setCurrentLimit(CurrentUnit unit, double value) {
+        if (unit != currentLimitUnit || value != currentLimit)
+            thisMotor.setCurrentAlert(value, unit);
+    }
+
+    public boolean isOverCurrent(CurrentUnit unit, double value) {
+        setCurrentLimit(unit, value);
+
+        return isOverCurrent();
+    }
+
+    public boolean isOverCurrent() {
+        return thisMotor.isOverCurrent();
     }
 }
