@@ -19,6 +19,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.teamcode.Base.Helpers.HardwareUtils;
 import org.firstinspires.ftc.teamcode.Base.Helpers.PedroUtils;
 import org.firstinspires.ftc.teamcode.Base.Helpers.Polygon;
+import org.firstinspires.ftc.teamcode.Base.Helpers.RegressionMethod;
 import org.firstinspires.ftc.teamcode.Base.Subsystems.IntakeSubsystem;
 import org.firstinspires.ftc.teamcode.Base.Subsystems.ShooterPFState;
 import org.firstinspires.ftc.teamcode.Base.Subsystems.ShooterSubsystem;
@@ -224,6 +225,9 @@ public class RobotManager {
     }
 
     public void buildShooterCurves() {
+        Parameters.CLOSE_ZONE_CURVE.setRegressionMethod(Parameters.REGRESSION_METHOD);
+        Parameters.FAR_ZONE_CURVE.setRegressionMethod(Parameters.REGRESSION_METHOD);
+
         Parameters.CLOSE_ZONE_CURVE.clear();
         Parameters.FAR_ZONE_CURVE.clear();
 
@@ -239,7 +243,6 @@ public class RobotManager {
 
             shooterSubsystem.setHoodCompensationMultiplier(6);
         }
-
 
         Parameters.CLOSE_ZONE_CURVE.build();
         Parameters.FAR_ZONE_CURVE.build();
@@ -649,8 +652,8 @@ public class RobotManager {
 
     public void updateShooterParameters(double distanceToGoalInput) {
         if (distanceToGoalInput <= Parameters.FAR_ZONE_DISTANCE) {
-            shooterSubsystem.setVelocity(Parameters.CLOSE_ZONE_CURVE.getRPMCurveOutput(distanceToGoalInput));
-            shooterSubsystem.setHoodPos(Parameters.CLOSE_ZONE_CURVE.getHoodCurveOutput(distanceToGoalInput));
+            shooterSubsystem.setVelocity(Parameters.CLOSE_ZONE_CURVE.getRPMOutput(distanceToGoalInput));
+            shooterSubsystem.setHoodPos(Parameters.CLOSE_ZONE_CURVE.getHoodOutput(distanceToGoalInput));
         } else {
             shooterSubsystem.setVelocity(Parameters.SHOOTER_FAR_ZONE_VELOCITY);
             shooterSubsystem.setHoodPos(Parameters.SHOOTER_FAR_ZONE_HOOD_ANGLE);

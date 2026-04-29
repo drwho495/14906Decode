@@ -1,12 +1,16 @@
 package org.firstinspires.ftc.teamcode.Base.Helpers;
 
+import com.pedropathing.geometry.Pose;
+
 import org.apache.commons.math3.fitting.PolynomialCurveFitter;
 import org.apache.commons.math3.fitting.WeightedObservedPoint;
 import org.apache.commons.math3.fitting.WeightedObservedPoints;
 
+import java.util.ArrayList;
 import java.util.List;
 
-public class PointsCurve {
+// this is class to build a spline that can be represented as a mathematical function
+public class Spline {
     public final WeightedObservedPoints pointArray = new WeightedObservedPoints();
     public double[] coefficients = null;
     private boolean isBuilt = false;
@@ -46,5 +50,13 @@ public class PointsCurve {
         pointArray.clear();
         coefficients = null;
         isBuilt = false;
+    }
+
+    public void populate(ArrayList<Pose> poseList) {
+        clear();
+
+        for (Pose pose : poseList) {
+            addPoint(pose.getX(), pose.getY());
+        }
     }
 }

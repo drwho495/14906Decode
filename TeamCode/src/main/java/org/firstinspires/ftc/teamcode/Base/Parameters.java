@@ -9,7 +9,8 @@ import com.bylazar.configurables.annotations.Configurable;
 import com.pedropathing.geometry.Pose;
 
 import org.firstinspires.ftc.teamcode.Base.Helpers.PedroUtils;
-import org.firstinspires.ftc.teamcode.Base.Helpers.ShooterCurve;
+import org.firstinspires.ftc.teamcode.Base.Helpers.RegressionMethod;
+import org.firstinspires.ftc.teamcode.Base.Helpers.ShooterRegressionController;
 import org.firstinspires.ftc.teamcode.bedroBathing.util.CustomPIDFCoefficients;
 
 @Config
@@ -53,8 +54,13 @@ public class Parameters {
     public static double DEFAULT_AIM_OFFSET_RED = 0;
     public static double DEFAULT_AIM_OFFSET_BLUE = 4;
 
+    public static double GATE_CYCLE_AFTER_SHOOTING_TIME = 1300;
+    public static double GATE_CYCLE_INITIAL_TIME = 1000;
+    public static double GATE_CYCLE_FAST_TIME = 800;
+
     public static double SHOOTER_FAR_ZONE_VELOCITY = 4850;
     public static double SHOOTER_FAR_ZONE_HOOD_ANGLE = 55;
-    public static ShooterCurve CLOSE_ZONE_CURVE = new ShooterCurve();
-    public static ShooterCurve FAR_ZONE_CURVE = new ShooterCurve();
+    public static ShooterRegressionController CLOSE_ZONE_CURVE = new ShooterRegressionController();
+    public static ShooterRegressionController FAR_ZONE_CURVE = new ShooterRegressionController();
+    public static RegressionMethod REGRESSION_METHOD = RegressionMethod.SPLINE;
 }

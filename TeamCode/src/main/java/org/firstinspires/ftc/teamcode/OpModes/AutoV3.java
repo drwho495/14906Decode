@@ -19,6 +19,8 @@ import java.util.ArrayList;
 enum V3AutoDefault {
     EIGHTEEN_ARTIFACT,
     EIGHTEEN_ARTIFACT_ALLIANCE_FRIENDLY,
+    EIGHTEEN_ARTIFACT_ALLIANCE_FRIENDLY_EXTRA_PUSH,
+    TWENTY_ONE_ALLIANCE_FRIENDLY,
     FIFTEEN_ARTIFACT,
     FIFTEEN_ARTIFACT_GATE_INTAKE,
     FIFTEEN_ARTIFACT_ALLIANCE_FRIENDLY,
@@ -46,13 +48,13 @@ public class AutoV3 extends LinearOpMode {
             case EIGHTEEN_ARTIFACT:
                 commands.add(new AutoCommandRepository.ScoreArtifacts(true));
                 commands.add(new AutoCommandRepository.IntakeMidLine());
-                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
-                commands.add(new AutoCommandRepository.IntakeGate(true));
-                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
-                commands.add(new AutoCommandRepository.IntakeGate(false));
-                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
+                commands.add(new AutoCommandRepository.ScoreArtifacts());
+                commands.add(new AutoCommandRepository.IntakeGate(Parameters.GATE_CYCLE_INITIAL_TIME));
+                commands.add(new AutoCommandRepository.ScoreArtifacts());
+                commands.add(new AutoCommandRepository.IntakeGate(Parameters.GATE_CYCLE_AFTER_SHOOTING_TIME));
+                commands.add(new AutoCommandRepository.ScoreArtifacts());
                 commands.add(new AutoCommandRepository.IntakeFarLine());
-                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
+                commands.add(new AutoCommandRepository.ScoreArtifacts());
                 commands.add(new AutoCommandRepository.IntakeCloseLine());
                 commands.add(new AutoCommandRepository.ScoreArtifactsAndPark());
 
@@ -61,14 +63,46 @@ public class AutoV3 extends LinearOpMode {
             case EIGHTEEN_ARTIFACT_ALLIANCE_FRIENDLY:
                 commands.add(new AutoCommandRepository.ScoreArtifacts(true));
                 commands.add(new AutoCommandRepository.IntakeMidLine());
-                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
-                commands.add(new AutoCommandRepository.IntakeGate(true));
-                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
+                commands.add(new AutoCommandRepository.ScoreArtifacts());
+                commands.add(new AutoCommandRepository.IntakeGate(Parameters.GATE_CYCLE_INITIAL_TIME));
+                commands.add(new AutoCommandRepository.ScoreArtifacts());
                 commands.add(new AutoCommandRepository.IntakeCloseLine(true));
-                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
-                commands.add(new AutoCommandRepository.IntakeGate(false));
-                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
-                commands.add(new AutoCommandRepository.IntakeGate(false));
+                commands.add(new AutoCommandRepository.ScoreArtifacts());
+                commands.add(new AutoCommandRepository.IntakeGate(Parameters.GATE_CYCLE_AFTER_SHOOTING_TIME));
+                commands.add(new AutoCommandRepository.ScoreArtifacts());
+                commands.add(new AutoCommandRepository.IntakeGate(Parameters.GATE_CYCLE_AFTER_SHOOTING_TIME));
+                commands.add(new AutoCommandRepository.ScoreArtifactsAndPark());
+
+                startSide = AutoStartSide.CLOSE_ZONE;
+                break;
+            case EIGHTEEN_ARTIFACT_ALLIANCE_FRIENDLY_EXTRA_PUSH:
+                commands.add(new AutoCommandRepository.ScoreArtifacts(true));
+                commands.add(new AutoCommandRepository.IntakeMidLine());
+                commands.add(new AutoCommandRepository.ScoreArtifacts());
+                commands.add(new AutoCommandRepository.IntakeGate(Parameters.GATE_CYCLE_INITIAL_TIME));
+                commands.add(new AutoCommandRepository.ScoreArtifacts());
+                commands.add(new AutoCommandRepository.IntakeGate(Parameters.GATE_CYCLE_AFTER_SHOOTING_TIME));
+                commands.add(new AutoCommandRepository.ScoreArtifacts());
+                commands.add(new AutoCommandRepository.IntakeGate(Parameters.GATE_CYCLE_AFTER_SHOOTING_TIME));
+                commands.add(new AutoCommandRepository.ScoreArtifacts());
+                commands.add(new AutoCommandRepository.IntakeCloseLine(false));
+                commands.add(new AutoCommandRepository.ScoreArtifactsAndPark());
+
+                startSide = AutoStartSide.CLOSE_ZONE;
+                break;
+            case TWENTY_ONE_ALLIANCE_FRIENDLY:
+                commands.add(new AutoCommandRepository.ScoreArtifacts(true));
+                commands.add(new AutoCommandRepository.IntakeMidLine());
+                commands.add(new AutoCommandRepository.ScoreArtifacts(false, true));
+                commands.add(new AutoCommandRepository.IntakeGate(Parameters.GATE_CYCLE_INITIAL_TIME));
+                commands.add(new AutoCommandRepository.ScoreArtifacts(false, true));
+                commands.add(new AutoCommandRepository.IntakeGate(Parameters.GATE_CYCLE_FAST_TIME));
+                commands.add(new AutoCommandRepository.ScoreArtifacts(false, true));
+                commands.add(new AutoCommandRepository.IntakeGate(Parameters.GATE_CYCLE_FAST_TIME));
+                commands.add(new AutoCommandRepository.ScoreArtifacts(false, true));
+                commands.add(new AutoCommandRepository.IntakeGate(Parameters.GATE_CYCLE_FAST_TIME));
+                commands.add(new AutoCommandRepository.ScoreArtifacts(false, true));
+                commands.add(new AutoCommandRepository.IntakeCloseLine(true));
                 commands.add(new AutoCommandRepository.ScoreArtifactsAndPark());
 
                 startSide = AutoStartSide.CLOSE_ZONE;
@@ -76,14 +110,14 @@ public class AutoV3 extends LinearOpMode {
             case FIFTEEN_ARTIFACT:
                 commands.add(new AutoCommandRepository.ScoreArtifacts(true));
                 commands.add(new AutoCommandRepository.IntakeFarLine());
-                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
+                commands.add(new AutoCommandRepository.ScoreArtifacts());
                 commands.add(new AutoCommandRepository.IntakeMidLine());
                 commands.add(new AutoCommandRepository.ClearGate());
-                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
+                commands.add(new AutoCommandRepository.ScoreArtifacts());
                 commands.add(new AutoCommandRepository.IntakeCloseLine());
-                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
+                commands.add(new AutoCommandRepository.ScoreArtifacts());
                 commands.add(new AutoCommandRepository.IntakeHumanPlayer());
-                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
+                commands.add(new AutoCommandRepository.ScoreArtifacts());
                 commands.add(new AutoCommandRepository.Park());
 
                 startSide = AutoStartSide.CLOSE_ZONE;
@@ -91,11 +125,11 @@ public class AutoV3 extends LinearOpMode {
             case FIFTEEN_ARTIFACT_GATE_INTAKE:
                 commands.add(new AutoCommandRepository.ScoreArtifacts(true));
                 commands.add(new AutoCommandRepository.IntakeMidLine());
-                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
-                commands.add(new AutoCommandRepository.IntakeGate(true));
-                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
+                commands.add(new AutoCommandRepository.ScoreArtifacts());
+                commands.add(new AutoCommandRepository.IntakeGate(Parameters.GATE_CYCLE_INITIAL_TIME));
+                commands.add(new AutoCommandRepository.ScoreArtifacts());
                 commands.add(new AutoCommandRepository.IntakeFarLine());
-                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
+                commands.add(new AutoCommandRepository.ScoreArtifacts());
                 commands.add(new AutoCommandRepository.IntakeCloseLine());
                 commands.add(new AutoCommandRepository.ScoreArtifactsAndPark());
 
@@ -104,11 +138,11 @@ public class AutoV3 extends LinearOpMode {
             case FIFTEEN_ARTIFACT_ALLIANCE_FRIENDLY:
                 commands.add(new AutoCommandRepository.ScoreArtifacts(true));
                 commands.add(new AutoCommandRepository.IntakeMidLine());
-                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
-                commands.add(new AutoCommandRepository.IntakeGate(true));
-                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
-                commands.add(new AutoCommandRepository.IntakeGate(false));
-                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
+                commands.add(new AutoCommandRepository.ScoreArtifacts());
+                commands.add(new AutoCommandRepository.IntakeGate(Parameters.GATE_CYCLE_INITIAL_TIME));
+                commands.add(new AutoCommandRepository.ScoreArtifacts());
+                commands.add(new AutoCommandRepository.IntakeGate(Parameters.GATE_CYCLE_AFTER_SHOOTING_TIME));
+                commands.add(new AutoCommandRepository.ScoreArtifacts());
                 commands.add(new AutoCommandRepository.IntakeCloseLine());
                 commands.add(new AutoCommandRepository.ScoreArtifactsAndPark());
 
@@ -117,11 +151,11 @@ public class AutoV3 extends LinearOpMode {
             case TWELVE_ARTIFACT:
                 commands.add(new AutoCommandRepository.ScoreArtifacts(true));
                 commands.add(new AutoCommandRepository.IntakeFarLine());
-                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
+                commands.add(new AutoCommandRepository.ScoreArtifacts());
                 commands.add(new AutoCommandRepository.IntakeMidLine());
-                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
+                commands.add(new AutoCommandRepository.ScoreArtifacts());
                 commands.add(new AutoCommandRepository.IntakeCloseLine());
-                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
+                commands.add(new AutoCommandRepository.ScoreArtifacts());
                 commands.add(new AutoCommandRepository.Park());
 
                 startSide = AutoStartSide.CLOSE_ZONE;
@@ -129,11 +163,11 @@ public class AutoV3 extends LinearOpMode {
             case TWELVE_ARTIFACT_ALLIANCE_FRIENDLY:
                 commands.add(new AutoCommandRepository.ScoreArtifacts(true));
                 commands.add(new AutoCommandRepository.IntakeMidLine());
-                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
-                commands.add(new AutoCommandRepository.IntakeGate(true));
-                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
+                commands.add(new AutoCommandRepository.ScoreArtifacts());
+                commands.add(new AutoCommandRepository.IntakeGate(Parameters.GATE_CYCLE_INITIAL_TIME));
+                commands.add(new AutoCommandRepository.ScoreArtifacts());
                 commands.add(new AutoCommandRepository.IntakeCloseLine());
-                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
+                commands.add(new AutoCommandRepository.ScoreArtifacts());
                 commands.add(new AutoCommandRepository.Park());
 
                 startSide = AutoStartSide.CLOSE_ZONE;
@@ -141,25 +175,25 @@ public class AutoV3 extends LinearOpMode {
             case FAR_ZONE_6_ARTIFACT_FROM_HP:
                 commands.add(new AutoCommandRepository.ScoreArtifacts(true));
                 commands.add(new AutoCommandRepository.IntakeHumanPlayer());
-                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
+                commands.add(new AutoCommandRepository.ScoreArtifacts());
 
                 startSide = AutoStartSide.FAR_ZONE;
                 break;
             case FAR_ZONE_9_ARTIFACT_FROM_HP_SM:
                 commands.add(new AutoCommandRepository.ScoreArtifacts(true));
                 commands.add(new AutoCommandRepository.IntakeFarLine());
-                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
+                commands.add(new AutoCommandRepository.ScoreArtifacts());
                 commands.add(new AutoCommandRepository.IntakeHumanPlayer());
-                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
+                commands.add(new AutoCommandRepository.ScoreArtifacts());
 
                 startSide = AutoStartSide.FAR_ZONE;
                 break;
             case FAR_ZONE_9_ARTIFACT_FROM_HP:
                 commands.add(new AutoCommandRepository.ScoreArtifacts(true));
                 commands.add(new AutoCommandRepository.IntakeHumanPlayer());
-                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
+                commands.add(new AutoCommandRepository.ScoreArtifacts());
                 commands.add(new AutoCommandRepository.IntakeHumanPlayer(true));
-                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
+                commands.add(new AutoCommandRepository.ScoreArtifacts());
 
                 startSide = AutoStartSide.FAR_ZONE;
                 break;
@@ -172,6 +206,10 @@ public class AutoV3 extends LinearOpMode {
                 return "Close Zone: 18 Artifact Auto";
             case EIGHTEEN_ARTIFACT_ALLIANCE_FRIENDLY:
                 return "Close Zone: 18 Artifact Alliance Friendly Auto";
+            case EIGHTEEN_ARTIFACT_ALLIANCE_FRIENDLY_EXTRA_PUSH:
+                return "Close Zone: 18 Artifact Alliance Friendly Auto With an Extra Gate Push.";
+            case TWENTY_ONE_ALLIANCE_FRIENDLY:
+                return "Close Zone: 21 Artifact Alliance Friendly Auto.";
             case FIFTEEN_ARTIFACT:
                 return "Close Zone: 15 Artifact Auto";
             case FIFTEEN_ARTIFACT_GATE_INTAKE:
@@ -197,11 +235,10 @@ public class AutoV3 extends LinearOpMode {
     public void runOpMode() throws InterruptedException {
         robot = new RobotManager(this);
 
-
         robot.setState(OpModeStates.INTAKE_SCORE);
         robot.setShooterControlPolicy(ShooterControlPolicy.MANUAL);
         robot.enableAutoTransferStop();
-        robot.disableDebugPrinting();
+        robot.enableDebugPrinting();
         robot.disableVelocityCompensation();
         robot.setShootingStyle(ShootingStyle.LARGE_ARC);
         robot.disableHoodCompensation();
@@ -249,7 +286,9 @@ public class AutoV3 extends LinearOpMode {
             telemetry.addData("Autonomous Default: ", getDefaultUserLabel(defaultAuto));
             telemetry.addData("Robot Heading: ", robot.getPose().getHeading());
             telemetry.addLine();
-            telemetry.addLine("Auto Program:");
+            telemetry.addLine();
+            telemetry.addLine();
+            telemetry.addLine("Auto Program Contents:");
             telemetry.addData("Starting Side: ", startSide);
 
             for(AutoCommandRepository.AutoCommand command : commands) {

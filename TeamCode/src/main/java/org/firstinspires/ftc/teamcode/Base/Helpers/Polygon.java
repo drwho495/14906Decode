@@ -5,19 +5,21 @@ import com.pedropathing.geometry.Pose;
 import java.util.ArrayList;
 import java.util.List;
 
+// this is class to build a polygon that can be represented as a mathematical function
 public class Polygon {
-    private List<Pose> points = new ArrayList<>();
-    private List<Pose> transformedPoints = new ArrayList<>();
+    private ArrayList<Pose> points = new ArrayList<>();
+    private ArrayList<Pose> transformedPoints = new ArrayList<>();
 
     private double offsetX = 0;
     private double offsetY = 0;
     private double offsetRotZ = 0;
 
-    public Polygon(List<Pose> poses) {
+    public Polygon(ArrayList<Pose> poses) {
         points = poses;
     }
 
     public Polygon() {
+
     }
 
     public static Polygon makeRectangle(double x, double y) {
@@ -186,5 +188,35 @@ public class Polygon {
     }
 
 
+    public void clear() {
+        points.clear();
+        transformedPoints.clear();
+    }
 
+    public void populate(ArrayList<Pose> poseList) {
+        clear();
+
+        points = poseList;
+    }
+
+    public double getY(double x) {
+        getTransformedPoints();
+
+        Pose startPoint = null;
+        Pose endPoint = null;
+
+        for (final Pose point : transformedPoints) {
+            if (point.getX() <= x && (startPoint == null || startPoint.getX() < point.getX())) {
+                startPoint = point;
+            } else if (point.getX() >= x && (endPoint == null || endPoint.getX() > point.getX())) {
+                endPoint = point;
+            }
+        }
+
+        if (startPoint != null && endPoint != null) {
+            return (((endPoint.getY() - startPoint.getY()) / (endPoint.getX() - startPoint.getX())) * (x - startPoint.getX())) + startPoint.getY();
+        }
+
+        return 0;
+    }
 }

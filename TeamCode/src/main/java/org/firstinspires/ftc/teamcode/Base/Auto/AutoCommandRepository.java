@@ -1,6 +1,8 @@
 package org.firstinspires.ftc.teamcode.Base.Auto;
 
 import com.pedropathing.geometry.Pose;
+
+import org.firstinspires.ftc.teamcode.Base.Parameters;
 import org.firstinspires.ftc.teamcode.Base.RobotManager;
 
 public class AutoCommandRepository {
@@ -60,13 +62,13 @@ public class AutoCommandRepository {
             case INTAKE_CLOSE_LINE:
                 return new IntakeCloseLine();
             case SCORE_ARTIFACTS:
-                return new ScoreArtifacts(false);
+                return new ScoreArtifacts();
             case SCORE_ARTIFACTS_AND_PARK:
                 return new ScoreArtifactsAndPark();
             case PARK:
                 return new Park();
             case INTAKE_GATE:
-                return new IntakeGate(false);
+                return new IntakeGate();
             case INTAKE_HUMAN_PLAYER:
                 return new IntakeHumanPlayer();
             case CLEAR_GATE:
@@ -135,15 +137,24 @@ public class AutoCommandRepository {
     }
 
     public static class ScoreArtifacts extends AutoCommand {
-        private final boolean initialCycle;
+        private boolean initialCycle = false;
+        private boolean quickCycle = false;
 
         @Override
         public AutoCommandTypes getType() {
             return AutoCommandTypes.SCORE_ARTIFACTS;
         }
 
+        public ScoreArtifacts(boolean initialCycle, boolean quickCycle) {
+            this.initialCycle = initialCycle;
+            this.quickCycle = quickCycle;
+        }
+
         public ScoreArtifacts(boolean initialCycle) {
             this.initialCycle = initialCycle;
+        }
+
+        public ScoreArtifacts() {
         }
 
         @Override
@@ -162,15 +173,25 @@ public class AutoCommandRepository {
                     (lastCommand != null && lastCommand.getType() == AutoCommandTypes.INTAKE_CLOSE_LINE),
                     false,
                     intakeEndT,
-                    this.initialCycle
+                    this.initialCycle,
+                    quickCycle
             );
         }
     }
 
     public static class ScoreArtifactsAndPark extends AutoCommand {
+        private boolean quickCycle = false;
+
         @Override
         public AutoCommandTypes getType() {
             return AutoCommandTypes.SCORE_ARTIFACTS_AND_PARK;
+        }
+
+        public ScoreArtifactsAndPark(boolean quickCycle) {
+            this.quickCycle = quickCycle;
+        }
+
+        public ScoreArtifactsAndPark() {
         }
 
         @Override
@@ -189,21 +210,26 @@ public class AutoCommandRepository {
                     (lastCommand != null && lastCommand.getType() == AutoCommandTypes.INTAKE_CLOSE_LINE),
                     true,
                     intakeEndT,
-                    false
+                    false,
+                    quickCycle
             );
         }
     }
 
     public static class IntakeGate extends AutoCommand {
-        private boolean initialCycle = false;
+        private double sleepTime;
 
         @Override
         public AutoCommandTypes getType() {
             return AutoCommandTypes.INTAKE_GATE;
         }
 
-        public IntakeGate(boolean initialCycle) {
-            this.initialCycle = initialCycle;
+        public IntakeGate(double sleepTime) {
+            this.sleepTime = sleepTime;
+        }
+
+        public IntakeGate() {
+            this.sleepTime = Parameters.GATE_CYCLE_AFTER_SHOOTING_TIME;
         }
 
         @Override
@@ -211,7 +237,7 @@ public class AutoCommandRepository {
             PathingMethods.intakeGate(
                     robot,
                     startSide,
-                    initialCycle
+                    sleepTime
             );
         }
     }

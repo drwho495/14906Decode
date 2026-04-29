@@ -4,13 +4,13 @@ import com.pedropathing.geometry.BezierCurve;
 import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.Path;
+import com.pedropathing.paths.PathBuilder;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.Base.AllianceSides;
 import org.firstinspires.ftc.teamcode.Base.Parameters;
 import org.firstinspires.ftc.teamcode.Base.RobotManager;
 import org.firstinspires.ftc.teamcode.Base.ShooterControlPolicy;
-import org.firstinspires.ftc.teamcode.pedroPathing.PedroConstants;
 
 public class PathingMethods {
     // 0 is the line furthest from the goal
@@ -150,7 +150,7 @@ public class PathingMethods {
         intakeLine(robot, startSide, number, false);
     }
 
-    public static void intakeGate(RobotManager robot, AutoStartSide startSide, boolean initialCycle) {
+    public static void intakeGate(RobotManager robot, AutoStartSide startSide, double sleepTime) {
         Pose robotPose = robot.getPose();
 
         double gateHeading = 25;
@@ -202,7 +202,7 @@ public class PathingMethods {
                         .setTValueConstraint(1)
         );
 
-        robot.safeSleep(initialCycle ? 1000 : 1350);
+        robot.safeSleep(sleepTime);
         robot.breakFollowing(false);
         robot.clearPathTimeout();
     }
@@ -342,10 +342,13 @@ public class PathingMethods {
             boolean afterCloseLine,
             boolean shootOffTape,
             double intakeShutoffT,
-            boolean initialCycle
+            boolean initialCycle,
+            boolean quickCycle
     ) {
         Pose shootingPosition;
         Pose robotPose = robot.getPose();
+        PathBuilder shooterPathBuilder;
+        boolean shotArtifactsWhileMoving = false;
 
         if (robot.getShooterControlPolicy() == ShooterControlPolicy.MANUAL) {
             if (startSide == AutoStartSide.FAR_ZONE) {
@@ -385,18 +388,30 @@ public class PathingMethods {
 
 //                robot.updateShooterParameters(shootingPosition);
 
+                shooterPathBuilder = robot.pathBuilder()
+                        .addPath(new Path(
+                                new BezierLine(
+                                        startPose,
+                                        shootingPosition
+                                )
+                        ))
+                        .setLinearHeadingInterpolation(robot.getFixedHeading(220), robot.getHeadingToGoal(shootingPosition))
+                        .setTValueConstraint(.9)
+                        .setVelocityConstraint(100);
+
+                if (quickCycle) {
+                    shooterPathBuilder
+                            .addParametricCallback(.8, () -> {
+                                robot.setIntakePower(1);
+                                robot.startScoringCycle();
+                            })
+                            .setNoDeceleration();
+
+                    shotArtifactsWhileMoving = true;
+                }
+
                 robot.addPathTimeout(2000);
-                robot.runBlocking(robot.pathBuilder()
-                                .addPath(new Path(
-                                        new BezierLine(
-                                                startPose,
-                                                shootingPosition
-                                        )
-                                ))
-                                .setLinearHeadingInterpolation(robot.getFixedHeading(220), robot.getHeadingToGoal(shootingPosition))
-                                .setTValueConstraint(.9)
-                                .setVelocityConstraint(5)
-                        , false);
+                robot.runBlocking(shooterPathBuilder, false);
             } else {
                 if (shootOffTape) {
                     shootingPosition = robot.getFixedPose(
@@ -468,29 +483,33 @@ public class PathingMethods {
                     , false);
         }
 
-        robot.stopAndAim();
-        robot.setIntakePower(1);
+        if (!shotArtifactsWhileMoving) {
+            robot.stopAndAim();
+            robot.setIntakePower(1);
 
-        if (startSide == AutoStartSide.CLOSE_ZONE) {
-            if (initialCycle) {
-                robot.waitForShooter(500);
-            } else {
-                robot.waitForShooter(150);
-            }
-        } else if (startSide == AutoStartSide.FAR_ZONE) {
-            if (initialCycle) {
-                robot.waitForShooter();
-            } else {
-                robot.waitForShooter(600);
+            if (startSide == AutoStartSide.CLOSE_ZONE) {
+                if (initialCycle) {
+                    robot.waitForShooter(500);
+                } else {
+                    robot.waitForShooter(150);
+                }
+            } else if (startSide == AutoStartSide.FAR_ZONE) {
+                if (initialCycle) {
+                    robot.waitForShooter();
+                } else {
+                    robot.waitForShooter(600);
+                }
+
+                robot.waitForHeadingCorrection(.75, 300, 1);
             }
 
-            robot.waitForHeadingCorrection(.75, 300, 1);
+            robot.startScoringCycle();
+            robot.setIntakePower(1);
+
+            robot.safeSleep(650);
+        } else {
+            robot.safeSleep(100);
         }
-
-        robot.startScoringCycle();
-        robot.setIntakePower(1);
-
-        robot.safeSleep(650);
 
         robot.stopScoringCycle();
         robot.safeSleep(50);
