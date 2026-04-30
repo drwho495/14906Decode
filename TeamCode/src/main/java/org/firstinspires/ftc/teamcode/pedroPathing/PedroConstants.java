@@ -91,12 +91,9 @@ public class PedroConstants {
 
         if (pinpointLocalizer == null) {
             pinpointLocalizer = new PinpointLocalizer(hardwareMap, localizerConstants);
-        }
-
-        if (PedroConstants.follower != null) {
-            PedroConstants.follower.update();
-
-            startingPosition = PedroConstants.follower.getPose();
+        } else {
+            pinpointLocalizer.update();
+            startingPosition = pinpointLocalizer.getPose();
         }
 
         PedroConstants.follower = new FollowerBuilder(followerConstants, hardwareMap)
@@ -106,7 +103,6 @@ public class PedroConstants {
                 .build();
 
         PedroConstants.follower.setPose(startingPosition);
-        PedroConstants.follower.update();
 
         return PedroConstants.follower;
     }

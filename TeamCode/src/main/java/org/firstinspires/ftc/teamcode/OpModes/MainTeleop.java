@@ -74,11 +74,12 @@ public class MainTeleop extends LinearOpMode {
                 robot.setDriverOffset(Math.toDegrees(robot.getPose().getHeading()));
             }
 
-            if (gamepad1.shareWasPressed()) {
+            if (gamepad1.shareWasPressed() || gamepad2.shareWasPressed()) {
                 robot.recalibrateIMU();
             }
 
-            if (gamepad1.psWasPressed()) robot.setPose(robot.getAllianceSide() == AllianceSides.BLUE ? Parameters.BLUE_CLOSE_START : Parameters.RED_CLOSE_START);
+            if (gamepad1.psWasPressed() || gamepad2.psWasPressed())
+                robot.setPose(robot.getAllianceSide() == AllianceSides.BLUE ? Parameters.BLUE_CLOSE_START : Parameters.RED_CLOSE_START);
 
             if (gamepad1.bWasPressed() || Parameters.TELEOP_UPDATE_SHOOTER_PARAMS) {
                 Parameters.TELEOP_UPDATE_SHOOTER_PARAMS = false;
