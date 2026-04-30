@@ -51,7 +51,7 @@ public class Parameters {
     public static double HOOD_SERVO_DEFAULT = HOOD_SERVO_FAR;
 
     public static double DEFAULT_AIM_OFFSET_RED = 0;
-    public static double DEFAULT_AIM_OFFSET_BLUE = 4;
+    public static double DEFAULT_AIM_OFFSET_BLUE = -1;
 
     public static double SHOOTER_FAR_ZONE_VELOCITY = 4850;
     public static double SHOOTER_FAR_ZONE_HOOD_ANGLE = 55;
