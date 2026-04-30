@@ -52,7 +52,7 @@ public class Parameters {
     public static double HOOD_SERVO_DEFAULT = HOOD_SERVO_FAR;
 
     public static double DEFAULT_AIM_OFFSET_RED = 0;
-    public static double DEFAULT_AIM_OFFSET_BLUE = 4;
+    public static double DEFAULT_AIM_OFFSET_BLUE = -1;
 
     public static double GATE_CYCLE_AFTER_SHOOTING_TIME = 1300;
     public static double GATE_CYCLE_INITIAL_TIME = 1000;
