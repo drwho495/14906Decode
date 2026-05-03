@@ -66,7 +66,7 @@ public class AutoCommandRepository {
             case PARK:
                 return new Park();
             case INTAKE_GATE:
-                return new IntakeGate(false);
+                return new IntakeGate(false, false);
             case INTAKE_HUMAN_PLAYER:
                 return new IntakeHumanPlayer();
             case CLEAR_GATE:
@@ -148,7 +148,7 @@ public class AutoCommandRepository {
 
         @Override
         public void execute(RobotManager robot, Pose startPose, AutoStartSide startSide, AutoCommand lastCommand) {
-            double intakeEndT = .15;
+            double intakeEndT = .05;
 
             if (lastCommand != null && lastCommand.getType() == AutoCommandTypes.INTAKE_HUMAN_PLAYER) {
                 intakeEndT = .5;
@@ -195,14 +195,15 @@ public class AutoCommandRepository {
     }
 
     public static class IntakeGate extends AutoCommand {
-        private boolean initialCycle = false;
+        private boolean initialCycle;
+        private boolean field1Blue;
 
         @Override
         public AutoCommandTypes getType() {
             return AutoCommandTypes.INTAKE_GATE;
         }
 
-        public IntakeGate(boolean initialCycle) {
+        public IntakeGate(boolean initialCycle, boolean field1Blue) {
             this.initialCycle = initialCycle;
         }
 
@@ -211,7 +212,9 @@ public class AutoCommandRepository {
             PathingMethods.intakeGate(
                     robot,
                     startSide,
-                    initialCycle
+                    initialCycle,
+                    false,
+                    field1Blue
             );
         }
     }
@@ -274,16 +277,25 @@ public class AutoCommandRepository {
     }
 
     public static class ClearGate extends AutoCommand {
+        private double waitTime = 2500;
         @Override
         public AutoCommandTypes getType() {
             return AutoCommandTypes.CLEAR_GATE;
+        }
+
+        public ClearGate(double waitTime) {
+            this.waitTime = waitTime;
+        }
+
+        public ClearGate() {
         }
 
         @Override
         public void execute(RobotManager robot, Pose startPose, AutoStartSide startSide, AutoCommand lastCommand) {
             PathingMethods.clearGate(
                     robot,
-                    startSide
+                    startSide,
+                    waitTime
             );
         }
     }

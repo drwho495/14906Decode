@@ -35,10 +35,10 @@ public class PathingMethods {
             }
         } else {
             if (robot.getAllianceSide() == AllianceSides.RED) {
-                wallX = 17;
+                wallX = 10;
                 goalX = 9;
             } else {
-                wallX = 14;
+                wallX = 9;
                 goalX = 6;
             }
         }
@@ -132,12 +132,12 @@ public class PathingMethods {
                                         new BezierCurve(
                                                 robotPose,
                                                 robot.getFixedPose(-15, -50),
-                                                robot.getFixedPose(7, -50)
+                                                robot.getFixedPose(10, -50)
                                         )
                                 ))
                                 .setLinearHeadingInterpolation(robotPose.getHeading(), robot.getFixedHeading(0), .4)
                                 .setTValueConstraint(.99)
-                                .setNoDeceleration()
+//                                .setNoDeceleration()
                                 .setVelocityConstraint(1000)
                         , true);
             }
@@ -150,64 +150,145 @@ public class PathingMethods {
         intakeLine(robot, startSide, number, false);
     }
 
-    public static void intakeGate(RobotManager robot, AutoStartSide startSide, boolean initialCycle) {
+    public static void intakeGate(RobotManager robot, AutoStartSide startSide, boolean initialCycle, boolean safeCycle, boolean field1Blue) {
         Pose robotPose = robot.getPose();
 
-        double gateHeading = 25;
-        double gateX;
-        double gateY;
+        if (safeCycle) {
+            Pose gatePose;
+            Pose intakePose;
 
-        if (robot.getAllianceSide() == AllianceSides.RED) {
-            gateX = 12;
-            gateY = -75.4;
-        } else {
-            gateX = 11;
-            gateY = -73.5;
-        }
+            // values are from test opmode
+            if (robot.getAllianceSide() == AllianceSides.BLUE) {
+                gatePose = robot.getFixedPose(18, -70, Math.toRadians(30));
+                intakePose = robot.getFixedPose(16, -88, Math.toRadians(65));
+            } else {
+                gatePose = robot.getFixedPose(18, -70, Math.toRadians(30));
+                intakePose = robot.getFixedPose(15, -88, Math.toRadians(65));
+            }
 
-        robot.setMaxFollowerPower(1);
-        robot.setIntakePower(1);
-        robot.addPathTimeout(1750);
-        robot.runBlocking(
-                robot.pathBuilder()
+            robot.setIntakePower(1);
+
+            robot.runBlocking(robot.pathBuilder()
+                            .addPath(new Path(
+                                    new BezierCurve(
+                                            robotPose,
+                                            robot.getFixedPose(-25, -95),
+                                            robot.getFixedPose(18, -70)
+                                    )
+                            ))
+                            .setLinearHeadingInterpolation(robot.getFixedHeading(0), gatePose.getHeading())
+                            .setTValueConstraint(.97)
+                            .setVelocityConstraint(1000)
+                            .setTimeoutConstraint(0)
+                            .setTranslationalConstraint(10)
+                            .setHeadingConstraint(Math.PI / 6)
+                    , false);
+
+            robot.safeSleep(350);
+
+            for (int i = 0; i < 2; i++) {
+                robotPose = robot.getPose();
+
+                robot.runBlocking(robot.pathBuilder()
                         .addPath(new Path(
-                                new BezierCurve(
-                                        robotPose,
-                                        robot.getFixedPose(-9, -82),
-                                        robot.getFixedPose(gateX, gateY)
+                                        new BezierLine(
+                                                robotPose,
+                                                intakePose
+                                        )
                                 )
-                        ))
-                        .setLinearHeadingInterpolation(robotPose.getHeading(), robot.getFixedHeading(gateHeading), .3)
-                        .setTValueConstraint(.9)
-                        .setHeadingConstraint(Math.PI)
+                        )
+                        .setLinearHeadingInterpolation(robotPose.getHeading(), intakePose.getHeading())
+                        .setTValueConstraint(.95)
                         .setVelocityConstraint(1000)
-                        .setBrakingStrength(5)
-                        .setTranslationalConstraint(1000)
-                , false);
+                        .setTimeoutConstraint(0)
+                        .setTranslationalConstraint(10)
+                        .setNoDeceleration()
+                        .setHeadingConstraint(Math.PI / 6)
+                );
 
-        robot.breakFollowing(false);
-        robot.setMaxFollowerPower(1);
+                robotPose = robot.getPose();
 
-        robotPose = robot.getPose();
-        robot.clearPathTimeout();
-        robot.runPassthrough(
-                robot.pathBuilder()
+//                robot.addPathTimeout(750);
+                robot.runBlocking(robot.pathBuilder()
                         .addPath(new Path(
-                                new BezierLine(
-                                        robotPose,
-                                        robot.getFixedPose(18, gateY)
+                                        new BezierLine(
+                                                robotPose,
+                                                gatePose
+                                        )
                                 )
-                        ))
-                        .setLinearHeadingInterpolation(robotPose.getHeading(), robot.getFixedHeading(gateHeading), 1)
-                        .setTValueConstraint(1)
-        );
+                        )
+                        .setLinearHeadingInterpolation(robotPose.getHeading(), gatePose.getHeading())
+                        .setTValueConstraint(.95)
+                        .setVelocityConstraint(1000)
+                        .setTimeoutConstraint(0)
+                        .setTranslationalConstraint(10)
+                        .setNoDeceleration()
+                        .setHeadingConstraint(Math.PI / 6)
+                );
+            }
+        } else {
+            double gateHeading = 25;
+            double gateX;
+            double gateY;
 
-        robot.safeSleep(initialCycle ? 1000 : 1350);
-        robot.breakFollowing(false);
-        robot.clearPathTimeout();
+            if (robot.getAllianceSide() == AllianceSides.RED) {
+                gateX = 11;
+                gateY = -76;
+            } else {
+                if (field1Blue) {
+                    gateX = 11;
+                    gateY = -72.5;
+                } else {
+                    gateX = 11;
+                    gateY = -74;
+                }
+            }
+
+            robot.setMaxFollowerPower(1);
+            robot.setIntakePower(1);
+            robot.addPathTimeout(1750);
+            robot.runBlocking(
+                    robot.pathBuilder()
+                            .addPath(new Path(
+                                    new BezierCurve(
+                                            robotPose,
+                                            robot.getFixedPose(-9, -78),
+                                            robot.getFixedPose(gateX, gateY)
+                                    )
+                            ))
+                            .setLinearHeadingInterpolation(robotPose.getHeading(), robot.getFixedHeading(gateHeading), .3)
+                            .setTValueConstraint(.9)
+                            .setHeadingConstraint(Math.PI)
+                            .setVelocityConstraint(1000)
+                            .setBrakingStrength(5)
+                            .setTranslationalConstraint(1000)
+                    , false);
+
+            robot.breakFollowing(false);
+            robot.setMaxFollowerPower(1);
+
+            robotPose = robot.getPose();
+            robot.clearPathTimeout();
+            robot.runPassthrough(
+                    robot.pathBuilder()
+                            .addPath(new Path(
+                                    new BezierLine(
+                                            robotPose,
+                                            robot.getFixedPose(19, gateY)
+                                    )
+                            ))
+                            .setLinearHeadingInterpolation(robotPose.getHeading(), robot.getFixedHeading(gateHeading), 1)
+                            .setNoDeceleration()
+                            .setTValueConstraint(1)
+            );
+
+            robot.safeSleep(initialCycle ? 1000 : 1350);
+            robot.breakFollowing(false);
+            robot.clearPathTimeout();
+        }
     }
 
-    public static void clearGate(RobotManager robot, AutoStartSide startSide) {
+    public static void clearGate(RobotManager robot, AutoStartSide startSide, double waitTime) {
         Pose robotPose = robot.getPose();
 
         double pushHeading = robot.getFixedHeading(0);
@@ -245,7 +326,7 @@ public class PathingMethods {
                 .setTValueConstraint(.99)
         );
 
-        robot.safeSleep(timer, 2500);
+        robot.safeSleep(timer, waitTime);
         robot.breakFollowing();
         robot.setMaxFollowerPower(1);
     }
@@ -361,7 +442,7 @@ public class PathingMethods {
                         robot.setHoodServoPos(20);
                     }
                 } else {
-                    robot.setShooterVelocity(3450);
+                    robot.setShooterVelocity(3350);
                     robot.setHoodServoPos(20);
                 }
             }
@@ -415,11 +496,11 @@ public class PathingMethods {
                                     .addPath(new Path(
                                             new BezierCurve(
                                                     robotPose,
-                                                    robot.getFixedPose(5, robotPose.getY() - 15),
+                                                    robot.getFixedPose(5, robotPose.getY() - 5),
                                                     shootingPosition
                                             )
                                     ))
-                                    .setLinearHeadingInterpolation(robot.getFixedHeading(0), robot.getHeadingToGoal(shootingPosition))
+                                    .setLinearHeadingInterpolation(robot.getFixedHeading(0), robot.getHeadingToGoal(shootingPosition), 1, .3)
                                     .addParametricCallback(intakeShutoffT, robot::powerOffIntake)
                                     .setTValueConstraint(.95)
                             , false);

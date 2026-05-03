@@ -50,6 +50,7 @@ public class MainTeleop extends LinearOpMode {
         robot.enableWaitForVelocityToShoot();
         robot.disableOnlyShootInZone();
         robot.enableVelocityCompensation();
+        robot.disablePoweredHold();
 
         robot.setAllianceSide(Parameters.LAST_ALLIANCE_SIDE);
         robot.powerOffShooter();
