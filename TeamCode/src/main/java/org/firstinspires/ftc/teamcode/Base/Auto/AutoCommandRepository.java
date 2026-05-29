@@ -66,7 +66,7 @@ public class AutoCommandRepository {
             case PARK:
                 return new Park();
             case INTAKE_GATE:
-                return new IntakeGate(false, false);
+                return new IntakeGate(false);
             case INTAKE_HUMAN_PLAYER:
                 return new IntakeHumanPlayer();
             case CLEAR_GATE:
@@ -196,14 +196,13 @@ public class AutoCommandRepository {
 
     public static class IntakeGate extends AutoCommand {
         private boolean initialCycle;
-        private boolean field1Blue;
 
         @Override
         public AutoCommandTypes getType() {
             return AutoCommandTypes.INTAKE_GATE;
         }
 
-        public IntakeGate(boolean initialCycle, boolean field1Blue) {
+        public IntakeGate(boolean initialCycle) {
             this.initialCycle = initialCycle;
         }
 
@@ -213,8 +212,7 @@ public class AutoCommandRepository {
                     robot,
                     startSide,
                     initialCycle,
-                    false,
-                    field1Blue
+                    false
             );
         }
     }

@@ -150,7 +150,7 @@ public class PathingMethods {
         intakeLine(robot, startSide, number, false);
     }
 
-    public static void intakeGate(RobotManager robot, AutoStartSide startSide, boolean initialCycle, boolean safeCycle, boolean field1Blue) {
+    public static void intakeGate(RobotManager robot, AutoStartSide startSide, boolean initialCycle, boolean safeCycle) {
         Pose robotPose = robot.getPose();
 
         if (safeCycle) {
@@ -235,13 +235,8 @@ public class PathingMethods {
                 gateX = 11;
                 gateY = -76;
             } else {
-                if (field1Blue) {
-                    gateX = 11;
-                    gateY = -72.5;
-                } else {
-                    gateX = 11;
-                    gateY = -74;
-                }
+                gateX = 11;
+                gateY = -74;
             }
 
             robot.setMaxFollowerPower(1);

@@ -8,22 +8,20 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
-import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
-import org.firstinspires.ftc.teamcode.Base.Helpers.HardwareUtils;
 import org.firstinspires.ftc.teamcode.Base.Helpers.PIDFController;
 import org.firstinspires.ftc.teamcode.Base.Parameters;
-
-import java.util.concurrent.TimeUnit;
 
 public class ComplexMotor {
     private LinearOpMode opMode;
     private DcMotorEx thisMotor = null;
     private ComplexMotorModes currentMode = ComplexMotorModes.RAW_POWER;
     private double motorPower = 0;
-    private double targetVelocity = 0;
+    private double lastMotorPower = 0;
+    private double lastMotorVelocity = 0;
+    private double motorVelocity = 0;
     private double currentVelocity;
     private double voltageTarget = 12.0;
     private final PIDFController velocityController = new PIDFController(0, 0, 0, 0);
@@ -97,12 +95,13 @@ public class ComplexMotor {
     public void setMode(ComplexMotorModes newMode) {
         currentMode = newMode;
     }
+
     public ComplexMotorModes getMode() {
         return currentMode;
     }
 
     public void setVelocity(double newVelo) {
-        targetVelocity = newVelo;
+        motorVelocity = newVelo;
     }
 
     public void resetEncoder() {
@@ -121,45 +120,53 @@ public class ComplexMotor {
 
         if (currentMode == ComplexMotorModes.USE_VELOCITY_PID) {
             if (useCustomVelocity) {
-                if (targetVelocity != 0) {
-                    velocityController.setSetPoint(targetVelocity);
+                if (motorVelocity != 0) {
+                    velocityController.setSetPoint(motorVelocity);
                     motorPower = velocityController.calculate(currentVelocity);
 
                     if (vSensor != null) {
                         motorPower *= (Parameters.SHOOTER_VOLTAGE_TARGET / vSensor.getVoltage());
                     }
 
-                    HardwareUtils.optimizeMethod(motorPower, thisMotor, thisMotor::setPower);
+                    if (lastMotorPower != motorPower) {
+                        thisMotor.setPower(motorPower);
 
-                    if (childMotor != null) {
-                        HardwareUtils.optimizeMethod(motorPower, childMotor, childMotor::setPower);
+                        if (childMotor != null) {
+                            childMotor.setPower(motorPower);
+                        }
                     }
                 } else {
-                    HardwareUtils.optimizeMethod(0, thisMotor, thisMotor::setPower);
+                    if (lastMotorPower != 0) {
+                        thisMotor.setPower(0);
 
-                    if (childMotor != null) {
-                        HardwareUtils.optimizeMethod(0, childMotor, childMotor::setPower);
+                        if (childMotor != null) {
+                            childMotor.setPower(0);
+                        }
                     }
                 }
             } else {
-                if (targetVelocity != 0) {
-                    double prevValue = HardwareUtils.previousValues.getOrDefault(thisMotor, Double.NaN);
-
-                    if (Double.isNaN(prevValue) || targetVelocity != prevValue) {
-                        thisMotor.setVelocity(targetVelocity, AngleUnit.DEGREES);
-                        HardwareUtils.previousValues.put(thisMotor, targetVelocity);
+                if (motorVelocity != 0) {
+                    if (lastMotorVelocity != motorVelocity) {
+                        thisMotor.setVelocity(motorVelocity, AngleUnit.DEGREES);
                     }
                 } else {
-                    HardwareUtils.optimizeMethod(0, thisMotor, thisMotor::setPower);
+                    if (lastMotorPower != 0) {
+                        thisMotor.setPower(0);
+                    }
                 }
             }
         } else if (currentMode == ComplexMotorModes.RAW_POWER) {
-            HardwareUtils.optimizeMethod(motorPower, thisMotor, thisMotor::setPower);
+            if (lastMotorPower != motorPower) {
+                thisMotor.setPower(motorPower);
 
-            if (childMotor != null) {
-                childMotor.setPower(motorPower);
+                if (childMotor != null) {
+                    childMotor.setPower(motorPower);
+                }
             }
         }
+
+        lastMotorPower = motorPower;
+        lastMotorVelocity = motorVelocity;
     }
 
     public double getCurrent() {
@@ -174,7 +181,7 @@ public class ComplexMotor {
 
     public boolean atVelocity(double error) {
         if (currentMode == ComplexMotorModes.USE_VELOCITY_PID) {
-            return abs(currentVelocity - targetVelocity) <= error;
+            return abs(currentVelocity - motorVelocity) <= error;
         }
         return true;
     }

@@ -11,6 +11,7 @@ import org.firstinspires.ftc.teamcode.Base.HardwareBases.ComplexMotor;
 import org.firstinspires.ftc.teamcode.Base.HardwareBases.ComplexMotorModes;
 import org.firstinspires.ftc.teamcode.Base.HardwareBases.ComplexServo;
 import org.firstinspires.ftc.teamcode.Base.Parameters;
+import org.firstinspires.ftc.teamcode.Base.ShooterPFState;
 
 @Config
 @Configurable
@@ -20,17 +21,20 @@ public class ShooterSubsystem extends Subsystem {
     private ComplexMotor shooterMotor2;
     private ComplexServo fingerServo;
     private ComplexServo hoodServo;
+    private ComplexServo turretServoLeft;
+    private ComplexServo turretServoRight;
     private VoltageSensor vSensor;
 
-    private double motorVelo = Parameters.SHOOTER_DEFAULT_RPM;
+    private boolean hoodCompensationEnabled = false;
     private boolean poweredOff = true;
+    private double motorVelo = Parameters.SHOOTER_DEFAULT_RPM;
     private double fingerServoPos = Parameters.FINGER_SERVO_OPEN;
     private double hoodServoPos = Parameters.HOOD_SERVO_DOWN;
     private double shooter1Current = 0;
     private double shooter2Current = 0;
-    private boolean hoodCompensationEnabled = false;
     private double hoodCompensationMultiplier = 9;
     private double lastVelocity = 0;
+    private double turretTargetPosition = 0;
 
     private ShooterPFState pfState = ShooterPFState.WANDERING_LOOP;
     public static double wanderingShooterP;
@@ -40,7 +44,7 @@ public class ShooterSubsystem extends Subsystem {
     public static double fastTransferringShooterP;
     public static double fastTransferringShooterF;
 
-    private final double velocityMultiplier = 304.0/6000;
+    private final double velocityMultiplier = 304.0 / 6000;
 
     @Override
     public void setLinearTeleop(LinearOpMode newOpMode) {
@@ -69,13 +73,6 @@ public class ShooterSubsystem extends Subsystem {
         } else if (pfState == ShooterPFState.FAST_TRANSFER_LOOP) {
             shooterMotor1.setVelocityPIDFCoefficients(fastTransferringShooterP, 0, 0, fastTransferringShooterF);
         }
-
-        double[] coeffs = shooterMotor1.getVelocityPIDFCoefficients();
-
-        thisOpMode.telemetry.addData("p: ", coeffs[0]);
-        thisOpMode.telemetry.addData("i: ", coeffs[1]);
-        thisOpMode.telemetry.addData("d: ", coeffs[2]);
-        thisOpMode.telemetry.addData("f: ", coeffs[3]);
     }
 
     @Override
@@ -108,11 +105,45 @@ public class ShooterSubsystem extends Subsystem {
 
         updatePF();
 
-        fingerServo = new ComplexServo(thisOpMode.hardwareMap, "fingerServo", 0, 180, AngleUnit.DEGREES);
+        fingerServo = new ComplexServo(
+                thisOpMode.hardwareMap,
+                "fingerServo",
+                0,
+                180,
+                AngleUnit.DEGREES
+        );
         fingerServo.setInverted(true);
 
-        hoodServo = new ComplexServo(thisOpMode.hardwareMap, "hoodServo", 0, 180, AngleUnit.DEGREES);
+        hoodServo = new ComplexServo(
+                thisOpMode.hardwareMap,
+                "hoodServo",
+                0,
+                180,
+                AngleUnit.DEGREES
+        );
         hoodServo.setInverted(true);
+
+        turretServoLeft = new ComplexServo(
+                thisOpMode.hardwareMap,
+                "turretServoLeft",
+                0,
+                320,
+                AngleUnit.DEGREES
+        );
+        turretServoLeft.setPositionMultiplier(1);
+        turretServoLeft.setPositionOffset(0, AngleUnit.DEGREES);
+        turretServoLeft.setInverted(false);
+
+        turretServoRight = new ComplexServo(
+                thisOpMode.hardwareMap,
+                "turretServoRight",
+                0,
+                320,
+                AngleUnit.DEGREES
+        );
+        turretServoRight.setPositionMultiplier(1);
+        turretServoRight.setPositionOffset(0, AngleUnit.DEGREES);
+        turretServoRight.setInverted(false);
     }
 
     public boolean ready() {
@@ -172,6 +203,34 @@ public class ShooterSubsystem extends Subsystem {
         hoodCompensationMultiplier = newMult;
     }
 
+    public boolean isPoweredOn() {
+        return !poweredOff;
+    }
+
+    public double getHoodAngle() {
+        return hoodServoPos;
+    }
+
+    public void setTurretPosition(double targetPosition) {
+        turretTargetPosition = targetPosition;
+    }
+
+    public double getTurretTargetPosition() {
+        return turretTargetPosition;
+    }
+
+    public double getReachableTurretTargetPosition() {
+        return Range.clip(turretTargetPosition, Parameters.TURRET_DEADZONE_ANGLE_FROM_ZERO, (360 - Parameters.TURRET_DEADZONE_ANGLE_FROM_ZERO));
+    }
+
+    public static boolean angleInTurretRange(double angle) {
+        return Parameters.TURRET_DEADZONE_ANGLE_FROM_ZERO <= angle && (360 - Parameters.TURRET_DEADZONE_ANGLE_FROM_ZERO) <= angle;
+    }
+
+    public boolean turretCanReachTarget() {
+        return angleInTurretRange(getTurretTargetPosition());
+    }
+
     @Override
     public void update() {
         if (!thisOpMode.opModeIsActive() || thisOpMode.isStopRequested()) return;
@@ -196,6 +255,11 @@ public class ShooterSubsystem extends Subsystem {
             shooterMotor2.setVelocity(motorVelo * velocityMultiplier);
         }
 
+        double reachableTurretTargetPosition = getReachableTurretTargetPosition();
+
+        turretServoRight.turnToAngle(reachableTurretTargetPosition);
+        turretServoLeft.turnToAngle(reachableTurretTargetPosition);
+
         fingerServo.turnToAngle(fingerServoPos);
         hoodServo.turnToAngle(Range.clip(hoodServoPos - hoodServoOffset, Parameters.HOOD_SERVO_DOWN, Parameters.HOOD_SERVO_UP));
 
@@ -203,13 +267,5 @@ public class ShooterSubsystem extends Subsystem {
         shooterMotor2.update();
 
         lastVelocity = getVelocities()[0];
-    }
-
-    public boolean isPoweredOn() {
-        return !poweredOff;
-    }
-
-    public double getHoodAngle() {
-        return hoodServoPos;
     }
 }

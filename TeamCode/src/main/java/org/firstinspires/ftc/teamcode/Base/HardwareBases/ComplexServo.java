@@ -11,14 +11,16 @@ import com.qualcomm.robotcore.hardware.Servo.Direction;
 import com.qualcomm.robotcore.hardware.ServoImplEx;
 import com.qualcomm.robotcore.util.Range;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.teamcode.Base.Helpers.HardwareUtils;
 
 public class ComplexServo {
     private ServoImplEx servo;
     private double maxAngle;
     private double minAngle;
-    private final double maxPosition;
-    private final double minPosition;
+    private double maxPosition;
+    private double minPosition;
+    private double positionOffset = 0;
+    private double positionMultiplier = 1;
+    private double lastPosition = 0;
 
     public ComplexServo(HardwareMap hw, String servoName, double minAngle, double maxAngle, AngleUnit angleUnit) {
         this.maxPosition = 1.0;
@@ -42,8 +44,7 @@ public class ComplexServo {
     }
 
     public void turnToAngle(double angle, AngleUnit angleUnit, boolean force) {
-        double angleRadians = Range.clip(this.toRadians(angle, angleUnit), this.minAngle, this.maxAngle);
-        this.setPosition((angleRadians - this.minAngle) / this.getAngleRange(AngleUnit.RADIANS), force);
+        this.setPosition(calculateAngleToServoRawPosition(angle, angleUnit), force);
     }
 
     public void turnToAngle(double degrees, boolean force) {
@@ -60,12 +61,30 @@ public class ComplexServo {
     }
 
     public void setPosition(double position, boolean force) {
-        if (force) {
-            servo.setPosition(Range.clip(position, 0.0, 1.0));
-        } else {
-            HardwareUtils.optimizeMethod(Range.clip(position, 0.0, 1.0), servo, servo::setPosition);
+        position = Range.clip((positionMultiplier * position) + calculateAngleToServoRawPosition(positionOffset, AngleUnit.RADIANS), 0.0, 1.0);
+
+        if (force || position != lastPosition) {
+            servo.setPosition(position);
         }
+
+        lastPosition = position;
     }
+
+    public void setPosition(double position) {
+        setPosition(position, false);
+    }
+
+    public void setPositionMultiplier(double positionMultiplier) {
+        this.positionMultiplier = positionMultiplier;
+    }
+
+    public void setPositionOffset(double positionOffset, AngleUnit angleUnit) {
+        this.positionOffset = this.toRadians(positionOffset, angleUnit);
+    }
+    public void setPositionOffset(double positionOffset) {
+        setPositionOffset(positionOffset, AngleUnit.DEGREES);
+    }
+
 
     public void setRange(double min, double max, AngleUnit angleUnit) {
         this.minAngle = this.toRadians(min, angleUnit);
@@ -120,5 +139,10 @@ public class ComplexServo {
 
     private double fromRadians(double angle, AngleUnit angleUnit) {
         return angleUnit == AngleUnit.DEGREES ? Math.toDegrees(angle) : angle;
+    }
+
+    private double calculateAngleToServoRawPosition(double fromAngle, AngleUnit angleUnit) {
+        double angleRadians = Range.clip(this.toRadians(fromAngle, angleUnit), this.minAngle, this.maxAngle);
+        return (angleRadians - this.minAngle) / this.getAngleRange(AngleUnit.RADIANS);
     }
 }

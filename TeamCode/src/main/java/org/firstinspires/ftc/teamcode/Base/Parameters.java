@@ -53,6 +53,8 @@ public class Parameters {
     public static double DEFAULT_AIM_OFFSET_RED = 0;
     public static double DEFAULT_AIM_OFFSET_BLUE = -1;
 
+    public static double TURRET_DEADZONE_ANGLE_FROM_ZERO = 45;
+
     public static double SHOOTER_FAR_ZONE_VELOCITY = 4850;
     public static double SHOOTER_FAR_ZONE_HOOD_ANGLE = 55;
     public static ShooterCurve CLOSE_ZONE_CURVE = new ShooterCurve();

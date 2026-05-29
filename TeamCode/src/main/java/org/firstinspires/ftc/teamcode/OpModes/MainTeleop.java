@@ -7,10 +7,13 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.teamcode.Base.AllianceSides;
+import org.firstinspires.ftc.teamcode.Base.HeadingLockControlPolicy;
 import org.firstinspires.ftc.teamcode.Base.OpModeStates;
 import org.firstinspires.ftc.teamcode.Base.Parameters;
 import org.firstinspires.ftc.teamcode.Base.RobotManager;
 import org.firstinspires.ftc.teamcode.Base.ShootingStyle;
+import org.firstinspires.ftc.teamcode.Base.ShooterAimPolicy;
+import org.firstinspires.ftc.teamcode.Base.TurretControlPolicy;
 
 import java.util.concurrent.TimeUnit;
 
@@ -55,11 +58,17 @@ public class MainTeleop extends LinearOpMode {
         robot.setAllianceSide(Parameters.LAST_ALLIANCE_SIDE);
         robot.powerOffShooter();
 
-        robot.disableAutoHeading();
+        robot.disableHeadingLock();
 
         robot.setState(OpModeStates.INTAKE_SCORE);
         robot.setHoodServoPos(Parameters.HOOD_SERVO_DEFAULT);
+        robot.setTurretControlPolicy(TurretControlPolicy.AIM_AT_GOAL);
+        robot.setShooterAimPolicy(ShooterAimPolicy.TURRET);
         robot.setDriverOffset(robot.getAllianceSide() == AllianceSides.BLUE ? 180 : 0);
+
+        if (robot.getShooterAimPolicy() == ShooterAimPolicy.TURRET) {
+            robot.startAimingAtGoal();
+        }
 
         while (opModeIsActive() && !isStopRequested()) {
             Pose robotPose = robot.getPose();
@@ -114,11 +123,11 @@ public class MainTeleop extends LinearOpMode {
                     }
 
                     if (gamepad1.rightBumperWasPressed()) {
-                        robot.setConstantTeleopHeading(robot.getFixedHeading(36.5));
-                        robot.enableAutoHeading();
+                        robot.setHeadingLockControlPolicy(HeadingLockControlPolicy.CONSTANT);
+                        robot.setConstantHeadingLockGoal(robot.getFixedHeading(36.5));
+                        robot.enableHeadingLock();
                     } else if (gamepad1.rightBumperWasReleased()) {
-                        robot.useGoalAimHeading();
-                        robot.disableAutoHeading();
+                        robot.disableHeadingLock();
                     }
 
                     if (gamepad1.right_trigger > .1 || gamepad1.a) {
@@ -188,11 +197,12 @@ public class MainTeleop extends LinearOpMode {
                         }
                     }
 
-                    if (gamepad1.xWasPressed()) {
-                        robot.useGoalAimHeading();
-                        robot.enableAutoHeading();
-                    } else if (gamepad1.xWasReleased()) {
-                        robot.disableAutoHeading();
+                    if (robot.getShooterAimPolicy() == ShooterAimPolicy.DRIVETRAIN) {
+                        if (gamepad1.xWasPressed()) {
+                            robot.startAimingAtGoal();
+                        } else if (gamepad1.xWasReleased()) {
+                            robot.stopAimingAtGoal();
+                        }
                     }
 
                     if (gamepad2.leftBumperWasPressed()) {
