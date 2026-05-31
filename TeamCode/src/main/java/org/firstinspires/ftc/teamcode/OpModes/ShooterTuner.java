@@ -4,9 +4,10 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.teamcode.Base.AllianceSides;
-import org.firstinspires.ftc.teamcode.Base.OpModeStates;
+import org.firstinspires.ftc.teamcode.Base.OpModeState;
 import org.firstinspires.ftc.teamcode.Base.Parameters;
 import org.firstinspires.ftc.teamcode.Base.RobotManager;
+import org.firstinspires.ftc.teamcode.Base.ShooterAimPolicy;
 import org.firstinspires.ftc.teamcode.Base.ShooterControlPolicy;
 
 @TeleOp(name = "Debug: Shooter Tuner", group = "Debug")
@@ -16,19 +17,22 @@ public class ShooterTuner extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
         robot = new RobotManager(this);
-        robot.setState(OpModeStates.INTAKE_SCORE);
+        robot.setState(OpModeState.GENERAL_CYCLE);
         robot.initialise();
         robot.setShooterControlPolicy(ShooterControlPolicy.MANUAL);
+        robot.setShooterAimPolicy(ShooterAimPolicy.TURRET);
 
         waitForStart();
 
+        robot.setAllianceSide(AllianceSides.RED);
         robot.setTransferSpeed(1);
         robot.disableAutoTransferStop();
         robot.disableHoodCompensation();
         robot.disableVelocityCompensation();
         robot.disableOnlyShootInZone();
+        robot.disableWaitForVelocityToShoot();
 
-        robot.setAllianceSide(AllianceSides.RED);
+        robot.startAimingAtGoal();
 
         while (opModeIsActive()) {
             if (gamepad1.psWasPressed()) robot.setPose(Parameters.RED_CLOSE_START);

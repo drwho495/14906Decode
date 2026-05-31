@@ -15,9 +15,10 @@ import org.firstinspires.ftc.teamcode.bedroBathing.util.CustomPIDFCoefficients;
 @Config
 @Configurable
 public class Parameters {
+    public static double VELOCITY_CORRECTION_MULTIPLIER = .5;
     public static double SHOOTER_READY_TOLERANCE = 60;
     public static double SHOOTER_DEFAULT_RPM = 4500;
-    public static double MIN_SHOOT_DISTANCE = 47;
+    public static double MIN_SHOOT_DISTANCE = 40;
     public static double FAR_ZONE_DISTANCE = 120;
     public static double FAR_ZONE_TRANSFER_SPEED = .6;
     public static double SHOOTER_VOLTAGE_TARGET = 11.7;
@@ -46,17 +47,21 @@ public class Parameters {
     public static int ROBOT = 1;
 
     public static double HOOD_SERVO_DOWN = 20;
-    public static double HOOD_SERVO_FAR = 50;
-    public static double HOOD_SERVO_UP = 120;
-    public static double HOOD_SERVO_DEFAULT = HOOD_SERVO_FAR;
+    public static double HOOD_SERVO_UP = 300;
+    public static double HOOD_SERVO_POSITION_OFFSET = 10;
 
     public static double DEFAULT_AIM_OFFSET_RED = 0;
     public static double DEFAULT_AIM_OFFSET_BLUE = -1;
 
-    public static double TURRET_DEADZONE_ANGLE_FROM_ZERO = 45;
+    public static double TURRET_DEADZONE_ANGLE_FROM_ZERO = 15;
+    public static double TURRET_ANGLE_MULTIPLIER = 0.9;
+    public static double TURRET_SERVO_LEFT_ZERO_OFFSET = 10;
+    public static double TURRET_SERVO_RIGHT_ZERO_OFFSET = 6;
+    public static double TURRET_BACKLASH = 14;
+    public static double TURRET_TEST_ANGLE = 90;
 
-    public static double SHOOTER_FAR_ZONE_VELOCITY = 4850;
-    public static double SHOOTER_FAR_ZONE_HOOD_ANGLE = 55;
+    public static double SHOOTER_FAR_ZONE_VELOCITY = 5000;
+    public static double SHOOTER_FAR_ZONE_HOOD_ANGLE = 300;
     public static ShooterCurve CLOSE_ZONE_CURVE = new ShooterCurve();
     public static ShooterCurve FAR_ZONE_CURVE = new ShooterCurve();
 }

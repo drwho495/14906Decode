@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.Base.Subsystems;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.bylazar.configurables.annotations.Configurable;
+import com.pedropathing.math.MathFunctions;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.qualcomm.robotcore.util.Range;
@@ -35,6 +36,7 @@ public class ShooterSubsystem extends Subsystem {
     private double hoodCompensationMultiplier = 9;
     private double lastVelocity = 0;
     private double turretTargetPosition = 0;
+    private double servoTargetBacklashOffset = 0;
 
     private ShooterPFState pfState = ShooterPFState.WANDERING_LOOP;
     public static double wanderingShooterP;
@@ -57,10 +59,10 @@ public class ShooterSubsystem extends Subsystem {
     }
 
     public ShooterSubsystem() {
-        wanderingShooterP = 0.04;
-        wanderingShooterF = 0.0037; // 0.0037
-        transferringShooterP = 0.028; // 0.027
-        transferringShooterF = 0.0048; // 0.0038
+        wanderingShooterP = 0.02;
+        wanderingShooterF = 0.003;
+        transferringShooterP = wanderingShooterP;
+        transferringShooterF = wanderingShooterF;
         fastTransferringShooterP = 0.028;
         fastTransferringShooterF = 0.0038;
     }
@@ -98,7 +100,7 @@ public class ShooterSubsystem extends Subsystem {
 
         shooterMotor2.enableBrake();
         shooterMotor2.setMode(ComplexMotorModes.USE_VELOCITY_PID);
-        shooterMotor2.setReversed(false);
+        shooterMotor2.setReversed(true);
 
         shooterMotor1.useCustomVeloPIDLoop(true);
         shooterMotor1.setLinkedMotor(shooterMotor2);
@@ -112,7 +114,7 @@ public class ShooterSubsystem extends Subsystem {
                 180,
                 AngleUnit.DEGREES
         );
-        fingerServo.setInverted(true);
+        fingerServo.setInverted(false);
 
         hoodServo = new ComplexServo(
                 thisOpMode.hardwareMap,
@@ -121,7 +123,8 @@ public class ShooterSubsystem extends Subsystem {
                 180,
                 AngleUnit.DEGREES
         );
-        hoodServo.setInverted(true);
+        hoodServo.setPositionOffset(Parameters.HOOD_SERVO_POSITION_OFFSET, AngleUnit.DEGREES);
+        hoodServo.setInverted(false);
 
         turretServoLeft = new ComplexServo(
                 thisOpMode.hardwareMap,
@@ -131,7 +134,7 @@ public class ShooterSubsystem extends Subsystem {
                 AngleUnit.DEGREES
         );
         turretServoLeft.setPositionMultiplier(1);
-        turretServoLeft.setPositionOffset(0, AngleUnit.DEGREES);
+        turretServoLeft.setPositionOffset(Parameters.TURRET_SERVO_LEFT_ZERO_OFFSET, AngleUnit.DEGREES);
         turretServoLeft.setInverted(false);
 
         turretServoRight = new ComplexServo(
@@ -142,7 +145,7 @@ public class ShooterSubsystem extends Subsystem {
                 AngleUnit.DEGREES
         );
         turretServoRight.setPositionMultiplier(1);
-        turretServoRight.setPositionOffset(0, AngleUnit.DEGREES);
+        turretServoRight.setPositionOffset(Parameters.TURRET_SERVO_RIGHT_ZERO_OFFSET, AngleUnit.DEGREES);
         turretServoRight.setInverted(false);
     }
 
@@ -152,6 +155,14 @@ public class ShooterSubsystem extends Subsystem {
 
     public Double[] getVelocities() {
         return new Double[]{shooterMotor1.getVelocity() / velocityMultiplier, shooterMotor2.getVelocity() / velocityMultiplier};
+    }
+
+    public void setTurretBacklashOffset(double offset) {
+        servoTargetBacklashOffset = offset;
+    }
+
+    public void clearTurretBacklashOffset() {
+        setTurretBacklashOffset(0);
     }
 
     public void openFinger() {
@@ -212,7 +223,7 @@ public class ShooterSubsystem extends Subsystem {
     }
 
     public void setTurretPosition(double targetPosition) {
-        turretTargetPosition = targetPosition;
+        turretTargetPosition = Math.toDegrees(MathFunctions.normalizeAngle(Math.toRadians(targetPosition)));
     }
 
     public double getTurretTargetPosition() {
@@ -224,11 +235,11 @@ public class ShooterSubsystem extends Subsystem {
     }
 
     public static boolean angleInTurretRange(double angle) {
-        return Parameters.TURRET_DEADZONE_ANGLE_FROM_ZERO <= angle && (360 - Parameters.TURRET_DEADZONE_ANGLE_FROM_ZERO) <= angle;
+        return Parameters.TURRET_DEADZONE_ANGLE_FROM_ZERO <= angle && (360 - Parameters.TURRET_DEADZONE_ANGLE_FROM_ZERO) >= angle;
     }
 
     public boolean turretCanReachTarget() {
-        return angleInTurretRange(getTurretTargetPosition());
+        return angleInTurretRange(turretTargetPosition);
     }
 
     @Override
@@ -255,10 +266,15 @@ public class ShooterSubsystem extends Subsystem {
             shooterMotor2.setVelocity(motorVelo * velocityMultiplier);
         }
 
-        double reachableTurretTargetPosition = getReachableTurretTargetPosition();
+        double reachableTurretTargetPosition = getReachableTurretTargetPosition() * Parameters.TURRET_ANGLE_MULTIPLIER;
+        double backlashOffsetCorrected = ((servoTargetBacklashOffset / 2) * Parameters.TURRET_ANGLE_MULTIPLIER);
 
-        turretServoRight.turnToAngle(reachableTurretTargetPosition);
-        turretServoLeft.turnToAngle(reachableTurretTargetPosition);
+        turretServoLeft.setPositionOffset(Parameters.TURRET_SERVO_LEFT_ZERO_OFFSET, AngleUnit.DEGREES);
+        turretServoRight.setPositionOffset(Parameters.TURRET_SERVO_RIGHT_ZERO_OFFSET, AngleUnit.DEGREES);
+        hoodServo.setPositionOffset(Parameters.HOOD_SERVO_POSITION_OFFSET, AngleUnit.DEGREES);
+
+        turretServoRight.turnToAngle(reachableTurretTargetPosition + backlashOffsetCorrected, true);
+        turretServoLeft.turnToAngle(reachableTurretTargetPosition - backlashOffsetCorrected, true);
 
         fingerServo.turnToAngle(fingerServoPos);
         hoodServo.turnToAngle(Range.clip(hoodServoPos - hoodServoOffset, Parameters.HOOD_SERVO_DOWN, Parameters.HOOD_SERVO_UP));

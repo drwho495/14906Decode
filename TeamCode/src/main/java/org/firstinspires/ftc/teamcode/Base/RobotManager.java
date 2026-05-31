@@ -6,6 +6,7 @@ package org.firstinspires.ftc.teamcode.Base;
 import com.pedropathing.VectorCalculator;
 import com.pedropathing.drivetrain.Drivetrain;
 import com.pedropathing.follower.Follower;
+import com.pedropathing.localization.PoseTracker;
 import com.pedropathing.math.MathFunctions;
 import com.pedropathing.math.Vector;
 import com.pedropathing.paths.PathBuilder;
@@ -29,11 +30,12 @@ import java.util.concurrent.TimeUnit;
 public class RobotManager {
     // hardware is defined here
 
-    private OpModeStates currentState = OpModeStates.IDLE;
+    private OpModeState currentState = OpModeState.GENERAL_CYCLE;
     private LinearOpMode opMode;
     private Follower follower = null;
     private VectorCalculator vectorCalculator = null;
     private Drivetrain drivetrain;
+    private PoseTracker poseTracker;
     private AllianceSides side = Parameters.LAST_ALLIANCE_SIDE;
     private double autoTimeout = -1;
     private double goalOffset = 0;
@@ -56,6 +58,7 @@ public class RobotManager {
     private boolean shooterAimAtGoalActive = false;
     private boolean turretEnabled = false;
     private double turretTargetPosition = 180;
+    private boolean turretRelativeControl = false;
 
     private double headingLockGoal = 0;
     private boolean headingLockActive = false;
@@ -87,6 +90,7 @@ public class RobotManager {
     private double canShootAtVelocity = 0;
     private double pathGetHeadingToGoalTrackT = .75;
     private double distanceToGoal = 0;
+    private boolean teleopDriveActive = false;
 
     // do NOT add a constructor to any of the subsystems!
     private final ShooterSubsystem shooterSubsystem = new ShooterSubsystem();
@@ -106,8 +110,12 @@ public class RobotManager {
         return shooterControlPolicy;
     }
 
-    public OpModeStates getState() {
+    public OpModeState getState() {
         return currentState;
+    }
+
+    public boolean isStateStart() {
+        return stateStart;
     }
 
     public void enableAutoTransferStop() {
@@ -170,9 +178,7 @@ public class RobotManager {
         shooterSubsystem.initialiseHardware();
         intakeSubsystem.initialiseHardware();
 
-        follower = PedroConstants.getFollower(opMode.hardwareMap);
-        vectorCalculator = follower.getVectorCalculator();
-        drivetrain = follower.getDrivetrain();
+        resetFollower();
 
         List<LynxModule> hubs = opMode.hardwareMap.getAll(LynxModule.class);
 
@@ -182,6 +188,13 @@ public class RobotManager {
 
         setAllianceSide(Parameters.LAST_ALLIANCE_SIDE);
         buildShooterCurves();
+    }
+
+    public void resetFollower() {
+        follower = PedroConstants.getFollower(opMode.hardwareMap);
+        poseTracker = follower.getPoseTracker();
+        vectorCalculator = follower.getVectorCalculator();
+        drivetrain = follower.getDrivetrain();
     }
 
     public void addGoalOffset(double numberToAdd) {
@@ -220,14 +233,15 @@ public class RobotManager {
         Parameters.FAR_ZONE_CURVE.clear();
 
         if (shootingStyle == ShootingStyle.LARGE_ARC) {
-            Parameters.CLOSE_ZONE_CURVE.addPoint(55, 20, 3400);
-            Parameters.CLOSE_ZONE_CURVE.addPoint(65, 20, 3520);
-            Parameters.CLOSE_ZONE_CURVE.addPoint(76, 20, 3580);
-            Parameters.CLOSE_ZONE_CURVE.addPoint(83, 20, 3780);
-            Parameters.CLOSE_ZONE_CURVE.addPoint(100, 30, 4300);
+            Parameters.CLOSE_ZONE_CURVE.addPoint(40, 30, 3100);
+            Parameters.CLOSE_ZONE_CURVE.addPoint(55, 100, 3400);
+//            Parameters.CLOSE_ZONE_CURVE.addPoint(65, 100, 3520);
+            Parameters.CLOSE_ZONE_CURVE.addPoint(76, 100, 3680);
+            Parameters.CLOSE_ZONE_CURVE.addPoint(83, 100, 3820);
+            Parameters.CLOSE_ZONE_CURVE.addPoint(100, 120, 4350);
 
-            Parameters.FAR_ZONE_CURVE.addPoint(110, 90, 5400);
-            Parameters.FAR_ZONE_CURVE.addPoint(120, 90, 5450);
+            Parameters.FAR_ZONE_CURVE.addPoint(160, 90, 5400);
+            Parameters.FAR_ZONE_CURVE.addPoint(160, 90, 5450);
 
             shooterSubsystem.setHoodCompensationMultiplier(6);
         }
@@ -252,6 +266,11 @@ public class RobotManager {
     public void setDrivePowers(double x, double y, double heading, boolean fieldCentric) {
         if (follower.isBusy()) {
             breakFollowing(false);
+        }
+
+        if (!teleopDriveActive) {
+            drivetrain.breakFollowing();
+            teleopDriveActive = true;
         }
 
         Pose robotPose = getPose();
@@ -289,6 +308,10 @@ public class RobotManager {
                 robotPose.getHeading(),
                 follower.getVelocity()
         );
+
+        poseTracker.update();
+        drivetrain.updateConstants();
+        vectorCalculator.updateConstants();
     }
 
     public void enableHeadingLock() {
@@ -304,13 +327,15 @@ public class RobotManager {
     }
 
     public void disableHeadingLock() {
-        if (!shooterAimAtGoalActive)
+        if (!shooterAimAtGoalActive || shooterAimPolicy == ShooterAimPolicy.TURRET) {
             headingLockActive = false;
+        }
     }
 
     public void disableTurret() {
-        if (!shooterAimAtGoalActive)
+        if (!shooterAimAtGoalActive || shooterAimPolicy == ShooterAimPolicy.DRIVETRAIN) {
             turretEnabled = false;
+        }
     }
 
     public void setPose(Pose newPose) {
@@ -350,6 +375,14 @@ public class RobotManager {
 
     public boolean turretCanReachTarget() {
         return shooterSubsystem.turretCanReachTarget();
+    }
+
+    public void enableTurretRelativeControl() {
+        turretRelativeControl = true;
+    }
+
+    public void disableTurretRelativeControl() {
+        turretRelativeControl = false;
     }
 
     public void powerOnShooter() {
@@ -398,11 +431,11 @@ public class RobotManager {
         shooterControlPolicy = ShooterControlPolicy.MANUAL;
     }
 
-    public boolean isShooting() {
+    public boolean scoringCycleActive() {
         return isShooting;
     }
 
-    public void setState(OpModeStates newState) {
+    public void setState(OpModeState newState) {
         if (currentState != newState) {
             stateStart = true;
 
@@ -588,16 +621,14 @@ public class RobotManager {
     }
 
     public Pose getVelocityCorrectedPose() {
-        final double multiplier = .6;
-
         Vector velocity = follower.getVelocity();
         Pose robotPose = getPose();
 
         return robotPose
                 .plus(
                         new Pose(
-                                velocity.getXComponent() * multiplier,
-                                velocity.getYComponent() * multiplier
+                                velocity.getXComponent() * Parameters.VELOCITY_CORRECTION_MULTIPLIER,
+                                velocity.getYComponent() * Parameters.VELOCITY_CORRECTION_MULTIPLIER
                         )
                 );
     }
@@ -705,146 +736,143 @@ public class RobotManager {
         }
 
         if (turretControlPolicy == TurretControlPolicy.AIM_AT_GOAL) {
-            turretTargetPosition = getHeadingToGoal();
+            turretTargetPosition = Math.toDegrees(getHeadingToGoal() - Math.PI);
         }
 
-        switch (currentState) {
-            case IDLE:
+        double turretPositionCorrected = turretTargetPosition;
 
-                break;
+        if (!turretRelativeControl) {
+            turretPositionCorrected -= Math.toDegrees(getPose().getHeading());
+        }
 
-            case INTAKE_SCORE:
-                shooterSubsystem.setTurretPosition(turretTargetPosition - Math.toDegrees(getPose().getHeading()));
+        shooterSubsystem.setTurretPosition(turretPositionCorrected);
 
-                if (shooterControlPolicy == ShooterControlPolicy.ROAMING) {
-                    updateShooterParameters(getDistanceToGoal());
+        if (shooterControlPolicy == ShooterControlPolicy.ROAMING) {
+            updateShooterParameters(getDistanceToGoal());
+        }
+
+        if (isShooting) {
+            boolean needsToWait = false;
+
+            shooterSubsystem.setTurretBacklashOffset(Parameters.TURRET_BACKLASH);
+
+            isTransferStopped = false;
+            transferStopTimerPaused = true;
+
+            if (waitForVelocityToShoot) {
+                if (!shooterSubsystem.ready() && !canShootOveride) {
+                    needsToWait = true;
+                }
+            }
+
+            if (shooterAimPolicy == ShooterAimPolicy.TURRET && !turretCanReachTarget()) {
+                needsToWait = true;
+            }
+
+            activeHoldingLastBall = false;
+
+            intakeSubsystem.setIntakePower(intakePower);
+
+            if (useHoodCompensation) {
+                shooterSubsystem.enableHoodCompensation();
+            } else {
+                shooterSubsystem.disableHoodCompensation();
+            }
+
+            if (!needsToWait) {
+                if (!canShoot) {
+                    canShoot = true;
+                    canShootAtVelocity = shooterSubsystem.getTargetVelocity();
                 }
 
-                if (isShooting) {
-                    boolean needsToWait = false;
+                if (intakeSubsystem.getIntakePower() >= .1) {
+                    canShootOveride = true;
+                    double distanceToGoal = getDistanceToGoal();
 
-                    isTransferStopped = false;
-                    transferStopTimerPaused = true;
-
-                    if (waitForVelocityToShoot) {
-                        if (!shooterSubsystem.ready() && !canShootOveride) {
-                            needsToWait = true;
-                        }
-                    }
-
-                    if (shooterAimPolicy == ShooterAimPolicy.TURRET && !turretCanReachTarget()) {
-                        needsToWait = true;
-                    }
-
-                    activeHoldingLastBall = false;
-
-                    intakeSubsystem.setIntakePower(intakePower);
-
-                    if (useHoodCompensation) {
-                        shooterSubsystem.enableHoodCompensation();
-                    } else {
-                        shooterSubsystem.disableHoodCompensation();
-                    }
-
-                    if (!needsToWait) {
-                        if (!canShoot) {
-                            canShoot = true;
-                            canShootAtVelocity = shooterSubsystem.getTargetVelocity();
-                        }
-
-                        if (intakeSubsystem.getIntakePower() >= .1) {
-                            canShootOveride = true;
-                            double distanceToGoal = getDistanceToGoal();
-
-                            if (distanceToGoal >= Parameters.MIN_SHOOT_DISTANCE) {
-                                if (distanceToGoal < Parameters.FAR_ZONE_DISTANCE) {
-                                    shooterSubsystem.setPFState(ShooterPFState.TRANSFER_LOOP);
-                                    intakeSubsystem.setPowerLimits(1, transferSpeed);
-                                } else {
-                                    double localTransferSpeed = Parameters.FAR_ZONE_TRANSFER_SPEED;
-
-                                    if (transferSpeed < localTransferSpeed)
-                                        localTransferSpeed = transferSpeed;
-
-                                    shooterSubsystem.setPFState(ShooterPFState.FAST_TRANSFER_LOOP);
-                                    intakeSubsystem.setPowerLimits(1, localTransferSpeed);
-                                }
-                            } else {
-                                intakeSubsystem.setPowerLimits(0, 0);
-                            }
+                    if (distanceToGoal >= Parameters.MIN_SHOOT_DISTANCE) {
+                        if (distanceToGoal < Parameters.FAR_ZONE_DISTANCE) {
+                            shooterSubsystem.setPFState(ShooterPFState.TRANSFER_LOOP);
+                            intakeSubsystem.setPowerLimits(1, transferSpeed);
                         } else {
-                            canShootOveride = false;
+                            double localTransferSpeed = Parameters.FAR_ZONE_TRANSFER_SPEED;
+
+                            if (transferSpeed < localTransferSpeed)
+                                localTransferSpeed = transferSpeed;
+
+                            shooterSubsystem.setPFState(ShooterPFState.FAST_TRANSFER_LOOP);
+                            intakeSubsystem.setPowerLimits(1, localTransferSpeed);
                         }
-
-                        shooterSubsystem.openFinger();
                     } else {
-                        canShoot = false;
-                        shooterSubsystem.closeFinger();
-
-                        intakeSubsystem.setPowerLimits(.5, 0);
+                        intakeSubsystem.setPowerLimits(0, 0);
                     }
                 } else {
-                    shooterSubsystem.setPFState(ShooterPFState.WANDERING_LOOP);
-                    shooterSubsystem.disableHoodCompensation();
+                    canShootOveride = false;
+                }
 
-                    if (intakePower == 0 && activeHoldLastBallEnabled && lastIntakePower > 0) {
-                        if (!activeHoldingLastBall) {
-                            activeHoldingLastBallTimer.reset();
-                            activeHoldingLastBall = true;
-                        }
+                shooterSubsystem.openFinger();
+            } else {
+                canShoot = false;
+                shooterSubsystem.closeFinger();
 
-                        if (activeHoldingLastBallTimer.time(TimeUnit.MILLISECONDS) < 750) {
-                            intakeSubsystem.setIntakePowers(.25, 0);
+                intakeSubsystem.setPowerLimits(.5, 0);
+            }
+        } else {
+            shooterSubsystem.setPFState(ShooterPFState.WANDERING_LOOP);
+            shooterSubsystem.disableHoodCompensation();
+            shooterSubsystem.clearTurretBacklashOffset();
+
+            if (intakePower == 0 && activeHoldLastBallEnabled && lastIntakePower > 0) {
+                if (!activeHoldingLastBall) {
+                    activeHoldingLastBallTimer.reset();
+                    activeHoldingLastBall = true;
+                }
+
+                if (activeHoldingLastBallTimer.time(TimeUnit.MILLISECONDS) < 750) {
+                    intakeSubsystem.setIntakePowers(.25, 0);
+                } else {
+                    intakeSubsystem.setIntakePower(0);
+                }
+            } else {
+                activeHoldingLastBall = false;
+
+                double intakeMotor2Power = intakePower;
+
+                if (intakePower > 0) {
+                    if (autoTransferStopEnabled) {
+                        if (isTransferStopped) {
+                            intakeMotor2Power = 0;
                         } else {
-                            intakeSubsystem.setIntakePower(0);
-                        }
-                    } else {
-                        activeHoldingLastBall = false;
+                            if (intakeSubsystem.isTransferOverCurrent(CurrentUnit.AMPS, 5)) {
+                                if (transferStopTimerPaused) {
+                                    transferStopTimer.reset();
+                                    transferStopTimerPaused = false;
+                                }
 
-                        double intakeMotor2Power = intakePower;
+                                if (transferStopTimer.time(TimeUnit.MILLISECONDS) >= 850) {
+                                    isTransferStopped = true;
+                                    transferStopTimerPaused = true;
 
-                        if (intakePower > 0) {
-                            if (autoTransferStopEnabled) {
-                                if (isTransferStopped) {
                                     intakeMotor2Power = 0;
-                                } else {
-                                    if (intakeSubsystem.isTransferOverCurrent(CurrentUnit.AMPS, 3)) {
-                                        if (transferStopTimerPaused) {
-                                            transferStopTimer.reset();
-                                            transferStopTimerPaused = false;
-                                        }
-
-                                        if (transferStopTimer.time(TimeUnit.MILLISECONDS) >= 650) {
-                                            isTransferStopped = true;
-                                            transferStopTimerPaused = true;
-
-                                            intakeMotor2Power = 0;
-                                        }
-                                    } else {
-                                        transferStopTimerPaused = true;
-                                    }
                                 }
                             } else {
-                                isTransferStopped = false;
                                 transferStopTimerPaused = true;
                             }
-                        } else {
-                            isTransferStopped = false;
-                            transferStopTimerPaused = true;
-                            intakeSubsystem.setIntakePower(intakePower);
                         }
-
-                        intakeSubsystem.setIntakePowers(intakePower, intakeMotor2Power);
+                    } else {
+                        isTransferStopped = false;
+                        transferStopTimerPaused = true;
                     }
-
-                    intakeSubsystem.setPowerLimits(1, 1);
-                    shooterSubsystem.closeFinger();
+                } else {
+                    isTransferStopped = false;
+                    transferStopTimerPaused = true;
+                    intakeSubsystem.setIntakePower(intakePower);
                 }
-                break;
 
-            case PARK:
+                intakeSubsystem.setIntakePowers(intakePower, intakeMotor2Power);
+            }
 
-                break;
+            intakeSubsystem.setPowerLimits(1, 1);
+            shooterSubsystem.closeFinger();
         }
 
         if (printDebugEnabled)
@@ -853,7 +881,10 @@ public class RobotManager {
         stateStart = false;
         resetDistanceToGoal = true;
 
-        follower.update();
+        if (!teleopDriveActive) {
+            follower.update();
+        }
+
         shooterSubsystem.update();
         intakeSubsystem.update();
     }
@@ -919,6 +950,7 @@ public class RobotManager {
 
     public void breakFollowing(boolean holdPoint) {
         Pose lastPose = null;
+        teleopDriveActive = false;
 
         if (holdPoint && follower.isBusy()) {
             lastPose = follower.getCurrentPath().endPose();

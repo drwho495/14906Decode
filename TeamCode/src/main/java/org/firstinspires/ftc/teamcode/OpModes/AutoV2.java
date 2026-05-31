@@ -11,7 +11,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.Base.AllianceSides;
 import org.firstinspires.ftc.teamcode.Base.Auto.AutoStartSide;
-import org.firstinspires.ftc.teamcode.Base.OpModeStates;
+import org.firstinspires.ftc.teamcode.Base.OpModeState;
 import org.firstinspires.ftc.teamcode.Base.Parameters;
 import org.firstinspires.ftc.teamcode.Base.RobotManager;
 import org.firstinspires.ftc.teamcode.Base.ShooterControlPolicy;
@@ -54,7 +54,7 @@ public class AutoV2 extends LinearOpMode {
     public void runOpMode() throws InterruptedException {
         robot = new RobotManager(this);
 
-        robot.setState(OpModeStates.INTAKE_SCORE);
+        robot.setState(OpModeState.GENERAL_CYCLE);
         robot.setShooterControlPolicy(ShooterControlPolicy.MANUAL);
         robot.enableAutoTransferStop();
         robot.disableDebugPrinting();
