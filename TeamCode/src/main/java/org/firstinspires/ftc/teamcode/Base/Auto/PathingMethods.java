@@ -10,7 +10,6 @@ import org.firstinspires.ftc.teamcode.Base.AllianceSides;
 import org.firstinspires.ftc.teamcode.Base.Parameters;
 import org.firstinspires.ftc.teamcode.Base.RobotManager;
 import org.firstinspires.ftc.teamcode.Base.ShooterControlPolicy;
-import org.firstinspires.ftc.teamcode.pedroPathing.PedroConstants;
 
 public class PathingMethods {
     // 0 is the line furthest from the goal
@@ -107,7 +106,7 @@ public class PathingMethods {
 
                 robotPose = robot.getPose();
 
-                robot.powerOffIntake();
+                robot.powerIntakeOff();
                 robot.setMaxFollowerPower(.4);
                 robot.runPassthrough(
                         robot.pathBuilder()
@@ -288,7 +287,7 @@ public class PathingMethods {
 
         double pushHeading = robot.getFixedHeading(0);
 
-        robot.powerOffIntake();
+        robot.powerIntakeOff();
         robot.setMaxFollowerPower(1);
         robot.addPathTimeout(900);
 
@@ -445,7 +444,7 @@ public class PathingMethods {
             robot.update();
         }
 
-        robot.powerOnShooter();
+        robot.powerShooterOn();
         robot.setMaxFollowerPower(1);
 
         if (intakeShutoffT == -1) {
@@ -496,7 +495,7 @@ public class PathingMethods {
                                             )
                                     ))
                                     .setLinearHeadingInterpolation(robot.getFixedHeading(0), robot.getHeadingToGoal(shootingPosition), 1, .3)
-                                    .addParametricCallback(intakeShutoffT, robot::powerOffIntake)
+                                    .addParametricCallback(intakeShutoffT, robot::powerIntakeOff)
                                     .setTValueConstraint(.95)
                             , false);
                 } else if (afterCloseLine) {
@@ -508,7 +507,7 @@ public class PathingMethods {
                                             )
                                     ))
                                     .setLinearHeadingInterpolation(robotPose.getHeading(), robot.getHeadingToGoal(shootingPosition))
-                                    .addParametricCallback(intakeShutoffT, robot::powerOffIntake)
+                                    .addParametricCallback(intakeShutoffT, robot::powerIntakeOff)
                                     .setTValueConstraint(.95)
                             , false);
                 } else {
@@ -521,7 +520,7 @@ public class PathingMethods {
                                             )
                                     ))
                                     .setLinearHeadingInterpolation(robotPose.getHeading(), robot.getHeadingToGoal(shootingPosition))
-                                    .addParametricCallback(intakeShutoffT, robot::powerOffIntake)
+                                    .addParametricCallback(intakeShutoffT, robot::powerIntakeOff)
                                     .setTValueConstraint(.95)
                             , false);
                 }

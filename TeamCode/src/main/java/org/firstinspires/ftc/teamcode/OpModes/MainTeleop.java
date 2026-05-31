@@ -7,6 +7,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.Base.AllianceSides;
 import org.firstinspires.ftc.teamcode.Base.HeadingLockControlPolicy;
 import org.firstinspires.ftc.teamcode.Base.OpModeState;
@@ -33,6 +34,8 @@ public class MainTeleop extends LinearOpMode {
     private boolean autoStartShooter = false;
     private boolean autoStartShootingStarted = false;
     private boolean autoStartShootingStopTimed = false;
+    private boolean manualTurretActive = false;
+    private boolean manualTurretPositionLocked = false;
     private boolean driverNotifiedOf3 = false;
     private ElapsedTime shooterTimer = new ElapsedTime();
 
@@ -58,7 +61,7 @@ public class MainTeleop extends LinearOpMode {
         robot.disablePoweredHold();
 
         robot.setAllianceSide(Parameters.LAST_ALLIANCE_SIDE);
-        robot.powerOffShooter();
+        robot.powerShooterOff();
 
         robot.disableHeadingLock();
 
@@ -76,10 +79,12 @@ public class MainTeleop extends LinearOpMode {
             Pose robotPose = robot.getPose();
 
             if (canDrive) {
-                robot.setDrivePowers(-gamepad1.left_stick_y,
+                robot.setDrivePowers(
+                        -gamepad1.left_stick_y,
                         -gamepad1.left_stick_x,
                         -gamepad1.right_stick_x,
-                        true);
+                        true
+                );
             }
 
             if (gamepad1.optionsWasPressed()) {
@@ -93,13 +98,6 @@ public class MainTeleop extends LinearOpMode {
             if (gamepad1.psWasPressed() || gamepad2.psWasPressed())
                 robot.setPose(robot.getAllianceSide() == AllianceSides.BLUE ? Parameters.BLUE_CLOSE_START : Parameters.RED_CLOSE_START);
 
-            if (gamepad1.bWasPressed() || gamepad2.bWasPressed() || Parameters.TELEOP_UPDATE_SHOOTER_PARAMS) {
-                Parameters.TELEOP_UPDATE_SHOOTER_PARAMS = false;
-
-                Parameters.CLOSE_ZONE_CURVE.build();
-                Parameters.FAR_ZONE_CURVE.build();
-            }
-
             if (gamepad2.aWasPressed()) {
                 showDebugInfo = !showDebugInfo;
             }
@@ -110,12 +108,45 @@ public class MainTeleop extends LinearOpMode {
                 robot.setState(OpModeState.GENERAL_CYCLE);
             }
 
+            if (gamepad2.xWasPressed()) {
+                manualTurretActive = !manualTurretActive;
+            }
+
+            if (manualTurretActive) {
+                if (robot.getTurretControlPolicy() == TurretControlPolicy.AIM_AT_GOAL) {
+                    robot.setTurretControlPolicy(TurretControlPolicy.CONSTANT);
+                }
+
+                if (robot.isTurretRelativeControlEnabled()) {
+                    robot.disableTurretRelativeControl();
+                }
+
+                if (gamepad2.yWasPressed()) {
+                    manualTurretPositionLocked = !manualTurretPositionLocked;
+                }
+
+                if (!manualTurretPositionLocked) {
+                    robot.setConstantTurretHeadingGoal(
+                            robot.getFixedHeading(
+                                    Math.atan2(gamepad2.right_stick_x, gamepad2.right_stick_y) - (Math.PI / 2),
+                                    AngleUnit.RADIANS
+                            ),
+                            AngleUnit.RADIANS
+                    );
+                }
+            }
+
             switch (robot.getState()) {
                 case GENERAL_CYCLE:
                     int goalOffsetAddMultiplier = robot.getAllianceSide() == AllianceSides.BLUE ? -1 : 1;
 
                     if (robot.isStateStart()) {
                         robot.disableHeadingLock();
+                    }
+
+                    if (gamepad1.bWasPressed() || gamepad2.bWasPressed()) {
+                        Parameters.CLOSE_ZONE_CURVE.build();
+                        Parameters.FAR_ZONE_CURVE.build();
                     }
 
                     if (gamepad2.dpadDownWasPressed()) {
@@ -148,7 +179,7 @@ public class MainTeleop extends LinearOpMode {
                     } else if (gamepad1.left_trigger > .1) {
                         robot.setIntakePower(-gamepad1.left_trigger);
                     } else {
-                        robot.powerOffIntake();
+                        robot.powerIntakeOff();
                     }
 
                     if (gamepad1.leftBumperWasPressed()) {
@@ -169,7 +200,7 @@ public class MainTeleop extends LinearOpMode {
                             autoStartShootingStarted = false;
                             autoStartShootingStopTimed = false;
 
-                            robot.powerOnShooter();
+                            robot.powerShooterOn();
                         }
 
                         if (autoStartShooter && !autoStartShootingStarted && robot.scoringCycleActive()) {
@@ -188,7 +219,7 @@ public class MainTeleop extends LinearOpMode {
                             autoStartShooter = false;
                             autoStartShootingStarted = false;
                             autoStartShootingStopTimed = false;
-                            robot.powerOffShooter();
+                            robot.powerShooterOff();
                         }
                     }
 
@@ -208,7 +239,7 @@ public class MainTeleop extends LinearOpMode {
                     boolean enableGatePosition = false;
 
                     if (robot.isStateStart()) {
-                        robot.powerOffShooter();
+                        robot.powerShooterOff();
                         robot.stopScoringCycle();
                         robot.setTransferSpeed(1);
 
@@ -221,7 +252,7 @@ public class MainTeleop extends LinearOpMode {
                         canDrive = false;
                         gateIntakeStateIsAutoShooting = true;
 
-                        robot.setIntakePower(0);
+                        robot.setMaxFollowerPower(1);
                         robot.runPassthrough(
                                 robot.pathBuilder()
                                         .addPath(
@@ -234,6 +265,7 @@ public class MainTeleop extends LinearOpMode {
                                         .setLinearHeadingInterpolation(robotPose.getHeading(), robot.getFixedHeading(10))
                                         .setTValueConstraint(1)
                                         .setVelocityConstraint(1000)
+                                        .addTemporalCallback(.1, robot::powerIntakeOff)
                         );
                     }
 
@@ -257,7 +289,6 @@ public class MainTeleop extends LinearOpMode {
                             canDrive = true;
                             gateIntakeStateIsAutoShooting = false;
 
-//                            robot.resetFollower();
                             robot.breakFollowing();
                             robot.stopScoringCycle();
                         }

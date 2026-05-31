@@ -74,7 +74,7 @@ public class AutoV2 extends LinearOpMode {
         int autoTypeSelection = autoType.ordinal();
 
         while (opModeInInit()) {
-            robot.powerOffShooter();
+            robot.powerShooterOff();
 
             if (gamepad1.yWasPressed())
                 robot.setAllianceSide(robot.getAllianceSide() == AllianceSides.BLUE ? AllianceSides.RED : AllianceSides.BLUE);
@@ -185,8 +185,8 @@ public class AutoV2 extends LinearOpMode {
             }
 
             if (debugPark) {
-                robot.powerOffShooter();
-                robot.powerOffIntake();
+                robot.powerShooterOff();
+                robot.powerIntakeOff();
 
                 robot.safeSleep(2000);
 
@@ -219,8 +219,8 @@ public class AutoV2 extends LinearOpMode {
             humanPlayerIntake();
             scoreArtifacts(1 + shootOffset, false, false, .2);
 
-            robot.powerOffShooter();
-            robot.powerOffIntake();
+            robot.powerShooterOff();
+            robot.powerIntakeOff();
 
             while (opModeIsActive() && timer.time(TimeUnit.SECONDS) <= 27) {
                 robot.update();
@@ -229,8 +229,8 @@ public class AutoV2 extends LinearOpMode {
             park();
         }
 
-        robot.powerOffShooter();
-        robot.powerOffIntake();
+        robot.powerShooterOff();
+        robot.powerIntakeOff();
         robot.update();
 
         double time = ((double) timer.time(TimeUnit.MILLISECONDS)) / 1000;
@@ -522,7 +522,7 @@ public class AutoV2 extends LinearOpMode {
 
         double pushHeading = robot.getFixedHeading(0);
 
-        robot.powerOffIntake();
+        robot.powerIntakeOff();
         robot.setMaxFollowerPower(1);
         robot.addPathTimeout(900);
 
@@ -633,7 +633,7 @@ public class AutoV2 extends LinearOpMode {
         Pose shootingPosition;
         Pose robotPose = robot.getPose();
 
-        robot.powerOnShooter();
+        robot.powerShooterOn();
         robot.setMaxFollowerPower(1);
 
         if (intakeShutoffT == -1) {
@@ -682,7 +682,7 @@ public class AutoV2 extends LinearOpMode {
                                             )
                                     ))
                                     .setLinearHeadingInterpolation(robotPose.getHeading(), robot.getHeadingToGoal(shootingPosition))
-                                    .addParametricCallback(intakeShutoffT, () -> robot.powerOffIntake())
+                                    .addParametricCallback(intakeShutoffT, () -> robot.powerIntakeOff())
                                     .setTValueConstraint(.95)
                             , false);
                 } else if (cycleNumber == 2) {
@@ -695,7 +695,7 @@ public class AutoV2 extends LinearOpMode {
                                             )
                                     ))
                                     .setLinearHeadingInterpolation(robotPose.getHeading(), robot.getHeadingToGoal(shootingPosition))
-                                    .addParametricCallback(intakeShutoffT, () -> robot.powerOffIntake())
+                                    .addParametricCallback(intakeShutoffT, () -> robot.powerIntakeOff())
                                     .setTValueConstraint(.95)
                             , false);
                 } else if (cycleNumber == 3) {
@@ -709,7 +709,7 @@ public class AutoV2 extends LinearOpMode {
                                                 )
                                         ))
                                         .setLinearHeadingInterpolation(robotPose.getHeading(), robot.getHeadingToGoal(shootingPosition))
-                                        .addParametricCallback(intakeShutoffT, () -> robot.powerOffIntake())
+                                        .addParametricCallback(intakeShutoffT, () -> robot.powerIntakeOff())
                                         .setTValueConstraint(.95)
                                 , false);
                     } else {
@@ -721,7 +721,7 @@ public class AutoV2 extends LinearOpMode {
                                                 )
                                         ))
                                         .setLinearHeadingInterpolation(robotPose.getHeading(), robot.getHeadingToGoal(shootingPosition))
-                                        .addParametricCallback(intakeShutoffT, () -> robot.powerOffIntake())
+                                        .addParametricCallback(intakeShutoffT, () -> robot.powerIntakeOff())
                                         .setTValueConstraint(.95)
                                 , false);
                     }

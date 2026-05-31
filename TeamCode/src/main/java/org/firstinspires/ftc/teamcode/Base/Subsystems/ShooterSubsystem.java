@@ -63,8 +63,8 @@ public class ShooterSubsystem extends Subsystem {
         wanderingShooterF = 0.003;
         transferringShooterP = wanderingShooterP;
         transferringShooterF = wanderingShooterF;
-        fastTransferringShooterP = 0.028;
-        fastTransferringShooterF = 0.0038;
+        fastTransferringShooterP = wanderingShooterP;
+        fastTransferringShooterF = wanderingShooterF;
     }
 
     private void updatePF() {
@@ -134,7 +134,7 @@ public class ShooterSubsystem extends Subsystem {
                 AngleUnit.DEGREES
         );
         turretServoLeft.setPositionMultiplier(1);
-        turretServoLeft.setPositionOffset(Parameters.TURRET_SERVO_LEFT_ZERO_OFFSET, AngleUnit.DEGREES);
+        turretServoLeft.setPositionOffset(Parameters.TURRET_SERVO_LEFT_ZERO_OFFSET, AngleUnit.RADIANS);
         turretServoLeft.setInverted(false);
 
         turretServoRight = new ComplexServo(
@@ -145,7 +145,7 @@ public class ShooterSubsystem extends Subsystem {
                 AngleUnit.DEGREES
         );
         turretServoRight.setPositionMultiplier(1);
-        turretServoRight.setPositionOffset(Parameters.TURRET_SERVO_RIGHT_ZERO_OFFSET, AngleUnit.DEGREES);
+        turretServoRight.setPositionOffset(Parameters.TURRET_SERVO_RIGHT_ZERO_OFFSET, AngleUnit.RADIANS);
         turretServoRight.setInverted(false);
     }
 
@@ -223,7 +223,7 @@ public class ShooterSubsystem extends Subsystem {
     }
 
     public void setTurretPosition(double targetPosition) {
-        turretTargetPosition = Math.toDegrees(MathFunctions.normalizeAngle(Math.toRadians(targetPosition)));
+        turretTargetPosition = MathFunctions.normalizeAngle(targetPosition);
     }
 
     public double getTurretTargetPosition() {
@@ -231,11 +231,11 @@ public class ShooterSubsystem extends Subsystem {
     }
 
     public double getReachableTurretTargetPosition() {
-        return Range.clip(turretTargetPosition, Parameters.TURRET_DEADZONE_ANGLE_FROM_ZERO, (360 - Parameters.TURRET_DEADZONE_ANGLE_FROM_ZERO));
+        return Range.clip(turretTargetPosition, Parameters.TURRET_DEADZONE_ANGLE_FROM_ZERO, ((2 * Math.PI) - Parameters.TURRET_DEADZONE_ANGLE_FROM_ZERO));
     }
 
     public static boolean angleInTurretRange(double angle) {
-        return Parameters.TURRET_DEADZONE_ANGLE_FROM_ZERO <= angle && (360 - Parameters.TURRET_DEADZONE_ANGLE_FROM_ZERO) >= angle;
+        return Parameters.TURRET_DEADZONE_ANGLE_FROM_ZERO <= angle && ((2 * Math.PI) - Parameters.TURRET_DEADZONE_ANGLE_FROM_ZERO) >= angle;
     }
 
     public boolean turretCanReachTarget() {
@@ -269,12 +269,12 @@ public class ShooterSubsystem extends Subsystem {
         double reachableTurretTargetPosition = getReachableTurretTargetPosition() * Parameters.TURRET_ANGLE_MULTIPLIER;
         double backlashOffsetCorrected = ((servoTargetBacklashOffset / 2) * Parameters.TURRET_ANGLE_MULTIPLIER);
 
-        turretServoLeft.setPositionOffset(Parameters.TURRET_SERVO_LEFT_ZERO_OFFSET, AngleUnit.DEGREES);
-        turretServoRight.setPositionOffset(Parameters.TURRET_SERVO_RIGHT_ZERO_OFFSET, AngleUnit.DEGREES);
-        hoodServo.setPositionOffset(Parameters.HOOD_SERVO_POSITION_OFFSET, AngleUnit.DEGREES);
+        turretServoLeft.setPositionOffset(Parameters.TURRET_SERVO_LEFT_ZERO_OFFSET, AngleUnit.RADIANS);
+        turretServoRight.setPositionOffset(Parameters.TURRET_SERVO_RIGHT_ZERO_OFFSET, AngleUnit.RADIANS);
+        hoodServo.setPositionOffset(Parameters.HOOD_SERVO_POSITION_OFFSET, AngleUnit.RADIANS);
 
-        turretServoRight.turnToAngle(reachableTurretTargetPosition + backlashOffsetCorrected, true);
-        turretServoLeft.turnToAngle(reachableTurretTargetPosition - backlashOffsetCorrected, true);
+        turretServoRight.turnToAngle(reachableTurretTargetPosition + backlashOffsetCorrected, AngleUnit.RADIANS, true);
+        turretServoLeft.turnToAngle(reachableTurretTargetPosition - backlashOffsetCorrected, AngleUnit.RADIANS, true);
 
         fingerServo.turnToAngle(fingerServoPos);
         hoodServo.turnToAngle(Range.clip(hoodServoPos - hoodServoOffset, Parameters.HOOD_SERVO_DOWN, Parameters.HOOD_SERVO_UP));

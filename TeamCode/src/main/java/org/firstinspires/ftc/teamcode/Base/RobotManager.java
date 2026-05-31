@@ -16,6 +16,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.teamcode.Base.Helpers.PedroUtils;
 import org.firstinspires.ftc.teamcode.Base.Subsystems.IntakeSubsystem;
@@ -57,7 +58,7 @@ public class RobotManager {
     private boolean onlyShootInZone = false;
     private boolean shooterAimAtGoalActive = false;
     private boolean turretEnabled = false;
-    private double turretTargetPosition = 180;
+    private double turretTargetPosition = Math.PI;
     private boolean turretRelativeControl = false;
 
     private double headingLockGoal = 0;
@@ -363,9 +364,20 @@ public class RobotManager {
             this.turretControlPolicy = turretControlPolicy;
     }
 
-    public void setConstantTurretHeadingGoal(double goal) {
-        setTurretControlPolicy(TurretControlPolicy.CONSTANT);
+    public void setConstantTurretHeadingGoal(double goal, AngleUnit angleUnit) {
+        if (getTurretControlPolicy() != TurretControlPolicy.CONSTANT) {
+            setTurretControlPolicy(TurretControlPolicy.CONSTANT);
+        }
+
         turretTargetPosition = goal;
+
+        if (angleUnit == AngleUnit.DEGREES) {
+            turretTargetPosition = Math.toRadians(turretTargetPosition);
+        }
+    }
+
+    public void setConstantTurretHeadingGoal(double goal) {
+        setConstantTurretHeadingGoal(goal, AngleUnit.DEGREES);
     }
 
     // This returns the turret target position, relative to the field.
@@ -377,7 +389,15 @@ public class RobotManager {
         return shooterSubsystem.turretCanReachTarget();
     }
 
+    public boolean isTurretRelativeControlEnabled() {
+        return turretRelativeControl;
+    }
+
     public void enableTurretRelativeControl() {
+        if (getTurretControlPolicy() != TurretControlPolicy.CONSTANT) {
+            setTurretControlPolicy(TurretControlPolicy.CONSTANT);
+        }
+
         turretRelativeControl = true;
     }
 
@@ -385,12 +405,16 @@ public class RobotManager {
         turretRelativeControl = false;
     }
 
-    public void powerOnShooter() {
+    public void powerShooterOn() {
         shooterSubsystem.powerOn();
     }
 
-    public void powerOffIntake() {
+    public void powerIntakeOff() {
         setIntakePower(0);
+    }
+
+    public void powerIntakeOn() {
+        setIntakePower(1);
     }
 
     public void setIntakePower(double newPower) {
@@ -409,7 +433,7 @@ public class RobotManager {
         shooterSubsystem.toggleShooterPower();
     }
 
-    public void powerOffShooter() {
+    public void powerShooterOff() {
         shooterSubsystem.powerOff();
     }
 
@@ -582,15 +606,29 @@ public class RobotManager {
     }
 
     /*
-     * This will get a copy of the inputted heading (in degrees!) value that will/won't be mirrored
-     * depending on the robot's alliance
+     * This will return a copy of the inputted heading value that could be mirrored if the robot
+     * is on blue.
+     */
+    public double getFixedHeading(double heading, AngleUnit angleUnit) {
+        double correctedHeading = heading;
+
+        if (angleUnit == AngleUnit.DEGREES) {
+            correctedHeading = Math.toRadians(heading);
+        }
+
+        if (side == AllianceSides.RED) {
+            return correctedHeading; // no mirroring is needed
+        } else {
+            return PedroUtils.getMirroredPose(new Pose(0, 0, correctedHeading)).getHeading();
+        }
+    }
+
+    /*
+     * This will return a copy of the inputted heading value (in degrees) that could be mirrored if the robot
+     * is on blue.
      */
     public double getFixedHeading(double heading) {
-        if (side == AllianceSides.RED) {
-            return Math.toRadians(heading); // no mirroring is needed
-        } else {
-            return PedroUtils.getMirroredPose(new Pose(0, 0, Math.toRadians(heading))).getHeading();
-        }
+        return getFixedHeading(heading, AngleUnit.DEGREES);
     }
 
     public void runBlocking(PathBuilder path, boolean correctAfterFinished) {
@@ -723,6 +761,8 @@ public class RobotManager {
     }
 
     public void update() {
+        Pose robotPose = getPose();
+
         if ((!opMode.opModeIsActive() && !opMode.opModeInInit()) || opMode.isStopRequested()) {
             return;
         }
@@ -731,18 +771,20 @@ public class RobotManager {
             clearCache();
         }
 
+        double headingToGoal = getHeadingToGoal(robotPose);
+
         if (headingLockControlPolicy == HeadingLockControlPolicy.CONSTANT) {
-            headingLockGoal = getHeadingToGoal();
+            headingLockGoal = headingToGoal;
         }
 
         if (turretControlPolicy == TurretControlPolicy.AIM_AT_GOAL) {
-            turretTargetPosition = Math.toDegrees(getHeadingToGoal() - Math.PI);
+            turretTargetPosition = headingToGoal - Math.PI;
         }
 
         double turretPositionCorrected = turretTargetPosition;
 
         if (!turretRelativeControl) {
-            turretPositionCorrected -= Math.toDegrees(getPose().getHeading());
+            turretPositionCorrected -= robotPose.getHeading();
         }
 
         shooterSubsystem.setTurretPosition(turretPositionCorrected);
@@ -1052,5 +1094,9 @@ public class RobotManager {
 
     public PathBuilder pathBuilder(PathConstraints pathConstraints) {
         return follower.pathBuilder(pathConstraints);
+    }
+
+    public TurretControlPolicy getTurretControlPolicy() {
+        return turretControlPolicy;
     }
 }

@@ -76,7 +76,7 @@ public class AirSortTest extends LinearOpMode {
                     robot.setIntakePower(.15);
                     robot.setShootingStyle(ShootingStyle.LARGE_ARC);
 //                    robot.stopScoringCycle();
-//                    robot.powerOffIntake();
+//                    robot.powerIntakeOff();
                     robot.startScoringCycle();
                     robot.setIntakePower(.15);
                     timer.reset();

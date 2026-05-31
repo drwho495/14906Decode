@@ -22,7 +22,6 @@ public class Parameters {
     public static double FAR_ZONE_DISTANCE = 120;
     public static double FAR_ZONE_TRANSFER_SPEED = .6;
     public static double SHOOTER_VOLTAGE_TARGET = 11.7;
-    public static boolean TELEOP_UPDATE_SHOOTER_PARAMS = false;
 
     public static AllianceSides LAST_ALLIANCE_SIDE = AllianceSides.RED;
     public static Pose RED_CLOSE_START = new Pose(0, 0, Math.toRadians(220));
@@ -53,12 +52,12 @@ public class Parameters {
     public static double DEFAULT_AIM_OFFSET_RED = 0;
     public static double DEFAULT_AIM_OFFSET_BLUE = -1;
 
-    public static double TURRET_DEADZONE_ANGLE_FROM_ZERO = 15;
+    public static double TURRET_DEADZONE_ANGLE_FROM_ZERO = Math.toRadians(15);
     public static double TURRET_ANGLE_MULTIPLIER = 0.9;
-    public static double TURRET_SERVO_LEFT_ZERO_OFFSET = 10;
-    public static double TURRET_SERVO_RIGHT_ZERO_OFFSET = 6;
-    public static double TURRET_BACKLASH = 14;
-    public static double TURRET_TEST_ANGLE = 90;
+    public static double TURRET_SERVO_LEFT_ZERO_OFFSET = Math.toRadians(10);
+    public static double TURRET_SERVO_RIGHT_ZERO_OFFSET = Math.toRadians(6);
+    public static double TURRET_BACKLASH = Math.toRadians(14);
+    public static double TURRET_TEST_ANGLE = Math.toRadians(90);
 
     public static double SHOOTER_FAR_ZONE_VELOCITY = 5000;
     public static double SHOOTER_FAR_ZONE_HOOD_ANGLE = 300;
