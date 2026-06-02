@@ -4,10 +4,10 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.teamcode.Base.AllianceSides;
-import org.firstinspires.ftc.teamcode.Base.OpModeState;
+import org.firstinspires.ftc.teamcode.Base.Misc.AllianceSides;
+import org.firstinspires.ftc.teamcode.Base.Misc.OpModeState;
 import org.firstinspires.ftc.teamcode.Base.RobotManager;
-import org.firstinspires.ftc.teamcode.Base.ShootingStyle;
+import org.firstinspires.ftc.teamcode.Base.Misc.ShootingStyle;
 
 import java.util.concurrent.TimeUnit;
 

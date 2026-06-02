@@ -8,14 +8,15 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.teamcode.Base.AllianceSides;
-import org.firstinspires.ftc.teamcode.Base.HeadingLockControlPolicy;
-import org.firstinspires.ftc.teamcode.Base.OpModeState;
+import org.firstinspires.ftc.teamcode.Base.Misc.AllianceSides;
+import org.firstinspires.ftc.teamcode.Base.Misc.HeadingLockControlPolicy;
+import org.firstinspires.ftc.teamcode.Base.Misc.OpModeState;
+import org.firstinspires.ftc.teamcode.Base.Misc.ShooterControlPolicy;
 import org.firstinspires.ftc.teamcode.Base.Parameters;
 import org.firstinspires.ftc.teamcode.Base.RobotManager;
-import org.firstinspires.ftc.teamcode.Base.ShootingStyle;
-import org.firstinspires.ftc.teamcode.Base.ShooterAimPolicy;
-import org.firstinspires.ftc.teamcode.Base.TurretControlPolicy;
+import org.firstinspires.ftc.teamcode.Base.Misc.ShootingStyle;
+import org.firstinspires.ftc.teamcode.Base.Misc.ShooterAimPolicy;
+import org.firstinspires.ftc.teamcode.Base.Misc.TurretControlPolicy;
 
 import java.util.concurrent.TimeUnit;
 
@@ -27,8 +28,13 @@ public class MainTeleop extends LinearOpMode {
     // (callbacks with pedro pathing)
 
     private boolean canDrive = true;
-    private boolean gateIntakeStateIsAutoShooting = false;
-    private ElapsedTime gateIntakeStateAutoScoreTimer = new ElapsedTime();
+    private boolean gateIntakeStateIsAutoScoring = false;
+    private boolean gateIntakeStateIsGateIntaking = false;
+    private boolean gateIntakeStateCanShootArtifacts = false;
+    private Pose gateIntakeLocalScorePose = Parameters.TELEOP_AUTO_SCORE_POSE;
+    private double gateIntakeLocalScoreHeading = Parameters.TELEOP_AUTO_SCORE_HEADING;
+    private Pose gateIntakeLocalGatePose = Parameters.TELEOP_AUTO_GATE_POSE;
+    private double gateIntakeLocalGateHeading = Parameters.TELEOP_AUTO_GATE_HEADING;
     private boolean showDebugInfo = true;
     private boolean autoStartShooterEnabled = true;
     private boolean autoStartShooter = false;
@@ -109,18 +115,18 @@ public class MainTeleop extends LinearOpMode {
             }
 
             if (gamepad2.xWasPressed()) {
-                manualTurretActive = !manualTurretActive;
+                if (manualTurretActive) {
+                    robot.startAimingAtGoal();
+
+                    manualTurretActive = false;
+                } else {
+                    robot.stopAimingAtGoal();
+
+                    manualTurretActive = true;
+                }
             }
 
             if (manualTurretActive) {
-                if (robot.getTurretControlPolicy() == TurretControlPolicy.AIM_AT_GOAL) {
-                    robot.setTurretControlPolicy(TurretControlPolicy.CONSTANT);
-                }
-
-                if (robot.isTurretRelativeControlEnabled()) {
-                    robot.disableTurretRelativeControl();
-                }
-
                 if (gamepad2.yWasPressed()) {
                     manualTurretPositionLocked = !manualTurretPositionLocked;
                 }
@@ -128,7 +134,7 @@ public class MainTeleop extends LinearOpMode {
                 if (!manualTurretPositionLocked) {
                     robot.setConstantTurretHeadingGoal(
                             robot.getFixedHeading(
-                                    Math.atan2(gamepad2.right_stick_x, gamepad2.right_stick_y) - (Math.PI / 2),
+                                    Math.atan2(gamepad2.right_stick_y, gamepad2.right_stick_x) - ((3 * Math.PI) / 2),
                                     AngleUnit.RADIANS
                             ),
                             AngleUnit.RADIANS
@@ -142,6 +148,10 @@ public class MainTeleop extends LinearOpMode {
 
                     if (robot.isStateStart()) {
                         robot.disableHeadingLock();
+
+                        if (robot.getShooterControlPolicy() != ShooterControlPolicy.ROAMING) {
+                            robot.setShooterControlPolicy(ShooterControlPolicy.ROAMING);
+                        }
                     }
 
                     if (gamepad1.bWasPressed() || gamepad2.bWasPressed()) {
@@ -236,67 +246,94 @@ public class MainTeleop extends LinearOpMode {
                     }
                     break;
                 case SPECIALIZED_GATE_CYCLE:
-                    boolean enableGatePosition = false;
+                    boolean enableManualGatePosition = false;
 
                     if (robot.isStateStart()) {
-                        robot.powerShooterOff();
+                        robot.powerShooterOn();
                         robot.stopScoringCycle();
+                        robot.setShooterControlPolicy(ShooterControlPolicy.MANUAL);
                         robot.setTransferSpeed(1);
 
-                        enableGatePosition = true;
+                        gateIntakeStateIsAutoScoring = false;
+                        gateIntakeStateIsGateIntaking = false;
+
+                        robot.updateShooterParameters(robot.getFixedPose(Parameters.TELEOP_AUTO_SCORE_POSE));
+
+                        enableManualGatePosition = true;
                     }
 
-                    if (gamepad1.a && !gateIntakeStateIsAutoShooting) {
-                        robotPose = robot.getPose();
-
+                    if (gamepad1.a && !gateIntakeStateIsAutoScoring) {
                         canDrive = false;
-                        gateIntakeStateIsAutoShooting = true;
+                        gateIntakeStateCanShootArtifacts = false;
+                        gateIntakeStateIsAutoScoring = true;
+                        gateIntakeStateIsGateIntaking = false;
 
                         robot.setMaxFollowerPower(1);
+                        robot.breakFollowing();
+                        robot.stopScoringCycle();
                         robot.runPassthrough(
                                 robot.pathBuilder()
                                         .addPath(
                                                 new BezierCurve(
                                                         robotPose,
-                                                        robot.getFixedPose(-10, -60),
-                                                        robot.getFixedPose(-36, -52)
+                                                        robot.getFixedPose(-10, -55),
+                                                        robot.getFixedPose(gateIntakeLocalScorePose)
                                                 )
                                         )
-                                        .setLinearHeadingInterpolation(robotPose.getHeading(), robot.getFixedHeading(10))
+                                        .setLinearHeadingInterpolation(robotPose.getHeading(), robot.getFixedHeading(gateIntakeLocalScoreHeading), .5)
                                         .setTValueConstraint(1)
                                         .setVelocityConstraint(1000)
-                                        .addTemporalCallback(.1, robot::powerIntakeOff)
+                                        .addTemporalCallback(.1, () -> {
+                                            robot.setIntakePower(0);
+                                            robot.startScoringCycle(true);
+                                        })
                         );
                     }
 
-                    if (gateIntakeStateIsAutoShooting) {
-                        boolean isScoring = robot.scoringCycleActive();
+                    if (gamepad1.x && !gateIntakeStateIsGateIntaking) {
+                        canDrive = false;
+                        gateIntakeStateCanShootArtifacts = false;
+                        gateIntakeStateIsAutoScoring = false;
+                        gateIntakeStateIsGateIntaking = true;
 
-                        if (robot.getFollower().getDistanceRemaining() < 5 && !isScoring) {
-                            robot.setIntakePower(1);
-                            robot.startScoringCycle();
-
-                            gateIntakeStateAutoScoreTimer.reset();
-                        }
-
-                        if (
-                                (isScoring && gateIntakeStateAutoScoreTimer.time(TimeUnit.MILLISECONDS) >= 3500)
-                                        || Math.abs(gamepad1.left_stick_x) > .1
-                                        || Math.abs(gamepad1.left_stick_y) > .1
-                                        || Math.abs(gamepad1.right_stick_x) > .1
-                        ) {
-                            enableGatePosition = true;
-                            canDrive = true;
-                            gateIntakeStateIsAutoShooting = false;
-
-                            robot.breakFollowing();
-                            robot.stopScoringCycle();
-                        }
+                        robot.setMaxFollowerPower(1);
+                        robot.breakFollowing();
+                        robot.powerIntakeOn();
+                        robot.stopScoringCycle();
+                        robot.runPassthrough(
+                                robot.pathBuilder()
+                                        .addPath(
+                                                new BezierCurve(
+                                                        robotPose,
+                                                        robot.getFixedPose(-15, -70),
+                                                        robot.getFixedPose(gateIntakeLocalGatePose)
+                                                )
+                                        )
+                                        .setLinearHeadingInterpolation(robotPose.getHeading(), robot.getFixedHeading(gateIntakeLocalGateHeading), .2)
+                                        .setTValueConstraint(1)
+                                        .setVelocityConstraint(1000)
+                        );
                     }
 
-                    if (enableGatePosition) {
+                    if (gateIntakeStateIsAutoScoring && robot.getFollower().getDistanceRemaining() < 5 && !gateIntakeStateCanShootArtifacts) {
                         robot.setIntakePower(1);
 
+                        gateIntakeStateCanShootArtifacts = true;
+                    }
+
+                    if (!canDrive && (Math.abs(gamepad1.left_stick_x) > .1 || Math.abs(gamepad1.left_stick_y) > .1 || Math.abs(gamepad1.right_stick_x) > .1)) {
+                        enableManualGatePosition = true;
+                        canDrive = true;
+                        gateIntakeStateIsAutoScoring = false;
+                        gateIntakeStateIsGateIntaking = false;
+                        gateIntakeStateCanShootArtifacts = false;
+
+                        robot.breakFollowing();
+                        robot.stopScoringCycle();
+                    }
+
+                    if (enableManualGatePosition) {
+                        robot.powerIntakeOn();
                         robot.setConstantHeadingLockGoal(robot.getFixedHeading(35));
                         robot.enableHeadingLock();
                     }
@@ -317,7 +354,7 @@ public class MainTeleop extends LinearOpMode {
             telemetry.addData("Robot Alliance: ", robot.getAllianceSide() == AllianceSides.BLUE ? "Blue Side" : "Red Side");
             telemetry.addData("Heading Lock Goal Offset: ", robot.getGoalOffset());
             telemetry.addData("Loop Time: ", timer.time(TimeUnit.MILLISECONDS));
-            telemetry.addData("G1-A: ", gamepad1.aWasPressed());
+            telemetry.addData("Manual Turret Enabled: ", manualTurretActive);
 
             if (showDebugInfo) {
                 telemetry.addLine("! DEBUG !");

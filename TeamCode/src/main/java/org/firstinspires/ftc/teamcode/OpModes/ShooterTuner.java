@@ -3,12 +3,12 @@ package org.firstinspires.ftc.teamcode.OpModes;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
-import org.firstinspires.ftc.teamcode.Base.AllianceSides;
-import org.firstinspires.ftc.teamcode.Base.OpModeState;
+import org.firstinspires.ftc.teamcode.Base.Misc.AllianceSides;
+import org.firstinspires.ftc.teamcode.Base.Misc.OpModeState;
 import org.firstinspires.ftc.teamcode.Base.Parameters;
 import org.firstinspires.ftc.teamcode.Base.RobotManager;
-import org.firstinspires.ftc.teamcode.Base.ShooterAimPolicy;
-import org.firstinspires.ftc.teamcode.Base.ShooterControlPolicy;
+import org.firstinspires.ftc.teamcode.Base.Misc.ShooterAimPolicy;
+import org.firstinspires.ftc.teamcode.Base.Misc.ShooterControlPolicy;
 
 @TeleOp(name = "Debug: Shooter Tuner", group = "Debug")
 public class ShooterTuner extends LinearOpMode {

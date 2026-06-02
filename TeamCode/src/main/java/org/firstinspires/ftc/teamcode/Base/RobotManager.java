@@ -19,6 +19,14 @@ import com.qualcomm.robotcore.util.Range;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.teamcode.Base.Helpers.PedroUtils;
+import org.firstinspires.ftc.teamcode.Base.Misc.AllianceSides;
+import org.firstinspires.ftc.teamcode.Base.Misc.HeadingLockControlPolicy;
+import org.firstinspires.ftc.teamcode.Base.Misc.OpModeState;
+import org.firstinspires.ftc.teamcode.Base.Misc.ShooterAimPolicy;
+import org.firstinspires.ftc.teamcode.Base.Misc.ShooterControlPolicy;
+import org.firstinspires.ftc.teamcode.Base.Misc.ShooterPFState;
+import org.firstinspires.ftc.teamcode.Base.Misc.ShootingStyle;
+import org.firstinspires.ftc.teamcode.Base.Misc.TurretControlPolicy;
 import org.firstinspires.ftc.teamcode.Base.Subsystems.IntakeSubsystem;
 import org.firstinspires.ftc.teamcode.Base.Subsystems.ShooterSubsystem;
 import org.firstinspires.ftc.teamcode.pedroPathing.PedroConstants;
@@ -53,7 +61,8 @@ public class RobotManager {
     private ShooterControlPolicy shooterControlPolicy = ShooterControlPolicy.ROAMING;
     private ShooterAimPolicy shooterAimPolicy = ShooterAimPolicy.TURRET;
     private TurretControlPolicy turretControlPolicy = TurretControlPolicy.CONSTANT;
-    private boolean isShooting = false;
+    private boolean scoringCycleActive = false;
+    private boolean scoringCycleOverrideWaitConditions = false;
     private boolean waitForVelocityToShoot = true;
     private boolean onlyShootInZone = false;
     private boolean shooterAimAtGoalActive = false;
@@ -234,8 +243,8 @@ public class RobotManager {
         Parameters.FAR_ZONE_CURVE.clear();
 
         if (shootingStyle == ShootingStyle.LARGE_ARC) {
-            Parameters.CLOSE_ZONE_CURVE.addPoint(40, 30, 3100);
-            Parameters.CLOSE_ZONE_CURVE.addPoint(55, 100, 3400);
+            Parameters.CLOSE_ZONE_CURVE.addPoint(40, 30, 3000);
+//            Parameters.CLOSE_ZONE_CURVE.addPoint(55, 60, 3400);
 //            Parameters.CLOSE_ZONE_CURVE.addPoint(65, 100, 3520);
             Parameters.CLOSE_ZONE_CURVE.addPoint(76, 100, 3680);
             Parameters.CLOSE_ZONE_CURVE.addPoint(83, 100, 3820);
@@ -246,7 +255,6 @@ public class RobotManager {
 
             shooterSubsystem.setHoodCompensationMultiplier(6);
         }
-
 
         Parameters.CLOSE_ZONE_CURVE.build();
         Parameters.FAR_ZONE_CURVE.build();
@@ -317,6 +325,7 @@ public class RobotManager {
 
     public void enableHeadingLock() {
         headingLockActive = true;
+        teleopDriveActive = true;
     }
 
     public void enableTurret() {
@@ -437,14 +446,19 @@ public class RobotManager {
         shooterSubsystem.powerOff();
     }
 
-    public void startScoringCycle() {
+    public void startScoringCycle(boolean overrideWaitConditions) {
         canShoot = false;
         canShootOveride = false;
-        isShooting = true;
+        scoringCycleActive = true;
+        scoringCycleOverrideWaitConditions = overrideWaitConditions;
+    }
+
+    public void startScoringCycle() {
+        startScoringCycle(false);
     }
 
     public void stopScoringCycle() {
-        isShooting = false;
+        scoringCycleActive = false;
     }
 
     public void enableAutoShooterControl() {
@@ -456,7 +470,7 @@ public class RobotManager {
     }
 
     public boolean scoringCycleActive() {
-        return isShooting;
+        return scoringCycleActive;
     }
 
     public void setState(OpModeState newState) {
@@ -478,7 +492,7 @@ public class RobotManager {
     }
 
     public Pose getPose() {
-        return follower.getPose();
+        return poseTracker.getPose();
     }
 
     public void setShootingStyle(ShootingStyle shootingStyle) {
@@ -508,10 +522,14 @@ public class RobotManager {
         shooterAimAtGoalActive = false;
 
         if (shooterAimPolicy == ShooterAimPolicy.TURRET) {
-            disableTurret();
+            setTurretControlPolicy(TurretControlPolicy.CONSTANT);
         } else if (shooterAimPolicy == ShooterAimPolicy.DRIVETRAIN) {
             disableHeadingLock();
         }
+    }
+
+    public boolean isAimingAtGoal() {
+        return shooterAimAtGoalActive;
     }
 
     private void internalRunPath(PathBuilder path, boolean correctAfterFinished) {
@@ -658,10 +676,7 @@ public class RobotManager {
         autoTimer.reset();
     }
 
-    public Pose getVelocityCorrectedPose() {
-        Vector velocity = follower.getVelocity();
-        Pose robotPose = getPose();
-
+    public Pose getVelocityCorrectedPose(Pose robotPose, Vector velocity) {
         return robotPose
                 .plus(
                         new Pose(
@@ -669,6 +684,10 @@ public class RobotManager {
                                 velocity.getYComponent() * Parameters.VELOCITY_CORRECTION_MULTIPLIER
                         )
                 );
+    }
+
+    public Pose getVelocityCorrectedPose() {
+        return getVelocityCorrectedPose(getPose(), poseTracker.getVelocity());
     }
 
     public double getHeadingToGoal(Pose robotPose) {
@@ -771,7 +790,7 @@ public class RobotManager {
             clearCache();
         }
 
-        double headingToGoal = getHeadingToGoal(robotPose);
+        double headingToGoal = getHeadingToGoal(useVelocityCompensation ? getVelocityCorrectedPose(robotPose, poseTracker.getVelocity()) : robotPose);
 
         if (headingLockControlPolicy == HeadingLockControlPolicy.CONSTANT) {
             headingLockGoal = headingToGoal;
@@ -793,7 +812,7 @@ public class RobotManager {
             updateShooterParameters(getDistanceToGoal());
         }
 
-        if (isShooting) {
+        if (scoringCycleActive) {
             boolean needsToWait = false;
 
             shooterSubsystem.setTurretBacklashOffset(Parameters.TURRET_BACKLASH);
@@ -821,7 +840,7 @@ public class RobotManager {
                 shooterSubsystem.disableHoodCompensation();
             }
 
-            if (!needsToWait) {
+            if (!needsToWait || scoringCycleOverrideWaitConditions) {
                 if (!canShoot) {
                     canShoot = true;
                     canShootAtVelocity = shooterSubsystem.getTargetVelocity();
@@ -938,6 +957,10 @@ public class RobotManager {
      */
     public void setDriverOffset(double driverHeadingOffset) {
         teleopHeadingOffset = Math.toRadians(driverHeadingOffset);
+    }
+
+    public double getDriverOffset() {
+        return teleopHeadingOffset;
     }
 
     /**
@@ -1098,5 +1121,9 @@ public class RobotManager {
 
     public TurretControlPolicy getTurretControlPolicy() {
         return turretControlPolicy;
+    }
+
+    public boolean isFollowerBusy() {
+        return !teleopDriveActive && follower.isBusy();
     }
 }

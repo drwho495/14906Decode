@@ -6,7 +6,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.Base.Parameters;
 import org.firstinspires.ftc.teamcode.Base.RobotManager;
-import org.firstinspires.ftc.teamcode.Base.TurretControlPolicy;
+import org.firstinspires.ftc.teamcode.Base.Misc.TurretControlPolicy;
 
 @TeleOp(name = "Debug: Turret Tester", group = "Debug")
 public class TurretTester extends LinearOpMode {

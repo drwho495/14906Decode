@@ -4,15 +4,15 @@ import com.pedropathing.geometry.Pose;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
-import org.firstinspires.ftc.teamcode.Base.AllianceSides;
+import org.firstinspires.ftc.teamcode.Base.Misc.AllianceSides;
 import org.firstinspires.ftc.teamcode.Base.Auto.AutoCommandRepository;
 import org.firstinspires.ftc.teamcode.Base.Auto.AutoProgram;
 import org.firstinspires.ftc.teamcode.Base.Auto.AutoStartSide;
-import org.firstinspires.ftc.teamcode.Base.OpModeState;
+import org.firstinspires.ftc.teamcode.Base.Misc.OpModeState;
 import org.firstinspires.ftc.teamcode.Base.Parameters;
 import org.firstinspires.ftc.teamcode.Base.RobotManager;
-import org.firstinspires.ftc.teamcode.Base.ShooterControlPolicy;
-import org.firstinspires.ftc.teamcode.Base.ShootingStyle;
+import org.firstinspires.ftc.teamcode.Base.Misc.ShooterControlPolicy;
+import org.firstinspires.ftc.teamcode.Base.Misc.ShootingStyle;
 
 import java.util.ArrayList;
 
@@ -20,7 +20,6 @@ enum V3AutoDefault {
     EIGHTEEN_ARTIFACT,
     EIGHTEEN_ARTIFACT_ALLIANCE_FRIENDLY,
     EIGHTEEN_ARTIFACT_ALLIANCE_FRIENDLY_EXTRA_PUSH,
-    EIGHTEEN_ARTIFACT_ALLIANCE_FRIENDLY_EXTRA_PUSH_F1_BLUE,
     FIFTEEN_ARTIFACT,
     FIFTEEN_ARTIFACT_GATE_INTAKE,
     FIFTEEN_ARTIFACT_ALLIANCE_FRIENDLY,
@@ -76,22 +75,6 @@ public class AutoV3 extends LinearOpMode {
                 startSide = AutoStartSide.CLOSE_ZONE;
                 break;
             case EIGHTEEN_ARTIFACT_ALLIANCE_FRIENDLY_EXTRA_PUSH:
-                commands.add(new AutoCommandRepository.ScoreArtifacts(true));
-                commands.add(new AutoCommandRepository.IntakeMidLine());
-                commands.add(new AutoCommandRepository.ClearGate(1000));
-                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
-                commands.add(new AutoCommandRepository.IntakeGate(true));
-                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
-                commands.add(new AutoCommandRepository.IntakeGate(false));
-                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
-                commands.add(new AutoCommandRepository.IntakeGate(false));
-                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
-                commands.add(new AutoCommandRepository.IntakeCloseLine(false));
-                commands.add(new AutoCommandRepository.ScoreArtifactsAndPark());
-
-                startSide = AutoStartSide.CLOSE_ZONE;
-                break;
-            case EIGHTEEN_ARTIFACT_ALLIANCE_FRIENDLY_EXTRA_PUSH_F1_BLUE:
                 commands.add(new AutoCommandRepository.ScoreArtifacts(true));
                 commands.add(new AutoCommandRepository.IntakeMidLine());
                 commands.add(new AutoCommandRepository.ClearGate(1000));
@@ -208,8 +191,6 @@ public class AutoV3 extends LinearOpMode {
                 return "Close Zone: 18 Artifact Alliance Friendly Auto";
             case EIGHTEEN_ARTIFACT_ALLIANCE_FRIENDLY_EXTRA_PUSH:
                 return "Close Zone: 18 Artifact Alliance Friendly Auto with an Extra Gate Push";
-            case EIGHTEEN_ARTIFACT_ALLIANCE_FRIENDLY_EXTRA_PUSH_F1_BLUE:
-                return "(Field 1 Blue Only) Close Zone: 18 Artifact Alliance Friendly Auto with an Extra Gate Push";
             case FIFTEEN_ARTIFACT:
                 return "Close Zone: 15 Artifact Auto";
             case FIFTEEN_ARTIFACT_GATE_INTAKE:
@@ -298,10 +279,6 @@ public class AutoV3 extends LinearOpMode {
 
             robot.update();
             telemetry.update();
-        }
-
-        if (useDefault && defaultAuto == V3AutoDefault.EIGHTEEN_ARTIFACT_ALLIANCE_FRIENDLY_EXTRA_PUSH_F1_BLUE) {
-            robot.setAllianceSide(AllianceSides.BLUE);
         }
 
         waitForStart();

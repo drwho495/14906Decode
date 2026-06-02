@@ -6,10 +6,10 @@ import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.Path;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.teamcode.Base.AllianceSides;
+import org.firstinspires.ftc.teamcode.Base.Misc.AllianceSides;
 import org.firstinspires.ftc.teamcode.Base.Parameters;
 import org.firstinspires.ftc.teamcode.Base.RobotManager;
-import org.firstinspires.ftc.teamcode.Base.ShooterControlPolicy;
+import org.firstinspires.ftc.teamcode.Base.Misc.ShooterControlPolicy;
 
 public class PathingMethods {
     // 0 is the line furthest from the goal
@@ -24,22 +24,12 @@ public class PathingMethods {
         double wallX;
         double goalX;
 
-        if (Parameters.ROBOT == 0) {
-            if (robot.getAllianceSide() == AllianceSides.RED) {
-                wallX = 17;
-                goalX = 9;
-            } else {
-                wallX = 16;
-                goalX = 7;
-            }
+        if (robot.getAllianceSide() == AllianceSides.RED) {
+            wallX = 10;
+            goalX = 9;
         } else {
-            if (robot.getAllianceSide() == AllianceSides.RED) {
-                wallX = 10;
-                goalX = 9;
-            } else {
-                wallX = 9;
-                goalX = 6;
-            }
+            wallX = 9;
+            goalX = 6;
         }
 
         if (number == 0) {
@@ -207,7 +197,6 @@ public class PathingMethods {
 
                 robotPose = robot.getPose();
 
-//                robot.addPathTimeout(750);
                 robot.runBlocking(robot.pathBuilder()
                         .addPath(new Path(
                                         new BezierLine(
@@ -342,18 +331,11 @@ public class PathingMethods {
             wallY = -130;
         }
 
-        if (Parameters.ROBOT == 0) {
-            if (robot.getAllianceSide() == AllianceSides.RED) {
-                wallX = 21;
-            } else {
-                wallX = 20;
-            }
+
+        if (robot.getAllianceSide() == AllianceSides.RED) {
+            wallX = 21;
         } else {
-            if (robot.getAllianceSide() == AllianceSides.RED) {
-                wallX = 21;
-            } else {
-                wallX = 19;
-            }
+            wallX = 19;
         }
 
         if (startSide == AutoStartSide.CLOSE_ZONE) {
@@ -417,8 +399,8 @@ public class PathingMethods {
             boolean afterCloseLine,
             boolean shootOffTape,
             double intakeShutoffT,
-            boolean initialCycle
-    ) {
+            boolean initialCycle)
+    {
         Pose shootingPosition;
         Pose robotPose = robot.getPose();
 

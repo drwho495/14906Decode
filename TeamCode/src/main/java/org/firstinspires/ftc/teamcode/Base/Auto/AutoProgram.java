@@ -14,9 +14,23 @@ public class AutoProgram {
     private AutoStartSide startSide = AutoStartSide.CLOSE_ZONE;
     private final RobotManager robot;
     private Pose startPose = new Pose();
+    private String autoName = "Unnamed Autonomous Program";
+
+    public AutoProgram(RobotManager robot, String autoName) {
+        this.robot = robot;
+        this.autoName = autoName;
+    }
 
     public AutoProgram(RobotManager robot) {
         this.robot = robot;
+    }
+
+    public void setName(String name) {
+        autoName = name;
+    }
+
+    public String getName() {
+        return autoName;
     }
 
     public ArrayList<AutoCommandRepository.AutoCommand> getCommands() {

@@ -12,7 +12,7 @@ import org.firstinspires.ftc.teamcode.Base.HardwareBases.ComplexMotor;
 import org.firstinspires.ftc.teamcode.Base.HardwareBases.ComplexMotorModes;
 import org.firstinspires.ftc.teamcode.Base.HardwareBases.ComplexServo;
 import org.firstinspires.ftc.teamcode.Base.Parameters;
-import org.firstinspires.ftc.teamcode.Base.ShooterPFState;
+import org.firstinspires.ftc.teamcode.Base.Misc.ShooterPFState;
 
 @Config
 @Configurable
@@ -271,13 +271,15 @@ public class ShooterSubsystem extends Subsystem {
 
         turretServoLeft.setPositionOffset(Parameters.TURRET_SERVO_LEFT_ZERO_OFFSET, AngleUnit.RADIANS);
         turretServoRight.setPositionOffset(Parameters.TURRET_SERVO_RIGHT_ZERO_OFFSET, AngleUnit.RADIANS);
-        hoodServo.setPositionOffset(Parameters.HOOD_SERVO_POSITION_OFFSET, AngleUnit.RADIANS);
+        hoodServo.setPositionOffset(Parameters.HOOD_SERVO_POSITION_OFFSET, AngleUnit.DEGREES);
 
         turretServoRight.turnToAngle(reachableTurretTargetPosition + backlashOffsetCorrected, AngleUnit.RADIANS, true);
         turretServoLeft.turnToAngle(reachableTurretTargetPosition - backlashOffsetCorrected, AngleUnit.RADIANS, true);
 
+        thisOpMode.telemetry.addData("hood servo: ", hoodServoPos);
+
         fingerServo.turnToAngle(fingerServoPos);
-        hoodServo.turnToAngle(Range.clip(hoodServoPos - hoodServoOffset, Parameters.HOOD_SERVO_DOWN, Parameters.HOOD_SERVO_UP));
+        hoodServo.turnToAngle(Range.clip(hoodServoPos - hoodServoOffset, Parameters.HOOD_SERVO_DOWN, Parameters.HOOD_SERVO_UP), AngleUnit.DEGREES, true);
 
         shooterMotor1.update();
         shooterMotor2.update();

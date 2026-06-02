@@ -10,6 +10,7 @@ import com.pedropathing.geometry.Pose;
 
 import org.firstinspires.ftc.teamcode.Base.Helpers.PedroUtils;
 import org.firstinspires.ftc.teamcode.Base.Helpers.ShooterCurve;
+import org.firstinspires.ftc.teamcode.Base.Misc.AllianceSides;
 import org.firstinspires.ftc.teamcode.bedroBathing.util.CustomPIDFCoefficients;
 
 @Config
@@ -42,9 +43,6 @@ public class Parameters {
     public static double FINGER_SERVO_OPEN = 45;
     public static double FINGER_SERVO_CLOSED = 100;
 
-    // 0 is the robot with the unpocketed chassis, 1 is the robot with the pocketed chassis
-    public static int ROBOT = 1;
-
     public static double HOOD_SERVO_DOWN = 20;
     public static double HOOD_SERVO_UP = 300;
     public static double HOOD_SERVO_POSITION_OFFSET = 10;
@@ -58,6 +56,11 @@ public class Parameters {
     public static double TURRET_SERVO_RIGHT_ZERO_OFFSET = Math.toRadians(6);
     public static double TURRET_BACKLASH = Math.toRadians(14);
     public static double TURRET_TEST_ANGLE = Math.toRadians(90);
+
+    public static Pose TELEOP_AUTO_SCORE_POSE = new Pose(-36, -50);
+    public static double TELEOP_AUTO_SCORE_HEADING = 15;
+    public static Pose TELEOP_AUTO_GATE_POSE = new Pose(11, -76);
+    public static double TELEOP_AUTO_GATE_HEADING = 35;
 
     public static double SHOOTER_FAR_ZONE_VELOCITY = 5000;
     public static double SHOOTER_FAR_ZONE_HOOD_ANGLE = 300;
