@@ -399,34 +399,15 @@ public class PathingMethods {
             boolean afterCloseLine,
             boolean shootOffTape,
             double intakeShutoffT,
-            boolean initialCycle)
+            boolean initialCycle,
+            double robotChassisHeading,
+            double robotChassisHeadingEndT)
     {
         Pose shootingPosition;
         Pose robotPose = robot.getPose();
 
-        if (robot.getShooterControlPolicy() == ShooterControlPolicy.MANUAL) {
-            if (startSide == AutoStartSide.FAR_ZONE) {
-                robot.setShooterVelocity(Parameters.SHOOTER_FAR_ZONE_VELOCITY);
-                robot.setHoodServoPos(Parameters.SHOOTER_FAR_ZONE_HOOD_ANGLE);
-            } else {
-                if (shootOffTape) {
-                    if (robot.getAllianceSide() == AllianceSides.RED) {
-                        robot.setShooterVelocity(3350);
-                        robot.setHoodServoPos(20);
-                    } else {
-                        robot.setShooterVelocity(3300);
-                        robot.setHoodServoPos(20);
-                    }
-                } else {
-                    robot.setShooterVelocity(3350);
-                    robot.setHoodServoPos(20);
-                }
-            }
-
-            robot.update();
-        }
-
         robot.powerShooterOn();
+        robot.powerIntakeOff();
         robot.setMaxFollowerPower(1);
 
         if (intakeShutoffT == -1) {
@@ -435,65 +416,55 @@ public class PathingMethods {
 
         if (startSide == AutoStartSide.CLOSE_ZONE) {
             if (initialCycle) {
-                robot.startScoringCycle(); // make sure that servo opens!
-                robot.update();
+                shootingPosition = robot.getFixedPose(-30, -40);
 
-                shootingPosition = robot.getFixedPose(-27, -40);
-
-//                robot.updateShooterParameters(shootingPosition);
-
+                robot.updateShooterParameters(shootingPosition);
                 robot.addPathTimeout(2000);
-                robot.runBlocking(robot.pathBuilder()
+                robot.runPassthrough(robot.pathBuilder()
                                 .addPath(new Path(
                                         new BezierLine(
                                                 startPose,
                                                 shootingPosition
                                         )
                                 ))
-                                .setLinearHeadingInterpolation(robot.getFixedHeading(220), robot.getHeadingToGoal(shootingPosition))
+                                .setLinearHeadingInterpolation(robot.getFixedHeading(220), robot.getFixedHeading(robotChassisHeading))
                                 .setTValueConstraint(.9)
                                 .setVelocityConstraint(5)
-                        , false);
+                );
             } else {
                 if (shootOffTape) {
-                    shootingPosition = robot.getFixedPose(
-                            robot.getAllianceSide() == AllianceSides.RED ? -30 : -29,
-                            -28,
-                            Math.toRadians(180)
-                    );
+                    shootingPosition = robot.getFixedPose(-30, -28);
                 } else {
-                    shootingPosition = robot.getFixedPose(-30, -40, Math.toRadians(180));
+                    shootingPosition = robot.getFixedPose(-30, -40);
                 }
 
-//                robot.updateShooterParameters(shootingPosition);
+                robot.updateShooterParameters(shootingPosition);
 
                 if (afterGate) {
-                    robot.runBlocking(robot.pathBuilder()
+                    robot.runPassthrough(robot.pathBuilder()
                                     .addPath(new Path(
                                             new BezierCurve(
                                                     robotPose,
-                                                    robot.getFixedPose(5, robotPose.getY() - 5),
+                                                    robot.getFixedPose(-20, robotPose.getY() - 5),
                                                     shootingPosition
                                             )
                                     ))
-                                    .setLinearHeadingInterpolation(robot.getFixedHeading(0), robot.getHeadingToGoal(shootingPosition), 1, .3)
-                                    .addParametricCallback(intakeShutoffT, robot::powerIntakeOff)
+                                    .setLinearHeadingInterpolation(robot.getFixedHeading(0), robot.getFixedHeading(robotChassisHeading), robotChassisHeadingEndT)
                                     .setTValueConstraint(.95)
-                            , false);
+                    );
                 } else if (afterCloseLine) {
-                    robot.runBlocking(robot.pathBuilder()
+                    robot.runPassthrough(robot.pathBuilder()
                                     .addPath(new Path(
                                             new BezierLine(
                                                     robotPose,
                                                     shootingPosition
                                             )
                                     ))
-                                    .setLinearHeadingInterpolation(robotPose.getHeading(), robot.getHeadingToGoal(shootingPosition))
-                                    .addParametricCallback(intakeShutoffT, robot::powerIntakeOff)
+                                    .setLinearHeadingInterpolation(robotPose.getHeading(), robot.getFixedHeading(robotChassisHeading), robotChassisHeadingEndT)
                                     .setTValueConstraint(.95)
-                            , false);
+                    );
                 } else {
-                    robot.runBlocking(robot.pathBuilder()
+                    robot.runPassthrough(robot.pathBuilder()
                                     .addPath(new Path(
                                             new BezierCurve(
                                                     robotPose,
@@ -501,58 +472,40 @@ public class PathingMethods {
                                                     shootingPosition
                                             )
                                     ))
-                                    .setLinearHeadingInterpolation(robotPose.getHeading(), robot.getHeadingToGoal(shootingPosition))
-                                    .addParametricCallback(intakeShutoffT, robot::powerIntakeOff)
+                                    .setLinearHeadingInterpolation(robotPose.getHeading(), robot.getFixedHeading(robotChassisHeading), robotChassisHeadingEndT)
                                     .setTValueConstraint(.95)
-                            , false);
+                    );
                 }
             }
+
+            robot.setIntakePower(1);
+
+            robot.waitForCondition(() -> robot.getFollower().getCurrentTValue() >= .1);
+            robot.powerIntakeOff();
+            robot.waitForCondition(() -> robot.getFollower().getCurrentTValue() >= .5);
+            robot.startScoringCycle(true);
+            ElapsedTime scoringTime = new ElapsedTime();
+            robot.waitForCondition(() -> robot.getFollower().getDistanceRemaining() < Parameters.AUTO_SCORE_ERROR);
+            robot.setIntakePower(1);
+            robot.safeSleep(scoringTime, 1250);
+
+            robot.stopScoringCycle();
+            robot.waitForPathEnd();
         } else if (startSide == AutoStartSide.FAR_ZONE) {
             shootingPosition = robot.getFixedPose(-30, -115, 0);
 
-//            robot.updateShooterParameters(shootingPosition);
-
-            robot.runBlocking(robot.pathBuilder()
+            robot.runPassthrough(robot.pathBuilder()
                             .addPath(new Path(
                                     new BezierLine(
                                             robotPose,
                                             shootingPosition
                                     )
                             ))
-                            .setLinearHeadingInterpolation(robotPose.getHeading(), robot.getHeadingToGoal(shootingPosition))
+                            .setLinearHeadingInterpolation(robotPose.getHeading(), robot.getFixedHeading(robotChassisHeading), robotChassisHeadingEndT)
                             .setTValueConstraint(.97)
                             .setVelocityConstraint(100)
-                    , false);
+            );
         }
-
-        robot.stopAndAim();
-        robot.setIntakePower(1);
-
-        if (startSide == AutoStartSide.CLOSE_ZONE) {
-            if (initialCycle) {
-                robot.waitForShooter(500);
-            } else {
-                robot.waitForShooter(150);
-            }
-        } else if (startSide == AutoStartSide.FAR_ZONE) {
-            if (initialCycle) {
-                robot.waitForShooter();
-            } else {
-                robot.waitForShooter(600);
-            }
-
-            robot.waitForHeadingCorrection(.75, 300, 1);
-        }
-
-        robot.startScoringCycle();
-        robot.setIntakePower(1);
-
-        robot.safeSleep(650);
-
-        robot.stopScoringCycle();
-        robot.safeSleep(50);
-
-        robot.update();
     }
 
     public static void park(RobotManager robot, AutoStartSide startSide) {

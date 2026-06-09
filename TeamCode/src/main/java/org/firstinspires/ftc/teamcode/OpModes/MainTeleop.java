@@ -65,12 +65,9 @@ public class MainTeleop extends LinearOpMode {
         robot.disableOnlyShootInZone();
         robot.enableVelocityCompensation();
         robot.disablePoweredHold();
-
         robot.setAllianceSide(Parameters.LAST_ALLIANCE_SIDE);
         robot.powerShooterOff();
-
         robot.disableHeadingLock();
-
         robot.setState(OpModeState.GENERAL_CYCLE);
         robot.setTurretControlPolicy(TurretControlPolicy.AIM_AT_GOAL);
         robot.setShooterAimPolicy(ShooterAimPolicy.TURRET);

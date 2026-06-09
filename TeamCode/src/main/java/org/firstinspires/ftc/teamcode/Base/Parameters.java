@@ -16,7 +16,9 @@ import org.firstinspires.ftc.teamcode.bedroBathing.util.CustomPIDFCoefficients;
 @Config
 @Configurable
 public class Parameters {
-    public static double VELOCITY_CORRECTION_MULTIPLIER = .5;
+    public static double AUTO_SCORE_ERROR = 10;
+    public static double CENTRIPETAL_VELOCITY_COMPENSATION_MULTIPLIER = 0.11;
+    public static double VELOCITY_CORRECTION_MULTIPLIER = 0.7;
     public static double SHOOTER_READY_TOLERANCE = 60;
     public static double SHOOTER_DEFAULT_RPM = 4500;
     public static double MIN_SHOOT_DISTANCE = 40;
@@ -28,10 +30,14 @@ public class Parameters {
     public static Pose RED_CLOSE_START = new Pose(0, 0, Math.toRadians(220));
     public static Pose RED_FAR_START = new Pose(-29.66, -120.83, Math.toRadians(-90));
     //    public static Pose RED_SHOOTER_GOAL = new Pose(20, 0);
-    public static Pose SHOOTER_GOAL_CLOSE_RED = new Pose(18, 4);
+    public static Pose SHOOTER_GOAL_CLOSE_RED_AIM = new Pose(20, -10);
+    public static Pose SHOOTER_GOAL_FAR_RED_AIM = new Pose(10, 4);
+    public static Pose SHOOTER_GOAL_CLOSE_BLUE_AIM = new Pose(-110, 10);
+    public static Pose SHOOTER_GOAL_FAR_BLUE_AIM = new Pose(-102, 7.5);
+    public static Pose SHOOTER_GOAL_CLOSE_RED = new Pose(18, 8);
     public static Pose SHOOTER_GOAL_FAR_RED = new Pose(10, 4);
-    public static Pose SHOOTER_GOAL_CLOSE_BLUE = new Pose(-110.7, 4);
-    public static Pose SHOOTER_GOAL_FAR_BLUE = new Pose(-109, 7.5);
+    public static Pose SHOOTER_GOAL_CLOSE_BLUE = new Pose(-110, 10);
+    public static Pose SHOOTER_GOAL_FAR_BLUE = new Pose(-102, 7.5);
     public static Pose BLUE_CLOSE_START = new Pose(-92.7, 0, PedroUtils.getMirroredPose(RED_CLOSE_START).getHeading());
     public static Pose BLUE_FAR_START = PedroUtils.getMirroredPose(RED_FAR_START);
     public static CustomPIDFCoefficients preciseTurnCoeffs = new CustomPIDFCoefficients(
@@ -50,7 +56,7 @@ public class Parameters {
     public static double DEFAULT_AIM_OFFSET_RED = 0;
     public static double DEFAULT_AIM_OFFSET_BLUE = -1;
 
-    public static double TURRET_DEADZONE_ANGLE_FROM_ZERO = Math.toRadians(15);
+    public static double TURRET_DEADZONE_ANGLE_FROM_ZERO = Math.toRadians(25);
     public static double TURRET_ANGLE_MULTIPLIER = 0.9;
     public static double TURRET_SERVO_LEFT_ZERO_OFFSET = Math.toRadians(10);
     public static double TURRET_SERVO_RIGHT_ZERO_OFFSET = Math.toRadians(6);

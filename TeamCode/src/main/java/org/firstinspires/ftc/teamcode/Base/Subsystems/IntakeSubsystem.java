@@ -67,12 +67,10 @@ public class IntakeSubsystem extends Subsystem {
 
     @Override
     public void update() {
-        if (!thisOpMode.opModeIsActive() || thisOpMode.isStopRequested()) return;
-
         intakeMotor1.setPower(Range.clip(intakeMotor1Power, -1, intakeMotor1Limit));
         intakeMotor2.setPower(Range.clip(intakeMotor2Power, -1, intakeMotor2Limit));
-        intakeMotor1.update();
 
+        intakeMotor1.update();
         intakeMotor2.update();
     }
 

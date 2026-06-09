@@ -23,7 +23,7 @@ public class AutoCommandRepository {
             return AutoCommandRepository.getUserLabel(getType());
         }
 
-        public abstract void execute(RobotManager robot, Pose startPose, AutoStartSide startSide, AutoCommand lastCommand);
+        public abstract void execute(RobotManager robot, Pose startPose, AutoStartSide startSide, AutoCommand lastCommand, AutoCommand nextCommand);
     }
 
     public static String getUserLabel(AutoCommandTypes ofType) {
@@ -83,7 +83,7 @@ public class AutoCommandRepository {
         }
 
         @Override
-        public void execute(RobotManager robot, Pose startPose, AutoStartSide startSide, AutoCommand lastCommand) {
+        public void execute(RobotManager robot, Pose startPose, AutoStartSide startSide, AutoCommand lastCommand, AutoCommand nextCommand) {
             PathingMethods.intakeLine(
                     robot,
                     startSide,
@@ -99,7 +99,7 @@ public class AutoCommandRepository {
         }
 
         @Override
-        public void execute(RobotManager robot, Pose startPose, AutoStartSide startSide, AutoCommand lastCommand) {
+        public void execute(RobotManager robot, Pose startPose, AutoStartSide startSide, AutoCommand lastCommand, AutoCommand nextCommand) {
             PathingMethods.intakeLine(
                     robot,
                     startSide,
@@ -124,7 +124,7 @@ public class AutoCommandRepository {
         }
 
         @Override
-        public void execute(RobotManager robot, Pose startPose, AutoStartSide startSide, AutoCommand lastCommand) {
+        public void execute(RobotManager robot, Pose startPose, AutoStartSide startSide, AutoCommand lastCommand, AutoCommand nextCommand) {
             PathingMethods.intakeLine(
                     robot,
                     startSide,
@@ -147,11 +147,28 @@ public class AutoCommandRepository {
         }
 
         @Override
-        public void execute(RobotManager robot, Pose startPose, AutoStartSide startSide, AutoCommand lastCommand) {
+        public void execute(RobotManager robot, Pose startPose, AutoStartSide startSide, AutoCommand lastCommand, AutoCommand nextCommand) {
             double intakeEndT = .05;
+            double chassisHeading = -90;
+            double chassisHeadingEndT = 1;
 
             if (lastCommand != null && lastCommand.getType() == AutoCommandTypes.INTAKE_HUMAN_PLAYER) {
                 intakeEndT = .5;
+            }
+
+            if (startSide == AutoStartSide.CLOSE_ZONE) {
+                if (nextCommand != null) {
+                    AutoCommandTypes type = nextCommand.getType();
+
+                    if (type == AutoCommandTypes.INTAKE_GATE) {
+                        chassisHeading = -45;
+                        chassisHeadingEndT = .3;
+                    } else if (type == AutoCommandTypes.INTAKE_CLOSE_LINE) {
+                        chassisHeading = 0;
+                    }
+                }
+            } else if (startSide == AutoStartSide.FAR_ZONE) {
+                chassisHeading = 0;
             }
 
             PathingMethods.scoreArtifacts(
@@ -162,7 +179,9 @@ public class AutoCommandRepository {
                     (lastCommand != null && lastCommand.getType() == AutoCommandTypes.INTAKE_CLOSE_LINE),
                     false,
                     intakeEndT,
-                    this.initialCycle
+                    this.initialCycle,
+                    chassisHeading,
+                    chassisHeadingEndT
             );
         }
     }
@@ -174,7 +193,7 @@ public class AutoCommandRepository {
         }
 
         @Override
-        public void execute(RobotManager robot, Pose startPose, AutoStartSide startSide, AutoCommand lastCommand) {
+        public void execute(RobotManager robot, Pose startPose, AutoStartSide startSide, AutoCommand lastCommand, AutoCommand nextCommand) {
             double intakeEndT = .15;
 
             if (lastCommand != null && lastCommand.getType() == AutoCommandTypes.INTAKE_HUMAN_PLAYER) {
@@ -189,7 +208,9 @@ public class AutoCommandRepository {
                     (lastCommand != null && lastCommand.getType() == AutoCommandTypes.INTAKE_CLOSE_LINE),
                     true,
                     intakeEndT,
-                    false
+                    false,
+                    -45,
+                    1
             );
         }
     }
@@ -207,7 +228,7 @@ public class AutoCommandRepository {
         }
 
         @Override
-        public void execute(RobotManager robot, Pose startPose, AutoStartSide startSide, AutoCommand lastCommand) {
+        public void execute(RobotManager robot, Pose startPose, AutoStartSide startSide, AutoCommand lastCommand, AutoCommand nextCommand) {
             PathingMethods.intakeGate(
                     robot,
                     startSide,
@@ -250,7 +271,7 @@ public class AutoCommandRepository {
         }
 
         @Override
-        public void execute(RobotManager robot, Pose startPose, AutoStartSide startSide, AutoCommand lastCommand) {
+        public void execute(RobotManager robot, Pose startPose, AutoStartSide startSide, AutoCommand lastCommand, AutoCommand nextCommand) {
             PathingMethods.intakeHumanPlayer(
                     robot,
                     startSide,
@@ -266,7 +287,7 @@ public class AutoCommandRepository {
         }
 
         @Override
-        public void execute(RobotManager robot, Pose startPose, AutoStartSide startSide, AutoCommand lastCommand) {
+        public void execute(RobotManager robot, Pose startPose, AutoStartSide startSide, AutoCommand lastCommand, AutoCommand nextCommand) {
             PathingMethods.park(
                     robot,
                     startSide
@@ -289,7 +310,7 @@ public class AutoCommandRepository {
         }
 
         @Override
-        public void execute(RobotManager robot, Pose startPose, AutoStartSide startSide, AutoCommand lastCommand) {
+        public void execute(RobotManager robot, Pose startPose, AutoStartSide startSide, AutoCommand lastCommand, AutoCommand nextCommand) {
             PathingMethods.clearGate(
                     robot,
                     startSide,

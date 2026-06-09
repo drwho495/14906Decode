@@ -16,6 +16,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
+import org.firstinspires.ftc.robotcore.external.Supplier;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.teamcode.Base.Helpers.PedroUtils;
@@ -26,6 +27,7 @@ import org.firstinspires.ftc.teamcode.Base.Misc.ShooterAimPolicy;
 import org.firstinspires.ftc.teamcode.Base.Misc.ShooterControlPolicy;
 import org.firstinspires.ftc.teamcode.Base.Misc.ShooterPFState;
 import org.firstinspires.ftc.teamcode.Base.Misc.ShootingStyle;
+import org.firstinspires.ftc.teamcode.Base.Misc.TurretBacklashPolicy;
 import org.firstinspires.ftc.teamcode.Base.Misc.TurretControlPolicy;
 import org.firstinspires.ftc.teamcode.Base.Subsystems.IntakeSubsystem;
 import org.firstinspires.ftc.teamcode.Base.Subsystems.ShooterSubsystem;
@@ -69,6 +71,7 @@ public class RobotManager {
     private boolean turretEnabled = false;
     private double turretTargetPosition = Math.PI;
     private boolean turretRelativeControl = false;
+    private TurretBacklashPolicy turretBacklashPolicy = TurretBacklashPolicy.MITIGATE_WHILE_SHOOTING;
 
     private double headingLockGoal = 0;
     private boolean headingLockActive = false;
@@ -84,9 +87,9 @@ public class RobotManager {
     private final ElapsedTime activeHoldingLastBallTimer = new ElapsedTime();
 
     private HeadingLockControlPolicy headingLockControlPolicy = HeadingLockControlPolicy.AIM_AT_GOAL;
-    private boolean aimHoldPoint = false;
-    private boolean useHoodCompensation = false;
-    private boolean useVelocityCompensation = true;
+    private boolean hoodCompensationEnabled = false;
+    private boolean velocityCompensationEnabled = true;
+    private boolean centripetalVelocityCompensationEnabled = true;
     private boolean stateStart = true;
     private boolean resetDistanceToGoal = false;
     private boolean autoTransferStopEnabled = true;
@@ -110,6 +113,14 @@ public class RobotManager {
         opMode = newOpMode;
         shooterSubsystem.setLinearTeleop(this.opMode);
         intakeSubsystem.setLinearTeleop(this.opMode);
+    }
+
+    public void setTurretBacklashPolicy(TurretBacklashPolicy newPolicy) {
+        turretBacklashPolicy = newPolicy;
+    }
+
+    public TurretBacklashPolicy getTurretBacklashPolicy() {
+        return turretBacklashPolicy;
     }
 
     public void setShooterControlPolicy(ShooterControlPolicy newControlPolicy) {
@@ -145,11 +156,19 @@ public class RobotManager {
     }
 
     public void enableVelocityCompensation() {
-        useVelocityCompensation = true;
+        velocityCompensationEnabled = true;
     }
 
     public void disableVelocityCompensation() {
-        useVelocityCompensation = false;
+        velocityCompensationEnabled = false;
+    }
+
+    public void enableCentripetalVelocityCompensation() {
+        centripetalVelocityCompensationEnabled = true;
+    }
+
+    public void disableCentripetalVelocityCompensation() {
+        centripetalVelocityCompensationEnabled = false;
     }
 
     public void enableWaitForVelocityToShoot() {
@@ -224,7 +243,7 @@ public class RobotManager {
     }
 
     private Pose getOffsetedGoalPose() {
-        Pose offsetedPose = getFixedPose(getGoalPosition().copy());
+        Pose offsetedPose = getFixedPose(getGoalPosition(true, true).copy());
 
         double offsetX = offsetedPose.getX() + (goalOffset + 6);
         double offsetY = offsetedPose.getY() - goalOffset;
@@ -719,7 +738,7 @@ public class RobotManager {
     }
 
     public double getHeadingToGoal() {
-        return getHeadingToGoal(useVelocityCompensation ? getVelocityCorrectedPose() : getPose());
+        return getHeadingToGoal(velocityCompensationEnabled ? getVelocityCorrectedPose() : getPose());
     }
 
     public void recalibrateIMU() {
@@ -735,11 +754,11 @@ public class RobotManager {
     }
 
     public void enableHoodCompensation() {
-        useHoodCompensation = true;
+        hoodCompensationEnabled = true;
     }
 
     public void disableHoodCompensation() {
-        useHoodCompensation = false;
+        hoodCompensationEnabled = false;
     }
 
     public double getTransferSpeed() {
@@ -782,7 +801,7 @@ public class RobotManager {
     public void update() {
         Pose robotPose = getPose();
 
-        if ((!opMode.opModeIsActive() && !opMode.opModeInInit()) || opMode.isStopRequested()) {
+        if (opMode.isStopRequested()) {
             return;
         }
 
@@ -790,7 +809,7 @@ public class RobotManager {
             clearCache();
         }
 
-        double headingToGoal = getHeadingToGoal(useVelocityCompensation ? getVelocityCorrectedPose(robotPose, poseTracker.getVelocity()) : robotPose);
+        double headingToGoal = getHeadingToGoal(velocityCompensationEnabled ? getVelocityCorrectedPose(robotPose, poseTracker.getVelocity()) : robotPose);
 
         if (headingLockControlPolicy == HeadingLockControlPolicy.CONSTANT) {
             headingLockGoal = headingToGoal;
@@ -804,6 +823,10 @@ public class RobotManager {
 
         if (!turretRelativeControl) {
             turretPositionCorrected -= robotPose.getHeading();
+
+            if (centripetalVelocityCompensationEnabled) {
+                turretPositionCorrected -= (poseTracker.getAngularVelocity() * Parameters.CENTRIPETAL_VELOCITY_COMPENSATION_MULTIPLIER);
+            }
         }
 
         shooterSubsystem.setTurretPosition(turretPositionCorrected);
@@ -812,10 +835,14 @@ public class RobotManager {
             updateShooterParameters(getDistanceToGoal());
         }
 
+        if (turretBacklashPolicy == TurretBacklashPolicy.MITIGATE_ALWAYS || (scoringCycleActive && turretBacklashPolicy == TurretBacklashPolicy.MITIGATE_WHILE_SHOOTING)) {
+            shooterSubsystem.setTurretBacklashOffset(Parameters.TURRET_BACKLASH);
+        } else {
+            shooterSubsystem.clearTurretBacklashOffset();
+        }
+
         if (scoringCycleActive) {
             boolean needsToWait = false;
-
-            shooterSubsystem.setTurretBacklashOffset(Parameters.TURRET_BACKLASH);
 
             isTransferStopped = false;
             transferStopTimerPaused = true;
@@ -834,7 +861,7 @@ public class RobotManager {
 
             intakeSubsystem.setIntakePower(intakePower);
 
-            if (useHoodCompensation) {
+            if (hoodCompensationEnabled) {
                 shooterSubsystem.enableHoodCompensation();
             } else {
                 shooterSubsystem.disableHoodCompensation();
@@ -880,7 +907,6 @@ public class RobotManager {
         } else {
             shooterSubsystem.setPFState(ShooterPFState.WANDERING_LOOP);
             shooterSubsystem.disableHoodCompensation();
-            shooterSubsystem.clearTurretBacklashOffset();
 
             if (intakePower == 0 && activeHoldLastBallEnabled && lastIntakePower > 0) {
                 if (!activeHoldingLastBall) {
@@ -936,8 +962,9 @@ public class RobotManager {
             shooterSubsystem.closeFinger();
         }
 
-        if (printDebugEnabled)
+        if (printDebugEnabled) {
             printDebugInfo();
+        }
 
         stateStart = false;
         resetDistanceToGoal = true;
@@ -1033,7 +1060,7 @@ public class RobotManager {
         return shooterSubsystem.getHoodAngle();
     }
 
-    public Pose getGoalPosition(boolean checkDistance) {
+    public Pose getGoalPosition(boolean checkDistance, boolean retrieveAimPosition) {
         Pose robotPose = new Pose();
 
         if (checkDistance)
@@ -1041,26 +1068,26 @@ public class RobotManager {
 
         if (getAllianceSide() == AllianceSides.RED) {
             if (!checkDistance || robotPose.distanceFrom(Parameters.SHOOTER_GOAL_CLOSE_RED) < Parameters.FAR_ZONE_DISTANCE) {
-                return Parameters.SHOOTER_GOAL_CLOSE_RED;
+                return retrieveAimPosition ? Parameters.SHOOTER_GOAL_CLOSE_RED_AIM : Parameters.SHOOTER_GOAL_CLOSE_RED;
             } else {
-                return Parameters.SHOOTER_GOAL_FAR_RED;
+                return retrieveAimPosition ? Parameters.SHOOTER_GOAL_FAR_RED_AIM : Parameters.SHOOTER_GOAL_FAR_RED;
             }
         } else {
             if (!checkDistance || robotPose.distanceFrom(Parameters.SHOOTER_GOAL_CLOSE_BLUE) < Parameters.FAR_ZONE_DISTANCE) {
-                return Parameters.SHOOTER_GOAL_CLOSE_BLUE;
+                return retrieveAimPosition ? Parameters.SHOOTER_GOAL_CLOSE_BLUE_AIM : Parameters.SHOOTER_GOAL_CLOSE_BLUE;
             } else {
-                return Parameters.SHOOTER_GOAL_FAR_BLUE;
+                return retrieveAimPosition ? Parameters.SHOOTER_GOAL_FAR_BLUE_AIM : Parameters.SHOOTER_GOAL_FAR_BLUE;
             }
         }
     }
 
     public Pose getGoalPosition() {
-        return getGoalPosition(true);
+        return getGoalPosition(true, false);
     }
 
     public double getDistanceToGoal() {
         if (resetDistanceToGoal) {
-            Pose robotPose = useVelocityCompensation ? getVelocityCorrectedPose() : getPose();
+            Pose robotPose = velocityCompensationEnabled ? getVelocityCorrectedPose() : getPose();
 
             resetDistanceToGoal = false;
             distanceToGoal = robotPose.distanceFrom(getGoalPosition());
@@ -1069,7 +1096,7 @@ public class RobotManager {
     }
 
     public double getDistanceToGoal(Pose robotPosition) {
-        return robotPosition.distanceFrom(getGoalPosition(false));
+        return robotPosition.distanceFrom(getGoalPosition(false, false));
     }
 
     public void waitForShooter() {
@@ -1125,5 +1152,17 @@ public class RobotManager {
 
     public boolean isFollowerBusy() {
         return !teleopDriveActive && follower.isBusy();
+    }
+
+    // The robot will stop waiting once the condition returns `true`
+    public void waitForCondition(Supplier<Boolean> condition) {
+        while (!condition.get() && opMode.opModeIsActive()) {
+            update();
+            follower.update();
+        }
+    }
+
+    public void waitForPathEnd() {
+        waitForCondition(() -> !follower.isBusy());
     }
 }

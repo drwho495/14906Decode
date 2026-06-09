@@ -244,11 +244,9 @@ public class ShooterSubsystem extends Subsystem {
 
     @Override
     public void update() {
-        if (!thisOpMode.opModeIsActive() || thisOpMode.isStopRequested()) return;
+        updatePF();
 
         double hoodServoOffset = 0;
-
-        updatePF();
 
         if (hoodCompensationEnabled) {
             shooter1Current = shooterMotor1.getCurrent();
@@ -275,8 +273,6 @@ public class ShooterSubsystem extends Subsystem {
 
         turretServoRight.turnToAngle(reachableTurretTargetPosition + backlashOffsetCorrected, AngleUnit.RADIANS, true);
         turretServoLeft.turnToAngle(reachableTurretTargetPosition - backlashOffsetCorrected, AngleUnit.RADIANS, true);
-
-        thisOpMode.telemetry.addData("hood servo: ", hoodServoPos);
 
         fingerServo.turnToAngle(fingerServoPos);
         hoodServo.turnToAngle(Range.clip(hoodServoPos - hoodServoOffset, Parameters.HOOD_SERVO_DOWN, Parameters.HOOD_SERVO_UP), AngleUnit.DEGREES, true);

@@ -56,17 +56,30 @@ public class AutoProgram {
     }
 
     public void execute() {
+        AutoCommandRepository.AutoCommand currentCommand = null;
         AutoCommandRepository.AutoCommand lastCommand = null;
+        AutoCommandRepository.AutoCommand nextCommand = null;
 
-        for (AutoCommandRepository.AutoCommand command : commands) {
-            command.execute(
+        for (int i = 0; i < commands.size(); i++) {
+            currentCommand = commands.get(i);
+
+            if (i > 0) {
+                lastCommand = commands.get(i - 1);
+            }
+
+            if ((i + 1) < commands.size()) {
+                nextCommand = commands.get(i + 1);
+            } else {
+                nextCommand = null;
+            }
+
+            currentCommand.execute(
                     robot,
                     startPose,
                     startSide,
-                    lastCommand
+                    lastCommand,
+                    nextCommand
             );
-
-            lastCommand = command;
         }
     }
 }

@@ -4,11 +4,15 @@ import com.pedropathing.geometry.Pose;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.Base.Misc.AllianceSides;
 import org.firstinspires.ftc.teamcode.Base.Auto.AutoCommandRepository;
 import org.firstinspires.ftc.teamcode.Base.Auto.AutoProgram;
 import org.firstinspires.ftc.teamcode.Base.Auto.AutoStartSide;
 import org.firstinspires.ftc.teamcode.Base.Misc.OpModeState;
+import org.firstinspires.ftc.teamcode.Base.Misc.ShooterAimPolicy;
+import org.firstinspires.ftc.teamcode.Base.Misc.TurretBacklashPolicy;
+import org.firstinspires.ftc.teamcode.Base.Misc.TurretControlPolicy;
 import org.firstinspires.ftc.teamcode.Base.Parameters;
 import org.firstinspires.ftc.teamcode.Base.RobotManager;
 import org.firstinspires.ftc.teamcode.Base.Misc.ShooterControlPolicy;
@@ -20,6 +24,7 @@ enum V3AutoDefault {
     EIGHTEEN_ARTIFACT,
     EIGHTEEN_ARTIFACT_ALLIANCE_FRIENDLY,
     EIGHTEEN_ARTIFACT_ALLIANCE_FRIENDLY_EXTRA_PUSH,
+    TWENTY_ONE_ARTIFACT_ALLIANCE_FRIENDLY,
     FIFTEEN_ARTIFACT,
     FIFTEEN_ARTIFACT_GATE_INTAKE,
     FIFTEEN_ARTIFACT_ALLIANCE_FRIENDLY,
@@ -90,6 +95,22 @@ public class AutoV3 extends LinearOpMode {
 
                 startSide = AutoStartSide.CLOSE_ZONE;
                 break;
+            case TWENTY_ONE_ARTIFACT_ALLIANCE_FRIENDLY:
+                commands.add(new AutoCommandRepository.ScoreArtifacts(true));
+                commands.add(new AutoCommandRepository.IntakeMidLine());
+                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
+                commands.add(new AutoCommandRepository.IntakeGate(true));
+                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
+                commands.add(new AutoCommandRepository.IntakeGate(true));
+                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
+                commands.add(new AutoCommandRepository.IntakeGate(false));
+                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
+                commands.add(new AutoCommandRepository.IntakeGate(false));
+                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
+                commands.add(new AutoCommandRepository.IntakeCloseLine(false));
+                commands.add(new AutoCommandRepository.ScoreArtifactsAndPark());
+
+                startSide = AutoStartSide.CLOSE_ZONE;
             case FIFTEEN_ARTIFACT:
                 commands.add(new AutoCommandRepository.ScoreArtifacts(true));
                 commands.add(new AutoCommandRepository.IntakeFarLine());
@@ -191,6 +212,8 @@ public class AutoV3 extends LinearOpMode {
                 return "Close Zone: 18 Artifact Alliance Friendly Auto";
             case EIGHTEEN_ARTIFACT_ALLIANCE_FRIENDLY_EXTRA_PUSH:
                 return "Close Zone: 18 Artifact Alliance Friendly Auto with an Extra Gate Push";
+            case TWENTY_ONE_ARTIFACT_ALLIANCE_FRIENDLY:
+                return "Close Zone: 21 Artifact Alliance Friendly Auto";
             case FIFTEEN_ARTIFACT:
                 return "Close Zone: 15 Artifact Auto";
             case FIFTEEN_ARTIFACT_GATE_INTAKE:
@@ -216,12 +239,11 @@ public class AutoV3 extends LinearOpMode {
     public void runOpMode() throws InterruptedException {
         robot = new RobotManager(this);
 
-
-        robot.setState(OpModeState.GENERAL_CYCLE);
+        robot.setShooterAimPolicy(ShooterAimPolicy.TURRET);
         robot.setShooterControlPolicy(ShooterControlPolicy.MANUAL);
         robot.enableAutoTransferStop();
         robot.disableDebugPrinting();
-        robot.disableVelocityCompensation();
+        robot.enableVelocityCompensation();
         robot.setShootingStyle(ShootingStyle.LARGE_ARC);
         robot.disableHoodCompensation();
         robot.disableOnlyShootInZone();
@@ -233,6 +255,11 @@ public class AutoV3 extends LinearOpMode {
 
         int defaultSelection = defaultAuto.ordinal();
         boolean defaultUpdated = true;
+
+        robot.setTurretControlPolicy(TurretControlPolicy.CONSTANT);
+        robot.enableTurretRelativeControl();
+        robot.enableTurret();
+        robot.setConstantTurretHeadingGoal(180, AngleUnit.DEGREES);
 
         while (opModeInInit()) {
             if (gamepad1.yWasPressed())
@@ -283,6 +310,11 @@ public class AutoV3 extends LinearOpMode {
 
         waitForStart();
         updateRobotStart();
+
+        robot.disableTurretRelativeControl();
+        robot.setTurretControlPolicy(TurretControlPolicy.AIM_AT_GOAL);
+        robot.startAimingAtGoal();
+        robot.setTurretBacklashPolicy(TurretBacklashPolicy.MITIGATE_ALWAYS);
 
         internalProgram = new AutoProgram(robot);
 
