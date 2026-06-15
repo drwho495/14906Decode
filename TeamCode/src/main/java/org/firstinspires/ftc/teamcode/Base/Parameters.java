@@ -16,9 +16,13 @@ import org.firstinspires.ftc.teamcode.bedroBathing.util.CustomPIDFCoefficients;
 @Config
 @Configurable
 public class Parameters {
+    public static long SHOOTER_FINGER_TIMEOUT = 500;
+    public static double TRANSFER_STOP_CURRENT = 3;
+    public static double AUTO_SCORE_MAX_VEL = -1;
     public static double AUTO_SCORE_ERROR = 10;
+    public static double AUTO_SCORE_WAIT_TIME = 550;
     public static double CENTRIPETAL_VELOCITY_COMPENSATION_MULTIPLIER = 0.11;
-    public static double VELOCITY_CORRECTION_MULTIPLIER = 0.7;
+    public static double VELOCITY_CORRECTION_MULTIPLIER = 0.6;
     public static double SHOOTER_READY_TOLERANCE = 60;
     public static double SHOOTER_DEFAULT_RPM = 4500;
     public static double MIN_SHOOT_DISTANCE = 40;
@@ -30,10 +34,10 @@ public class Parameters {
     public static Pose RED_CLOSE_START = new Pose(0, 0, Math.toRadians(220));
     public static Pose RED_FAR_START = new Pose(-29.66, -120.83, Math.toRadians(-90));
     //    public static Pose RED_SHOOTER_GOAL = new Pose(20, 0);
-    public static Pose SHOOTER_GOAL_CLOSE_RED_AIM = new Pose(20, -10);
+    public static Pose SHOOTER_GOAL_CLOSE_RED_AIM = new Pose(15, 0);
     public static Pose SHOOTER_GOAL_FAR_RED_AIM = new Pose(10, 4);
-    public static Pose SHOOTER_GOAL_CLOSE_BLUE_AIM = new Pose(-110, 10);
-    public static Pose SHOOTER_GOAL_FAR_BLUE_AIM = new Pose(-102, 7.5);
+    public static Pose SHOOTER_GOAL_CLOSE_BLUE_AIM = new Pose(-100, 10);
+    public static Pose SHOOTER_GOAL_FAR_BLUE_AIM = new Pose(-95, 7.5);
     public static Pose SHOOTER_GOAL_CLOSE_RED = new Pose(18, 8);
     public static Pose SHOOTER_GOAL_FAR_RED = new Pose(10, 4);
     public static Pose SHOOTER_GOAL_CLOSE_BLUE = new Pose(-110, 10);
@@ -51,7 +55,7 @@ public class Parameters {
 
     public static double HOOD_SERVO_DOWN = 20;
     public static double HOOD_SERVO_UP = 300;
-    public static double HOOD_SERVO_POSITION_OFFSET = 10;
+    public static double HOOD_SERVO_POSITION_OFFSET = 12;
 
     public static double DEFAULT_AIM_OFFSET_RED = 0;
     public static double DEFAULT_AIM_OFFSET_BLUE = -1;
@@ -68,8 +72,8 @@ public class Parameters {
     public static Pose TELEOP_AUTO_GATE_POSE = new Pose(11, -76);
     public static double TELEOP_AUTO_GATE_HEADING = 35;
 
-    public static double SHOOTER_FAR_ZONE_VELOCITY = 5000;
-    public static double SHOOTER_FAR_ZONE_HOOD_ANGLE = 300;
+    public static double SHOOTER_FAR_ZONE_VELOCITY = 5200;
+    public static double SHOOTER_FAR_ZONE_HOOD_ANGLE = 150;
     public static ShooterCurve CLOSE_ZONE_CURVE = new ShooterCurve();
     public static ShooterCurve FAR_ZONE_CURVE = new ShooterCurve();
 }

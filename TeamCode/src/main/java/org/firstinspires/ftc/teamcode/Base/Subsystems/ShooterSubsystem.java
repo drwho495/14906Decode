@@ -4,6 +4,7 @@ import com.acmerobotics.dashboard.config.Config;
 import com.bylazar.configurables.annotations.Configurable;
 import com.pedropathing.math.MathFunctions;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.qualcomm.robotcore.util.Range;
 
@@ -93,13 +94,14 @@ public class ShooterSubsystem extends Subsystem {
         );
 
         shooterMotor1.enableBrake();
-        shooterMotor1.setEncoderState(true);
         shooterMotor1.resetEncoder();
         shooterMotor1.setMode(ComplexMotorModes.USE_VELOCITY_PID);
+        shooterMotor1.setMotorRunMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         shooterMotor1.setReversed(true);
 
         shooterMotor2.enableBrake();
         shooterMotor2.setMode(ComplexMotorModes.USE_VELOCITY_PID);
+        shooterMotor2.setMotorRunMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         shooterMotor2.setReversed(true);
 
         shooterMotor1.useCustomVeloPIDLoop(true);

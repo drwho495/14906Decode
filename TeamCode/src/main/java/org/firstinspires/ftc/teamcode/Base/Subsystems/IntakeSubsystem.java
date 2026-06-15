@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.Base.Subsystems;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
@@ -35,13 +36,13 @@ public class IntakeSubsystem extends Subsystem {
     public void initialiseHardware() {
         intakeMotor1 = new ComplexMotor("intakeMotor1", thisOpMode);
         intakeMotor1.setMode(ComplexMotorModes.RAW_POWER);
-        intakeMotor1.setEncoderState(false);
+        intakeMotor1.setMotorRunMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         intakeMotor1.enableBrake();
         intakeMotor1.setPower(0);
 
         intakeMotor2 = new ComplexMotor("intakeMotor2", thisOpMode);
         intakeMotor2.setMode(ComplexMotorModes.RAW_POWER);
-        intakeMotor2.setEncoderState(true);
+        intakeMotor2.setMotorRunMode(DcMotor.RunMode.RUN_USING_ENCODER);
         intakeMotor2.setReversed(true);
         intakeMotor2.enableBrake();
         intakeMotor2.setPower(0);

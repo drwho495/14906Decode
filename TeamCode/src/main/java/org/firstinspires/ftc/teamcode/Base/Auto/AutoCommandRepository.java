@@ -23,7 +23,7 @@ public class AutoCommandRepository {
             return AutoCommandRepository.getUserLabel(getType());
         }
 
-        public abstract void execute(RobotManager robot, Pose startPose, AutoStartSide startSide, AutoCommand lastCommand, AutoCommand nextCommand);
+        public abstract void execute(RobotManager robot, Pose startPose, RunSide runSide, AutoCommand lastCommand, AutoCommand nextCommand);
     }
 
     public static String getUserLabel(AutoCommandTypes ofType) {
@@ -83,10 +83,10 @@ public class AutoCommandRepository {
         }
 
         @Override
-        public void execute(RobotManager robot, Pose startPose, AutoStartSide startSide, AutoCommand lastCommand, AutoCommand nextCommand) {
+        public void execute(RobotManager robot, Pose startPose, RunSide runSide, AutoCommand lastCommand, AutoCommand nextCommand) {
             PathingMethods.intakeLine(
                     robot,
-                    startSide,
+                    runSide,
                     0
             );
         }
@@ -99,10 +99,10 @@ public class AutoCommandRepository {
         }
 
         @Override
-        public void execute(RobotManager robot, Pose startPose, AutoStartSide startSide, AutoCommand lastCommand, AutoCommand nextCommand) {
+        public void execute(RobotManager robot, Pose startPose, RunSide runSide, AutoCommand lastCommand, AutoCommand nextCommand) {
             PathingMethods.intakeLine(
                     robot,
-                    startSide,
+                    runSide,
                     1
             );
         }
@@ -124,10 +124,10 @@ public class AutoCommandRepository {
         }
 
         @Override
-        public void execute(RobotManager robot, Pose startPose, AutoStartSide startSide, AutoCommand lastCommand, AutoCommand nextCommand) {
+        public void execute(RobotManager robot, Pose startPose, RunSide runSide, AutoCommand lastCommand, AutoCommand nextCommand) {
             PathingMethods.intakeLine(
                     robot,
-                    startSide,
+                    runSide,
                     2,
                     clearGateWhileMoving
             );
@@ -147,7 +147,7 @@ public class AutoCommandRepository {
         }
 
         @Override
-        public void execute(RobotManager robot, Pose startPose, AutoStartSide startSide, AutoCommand lastCommand, AutoCommand nextCommand) {
+        public void execute(RobotManager robot, Pose startPose, RunSide runSide, AutoCommand lastCommand, AutoCommand nextCommand) {
             double intakeEndT = .05;
             double chassisHeading = -90;
             double chassisHeadingEndT = 1;
@@ -156,24 +156,24 @@ public class AutoCommandRepository {
                 intakeEndT = .5;
             }
 
-            if (startSide == AutoStartSide.CLOSE_ZONE) {
+            if (runSide == RunSide.CLOSE_ZONE) {
                 if (nextCommand != null) {
                     AutoCommandTypes type = nextCommand.getType();
 
                     if (type == AutoCommandTypes.INTAKE_GATE) {
                         chassisHeading = -45;
-                        chassisHeadingEndT = .3;
+                        chassisHeadingEndT = .6;
                     } else if (type == AutoCommandTypes.INTAKE_CLOSE_LINE) {
                         chassisHeading = 0;
                     }
                 }
-            } else if (startSide == AutoStartSide.FAR_ZONE) {
+            } else if (runSide == RunSide.FAR_ZONE) {
                 chassisHeading = 0;
             }
 
             PathingMethods.scoreArtifacts(
                     robot,
-                    startSide,
+                    runSide,
                     startPose,
                     (lastCommand != null && lastCommand.getType() == AutoCommandTypes.INTAKE_GATE),
                     (lastCommand != null && lastCommand.getType() == AutoCommandTypes.INTAKE_CLOSE_LINE),
@@ -193,7 +193,7 @@ public class AutoCommandRepository {
         }
 
         @Override
-        public void execute(RobotManager robot, Pose startPose, AutoStartSide startSide, AutoCommand lastCommand, AutoCommand nextCommand) {
+        public void execute(RobotManager robot, Pose startPose, RunSide runSide, AutoCommand lastCommand, AutoCommand nextCommand) {
             double intakeEndT = .15;
 
             if (lastCommand != null && lastCommand.getType() == AutoCommandTypes.INTAKE_HUMAN_PLAYER) {
@@ -202,7 +202,7 @@ public class AutoCommandRepository {
 
             PathingMethods.scoreArtifacts(
                     robot,
-                    startSide,
+                    runSide,
                     startPose,
                     (lastCommand != null && lastCommand.getType() == AutoCommandTypes.INTAKE_GATE),
                     (lastCommand != null && lastCommand.getType() == AutoCommandTypes.INTAKE_CLOSE_LINE),
@@ -228,31 +228,15 @@ public class AutoCommandRepository {
         }
 
         @Override
-        public void execute(RobotManager robot, Pose startPose, AutoStartSide startSide, AutoCommand lastCommand, AutoCommand nextCommand) {
+        public void execute(RobotManager robot, Pose startPose, RunSide runSide, AutoCommand lastCommand, AutoCommand nextCommand) {
             PathingMethods.intakeGate(
                     robot,
-                    startSide,
+                    runSide,
                     initialCycle,
                     false
             );
         }
     }
-
-//    public static class IntakeGateInitial extends AutoCommand {
-//        @Override
-//        public AutoCommandTypes getType() {
-//            return AutoCommandTypes.INTAKE_GATE_INITIAL;
-//        }
-//
-//        @Override
-//        public void execute(RobotManager robot, Pose startPose, AutoStartSide startSide, AutoCommand lastCommand) {
-//            PathingMethods.intakeGate(
-//                    robot,
-//                    startSide,
-//                    true
-//            );
-//        }
-//    }
 
     public static class IntakeHumanPlayer extends AutoCommand {
         private boolean sweepZone;
@@ -271,10 +255,10 @@ public class AutoCommandRepository {
         }
 
         @Override
-        public void execute(RobotManager robot, Pose startPose, AutoStartSide startSide, AutoCommand lastCommand, AutoCommand nextCommand) {
+        public void execute(RobotManager robot, Pose startPose, RunSide runSide, AutoCommand lastCommand, AutoCommand nextCommand) {
             PathingMethods.intakeHumanPlayer(
                     robot,
-                    startSide,
+                    runSide,
                     sweepZone
             );
         }
@@ -287,10 +271,10 @@ public class AutoCommandRepository {
         }
 
         @Override
-        public void execute(RobotManager robot, Pose startPose, AutoStartSide startSide, AutoCommand lastCommand, AutoCommand nextCommand) {
+        public void execute(RobotManager robot, Pose startPose, RunSide runSide, AutoCommand lastCommand, AutoCommand nextCommand) {
             PathingMethods.park(
                     robot,
-                    startSide
+                    runSide
             );
         }
     }
@@ -310,10 +294,10 @@ public class AutoCommandRepository {
         }
 
         @Override
-        public void execute(RobotManager robot, Pose startPose, AutoStartSide startSide, AutoCommand lastCommand, AutoCommand nextCommand) {
+        public void execute(RobotManager robot, Pose startPose, RunSide runSide, AutoCommand lastCommand, AutoCommand nextCommand) {
             PathingMethods.clearGate(
                     robot,
-                    startSide,
+                    runSide,
                     waitTime
             );
         }

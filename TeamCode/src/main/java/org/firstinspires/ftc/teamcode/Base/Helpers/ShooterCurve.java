@@ -7,6 +7,7 @@ import java.util.Arrays;
 public class ShooterCurve {
     private final PointsCurve hoodCurve = new PointsCurve();
     private final PointsCurve rpmCurve = new PointsCurve();
+    private boolean limitDomain = false;
 
     public ArrayList<Pose> hoodCurvePoints = new ArrayList<>(
             Arrays.asList(
@@ -37,6 +38,14 @@ public class ShooterCurve {
         rpmCurve.buildCurve();
     }
 
+    public void enableDomainLimit() {
+        limitDomain = true;
+    }
+
+    public void disableDomainLimit() {
+        limitDomain = false;
+    }
+
     public static void populateCurveWithPoseList(PointsCurve curve, ArrayList<Pose> list) {
         curve.clear();
 
@@ -59,11 +68,26 @@ public class ShooterCurve {
     }
 
     public double getHoodCurveOutput(double x) {
-        return hoodCurve.getY(x);
+        return getCurveY(hoodCurve, x);
     }
 
     public double getRPMCurveOutput(double x) {
-        return rpmCurve.getY(x);
+        return getCurveY(rpmCurve, x);
+    }
+
+    private double getCurveY(PointsCurve curve, double x) {
+        if (limitDomain) {
+            double minX = curve.getMinX();
+            double maxX = curve.getMaxX();
+
+            if (x < minX) {
+                x = minX;
+            } else if (x > maxX) {
+                x = maxX;
+            }
+        }
+
+        return curve.getY(x);
     }
 
     public void clear() {

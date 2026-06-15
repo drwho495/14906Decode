@@ -7,9 +7,11 @@ import org.apache.commons.math3.fitting.WeightedObservedPoints;
 import java.util.List;
 
 public class PointsCurve {
+    private boolean isBuilt = false;
+    private double minX = 0;
+    private double maxX = 0;
     public final WeightedObservedPoints pointArray = new WeightedObservedPoints();
     public double[] coefficients = null;
-    private boolean isBuilt = false;
 
     public void addPoint(double x, double y) {
         if (isBuilt()) {
@@ -27,6 +29,19 @@ public class PointsCurve {
             final PolynomialCurveFitter fitter = PolynomialCurveFitter.create(3);
             coefficients = fitter.fit(pointsList);
 
+            minX = pointsList.get(0).getX();
+            maxX = minX;
+
+            for (final WeightedObservedPoint point : pointsList) {
+                double pointX = point.getX();
+
+                if (minX > pointX) {
+                    minX = pointX;
+                } else if (maxX < pointX) {
+                    maxX = pointX;
+                }
+            }
+
             isBuilt = true;
         }
     }
@@ -40,6 +55,14 @@ public class PointsCurve {
             return coefficients[0] + (coefficients[1] * x) + (coefficients[2] * (x*x)) + (coefficients[3] * (x*x*x));
         }
         return -1;
+    }
+
+    public double getMinX() {
+        return minX;
+    }
+
+    public double getMaxX() {
+        return maxX;
     }
 
     public void clear() {

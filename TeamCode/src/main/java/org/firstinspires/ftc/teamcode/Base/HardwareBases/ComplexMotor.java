@@ -16,8 +16,9 @@ import org.firstinspires.ftc.teamcode.Base.Parameters;
 
 public class ComplexMotor {
     private LinearOpMode opMode;
-    private DcMotorEx thisMotor = null;
+    private DcMotorEx motorInterface = null;
     private ComplexMotorModes currentMode = ComplexMotorModes.RAW_POWER;
+    private ComplexMotor encoderMotor = null;
     private double motorPower = 0;
     private double lastMotorPower = 0;
     private double lastMotorVelocity = 0;
@@ -33,33 +34,34 @@ public class ComplexMotor {
 
     public ComplexMotor(String hwName, LinearOpMode newOpMode) {
         this.opMode = newOpMode;
-        this.thisMotor = this.opMode.hardwareMap.get(DcMotorEx.class, hwName);
-        this.thisMotor.setMotorEnable();
+        this.motorInterface = this.opMode.hardwareMap.get(DcMotorEx.class, hwName);
+        this.encoderMotor = this;
+        this.motorInterface.setMotorEnable();
     }
 
     public ComplexMotor(String hwName, LinearOpMode newOpMode, VoltageSensor vSensor) {
         this.opMode = newOpMode;
         this.vSensor = vSensor;
-        this.thisMotor = this.opMode.hardwareMap.get(DcMotorEx.class, hwName);
-        this.thisMotor.setMotorEnable();
+        this.motorInterface = this.opMode.hardwareMap.get(DcMotorEx.class, hwName);
+        this.encoderMotor = this;
+        this.motorInterface.setMotorEnable();
     }
 
     public void enableBrake() {
-        this.thisMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        this.motorInterface.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
     }
 
     public void enableFloat() {
-        this.thisMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        this.motorInterface.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
     }
 
     public void setLinkedMotor(ComplexMotor linkedMotor) {
         this.childMotor = linkedMotor;
-        this.childMotor.setEncoderState(true);
         this.childMotor.setMode(ComplexMotorModes.RAW_POWER);
     }
 
-    public void setEncoderState(boolean use) {
-        this.thisMotor.setMode(use ? DcMotor.RunMode.RUN_USING_ENCODER : DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+    public void setEncoderMotor(ComplexMotor motor) {
+        encoderMotor = motor;
     }
 
     public double getVelocity() {
@@ -78,7 +80,7 @@ public class ComplexMotor {
         if (useCustomVelocity) {
             velocityController.setPIDF(p, i, d, f);
         } else {
-            thisMotor.setVelocityPIDFCoefficients(p, i, d, f);
+            motorInterface.setVelocityPIDFCoefficients(p, i, d, f);
         }
     }
 
@@ -86,10 +88,14 @@ public class ComplexMotor {
         if (useCustomVelocity) {
             return velocityController.getCoefficients();
         } else {
-            PIDFCoefficients coefficients = thisMotor.getPIDFCoefficients(thisMotor.getMode());
+            PIDFCoefficients coefficients = motorInterface.getPIDFCoefficients(motorInterface.getMode());
 
             return new double[]{coefficients.p, coefficients.i, coefficients.d, coefficients.f};
         }
+    }
+
+    public void setMotorRunMode(DcMotor.RunMode runMode) {
+        motorInterface.setMode(runMode);
     }
 
     public void setMode(ComplexMotorModes newMode) {
@@ -105,18 +111,22 @@ public class ComplexMotor {
     }
 
     public void resetEncoder() {
-        DcMotor.RunMode oldState = this.thisMotor.getMode();
+        DcMotor.RunMode oldState = this.encoderMotor.motorInterface.getMode();
 
-        this.thisMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        this.thisMotor.setMode(oldState);
+        this.encoderMotor.motorInterface.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        this.encoderMotor.motorInterface.setMode(oldState);
     }
 
     public void setReversed(boolean reversed) {
-        thisMotor.setDirection(reversed ? DcMotorSimple.Direction.REVERSE : DcMotorSimple.Direction.FORWARD);
+        motorInterface.setDirection(reversed ? DcMotorSimple.Direction.REVERSE : DcMotorSimple.Direction.FORWARD);
     }
 
     public void update() {
-        currentVelocity = thisMotor.getVelocity(AngleUnit.DEGREES);
+        if (encoderMotor != null) {
+            currentVelocity = encoderMotor.motorInterface.getVelocity(AngleUnit.DEGREES);
+        } else {
+            currentVelocity = 0;
+        }
 
         if (currentMode == ComplexMotorModes.USE_VELOCITY_PID) {
             if (useCustomVelocity) {
@@ -129,7 +139,7 @@ public class ComplexMotor {
                     }
 
                     if (lastMotorPower != motorPower) {
-                        thisMotor.setPower(motorPower);
+                        motorInterface.setPower(motorPower);
 
                         if (childMotor != null) {
                             childMotor.setPower(motorPower);
@@ -137,7 +147,7 @@ public class ComplexMotor {
                     }
                 } else {
                     if (lastMotorPower != 0) {
-                        thisMotor.setPower(0);
+                        motorInterface.setPower(0);
 
                         if (childMotor != null) {
                             childMotor.setPower(0);
@@ -147,17 +157,17 @@ public class ComplexMotor {
             } else {
                 if (motorVelocity != 0) {
                     if (lastMotorVelocity != motorVelocity) {
-                        thisMotor.setVelocity(motorVelocity, AngleUnit.DEGREES);
+                        motorInterface.setVelocity(motorVelocity, AngleUnit.DEGREES);
                     }
                 } else {
                     if (lastMotorPower != 0) {
-                        thisMotor.setPower(0);
+                        motorInterface.setPower(0);
                     }
                 }
             }
         } else if (currentMode == ComplexMotorModes.RAW_POWER) {
             if (lastMotorPower != motorPower) {
-                thisMotor.setPower(motorPower);
+                motorInterface.setPower(motorPower);
 
                 if (childMotor != null) {
                     childMotor.setPower(motorPower);
@@ -170,7 +180,7 @@ public class ComplexMotor {
     }
 
     public double getCurrent() {
-        return thisMotor.getCurrent(CurrentUnit.AMPS);
+        return motorInterface.getCurrent(CurrentUnit.AMPS);
     }
 
     public void setPower(double power) {
@@ -188,7 +198,7 @@ public class ComplexMotor {
 
     public void setCurrentLimit(CurrentUnit unit, double value) {
         if (unit != currentLimitUnit || value != currentLimit)
-            thisMotor.setCurrentAlert(value, unit);
+            motorInterface.setCurrentAlert(value, unit);
     }
 
     public boolean isOverCurrent(CurrentUnit unit, double value) {
@@ -198,6 +208,6 @@ public class ComplexMotor {
     }
 
     public boolean isOverCurrent() {
-        return thisMotor.isOverCurrent();
+        return motorInterface.isOverCurrent();
     }
 }

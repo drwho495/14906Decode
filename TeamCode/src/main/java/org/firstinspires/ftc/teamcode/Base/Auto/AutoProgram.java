@@ -11,7 +11,7 @@ import java.util.ArrayList;
 public class AutoProgram {
     // This is a list of default initialized commands that can be used in an OpMode.
     private ArrayList<AutoCommandRepository.AutoCommand> commands = new ArrayList<>();
-    private AutoStartSide startSide = AutoStartSide.CLOSE_ZONE;
+    private RunSide runSide = RunSide.CLOSE_ZONE;
     private final RobotManager robot;
     private Pose startPose = new Pose();
     private String autoName = "Unnamed Autonomous Program";
@@ -37,16 +37,16 @@ public class AutoProgram {
         return commands;
     }
 
-    public void setStartSide(AutoStartSide startSide) {
-        this.startSide = startSide;
+    public void setRunSide(RunSide runSide) {
+        this.runSide = runSide;
     }
 
     public void setStartPose(Pose startPose) {
         this.startPose = startPose;
     }
 
-    public void execute(AutoStartSide startSide, Pose startPose) {
-        setStartSide(startSide);
+    public void execute(RunSide runSide, Pose startPose) {
+        setRunSide(runSide);
         setStartPose(startPose);
         execute();
     }
@@ -59,6 +59,8 @@ public class AutoProgram {
         AutoCommandRepository.AutoCommand currentCommand = null;
         AutoCommandRepository.AutoCommand lastCommand = null;
         AutoCommandRepository.AutoCommand nextCommand = null;
+
+        robot.resetAutoPathingCancelFlag();
 
         for (int i = 0; i < commands.size(); i++) {
             currentCommand = commands.get(i);
@@ -76,10 +78,13 @@ public class AutoProgram {
             currentCommand.execute(
                     robot,
                     startPose,
-                    startSide,
+                    runSide,
                     lastCommand,
                     nextCommand
             );
+
+            if (robot.autoPathingCancelFlagActive())
+                break;
         }
     }
 }

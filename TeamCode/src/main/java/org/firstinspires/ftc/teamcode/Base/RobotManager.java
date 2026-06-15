@@ -19,6 +19,8 @@ import com.qualcomm.robotcore.util.Range;
 import org.firstinspires.ftc.robotcore.external.Supplier;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
+import org.firstinspires.ftc.teamcode.Base.Auto.AutoCommandRepository;
+import org.firstinspires.ftc.teamcode.Base.Auto.RunSide;
 import org.firstinspires.ftc.teamcode.Base.Helpers.PedroUtils;
 import org.firstinspires.ftc.teamcode.Base.Misc.AllianceSides;
 import org.firstinspires.ftc.teamcode.Base.Misc.HeadingLockControlPolicy;
@@ -50,6 +52,10 @@ public class RobotManager {
     private AllianceSides side = Parameters.LAST_ALLIANCE_SIDE;
     private double autoTimeout = -1;
     private double goalOffset = 0;
+    private AutoCommandRepository.AutoCommand lastAutoCommand = null;
+    private boolean flagAutoPathingCancelled = false;
+    private boolean autoRunBlockingEnabled = false;
+    private Runnable autoCallback = null;
 
     private final ElapsedTime autoTimer = new ElapsedTime();
     private final ElapsedTime timer = new ElapsedTime();
@@ -85,6 +91,7 @@ public class RobotManager {
     private boolean activeHoldLastBallEnabled = true;
     private boolean activeHoldingLastBall = false;
     private final ElapsedTime activeHoldingLastBallTimer = new ElapsedTime();
+    private final ElapsedTime shooterFingerTimeout = new ElapsedTime();
 
     private HeadingLockControlPolicy headingLockControlPolicy = HeadingLockControlPolicy.AIM_AT_GOAL;
     private boolean hoodCompensationEnabled = false;
@@ -263,8 +270,6 @@ public class RobotManager {
 
         if (shootingStyle == ShootingStyle.LARGE_ARC) {
             Parameters.CLOSE_ZONE_CURVE.addPoint(40, 30, 3000);
-//            Parameters.CLOSE_ZONE_CURVE.addPoint(55, 60, 3400);
-//            Parameters.CLOSE_ZONE_CURVE.addPoint(65, 100, 3520);
             Parameters.CLOSE_ZONE_CURVE.addPoint(76, 100, 3680);
             Parameters.CLOSE_ZONE_CURVE.addPoint(83, 100, 3820);
             Parameters.CLOSE_ZONE_CURVE.addPoint(100, 120, 4350);
@@ -274,6 +279,9 @@ public class RobotManager {
 
             shooterSubsystem.setHoodCompensationMultiplier(6);
         }
+
+        Parameters.CLOSE_ZONE_CURVE.enableDomainLimit();
+        Parameters.FAR_ZONE_CURVE.enableDomainLimit();
 
         Parameters.CLOSE_ZONE_CURVE.build();
         Parameters.FAR_ZONE_CURVE.build();
@@ -470,6 +478,7 @@ public class RobotManager {
         canShootOveride = false;
         scoringCycleActive = true;
         scoringCycleOverrideWaitConditions = overrideWaitConditions;
+        shooterFingerTimeout.reset();;
     }
 
     public void startScoringCycle() {
@@ -554,38 +563,18 @@ public class RobotManager {
     private void internalRunPath(PathBuilder path, boolean correctAfterFinished) {
         breakFollowing();
 
+        autoRunBlockingEnabled = true;
+
         follower.followPath(path.build(), correctAfterFinished);
         follower.update();
 
-        while (follower.isBusy() && !opMode.isStopRequested() && opMode.opModeIsActive()) {
+        while (follower.isBusy() && !opMode.isStopRequested() && opMode.opModeIsActive() && !flagAutoPathingCancelled) {
             if (autoTimeout > 0 && autoTimer.time(TimeUnit.MILLISECONDS) >= autoTimeout) {
                 breakFollowing(correctAfterFinished);
                 break;
             }
 
             if (followerEndStalePathEnabled) {
-//                velocityMagnitudes.add(0, new Pair<>(follower.getVelocity().getMagnitude(), System.currentTimeMillis()));
-//                double startTime = -1;
-//                double summedVelocity = 0;
-//                int numberOfInstances = 0;
-//
-//                for (Pair<Double, Long> pair : velocityMagnitudes) {
-//                    if (startTime == -1) {
-//                        startTime = pair.second;
-//                    }
-//
-//                    numberOfInstances++;
-//                    summedVelocity += pair.first;
-//
-//                    if ((startTime - pair.second) >= 800) {
-//                        if (numberOfInstances != 0 && Math.abs(summedVelocity / numberOfInstances) <= 1.5) {
-//                            breakFollowing(correctAfterFinished);
-//                        }
-//
-//                        break;
-//                    }
-//                }
-
                 if (follower.isRobotStuck()) {
                     breakFollowing(correctAfterFinished);
                 }
@@ -595,7 +584,8 @@ public class RobotManager {
             follower.update();
         }
 
-        autoTimeout = -1;
+        clearPathTimeout();
+        autoRunBlockingEnabled = false;
     }
 
     public void runBlocking(PathBuilder path) {
@@ -679,10 +669,19 @@ public class RobotManager {
     }
 
     public void safeSleep(ElapsedTime timer, double time) {
-        while (timer.time(TimeUnit.MILLISECONDS) < time && opMode.opModeIsActive() && !opMode.isStopRequested()) {
+        waitForCondition(() -> timer.time(TimeUnit.MILLISECONDS) >= time);
+    }
+
+    // The robot will stop waiting once the condition returns `true`
+    public void waitForCondition(Supplier<Boolean> condition) {
+        while (!condition.get() && opMode.opModeIsActive() && !flagAutoPathingCancelled) {
             update();
             follower.update();
         }
+    }
+
+    public void waitForPathEnd() {
+        waitForCondition(() -> !follower.isBusy());
     }
 
     public void addPathTimeout(double timeout) {
@@ -798,10 +797,53 @@ public class RobotManager {
         updateShooterParameters(getDistanceToGoal(robotPose));
     }
 
+    public void runSingleAutoCommand(AutoCommandRepository.AutoCommand command, RunSide runSide) {
+        resetAutoPathingCancelFlag();
+
+        command.execute(
+                this,
+                new Pose(),
+                runSide,
+                lastAutoCommand,
+                null
+        );
+
+        lastAutoCommand = command;
+    }
+
+    public void cancelAutoPathing() {
+        flagAutoPathingCancelled = true;
+
+        if (!autoRunBlockingEnabled && follower.isBusy()) {
+            // runPassthrough was called.
+            follower.breakFollowing();
+        }
+    }
+
+    public boolean autoPathingCancelFlagActive() {
+        return flagAutoPathingCancelled;
+    }
+
+    public void resetAutoPathingCancelFlag() {
+        flagAutoPathingCancelled = false;
+    }
+
+    public void registerAutoCallback(Runnable autoCallback) {
+        this.autoCallback = autoCallback;
+    }
+
+    public void clearAutoCallback() {
+        this.autoCallback = null;
+    }
+
     public void update() {
         Pose robotPose = getPose();
 
-        if (opMode.isStopRequested()) {
+        if (follower.isBusy() && autoCallback != null) {
+            autoCallback.run();
+        }
+
+        if (!opMode.opModeIsActive() || opMode.isStopRequested()) {
             return;
         }
 
@@ -924,18 +966,18 @@ public class RobotManager {
 
                 double intakeMotor2Power = intakePower;
 
-                if (intakePower > 0) {
+                if (intakePower >= 0) {
                     if (autoTransferStopEnabled) {
                         if (isTransferStopped) {
                             intakeMotor2Power = 0;
                         } else {
-                            if (intakeSubsystem.isTransferOverCurrent(CurrentUnit.AMPS, 5)) {
+                            if (intakeSubsystem.isTransferOverCurrent(CurrentUnit.AMPS, Parameters.TRANSFER_STOP_CURRENT)) {
                                 if (transferStopTimerPaused) {
                                     transferStopTimer.reset();
                                     transferStopTimerPaused = false;
                                 }
 
-                                if (transferStopTimer.time(TimeUnit.MILLISECONDS) >= 850) {
+                                if (transferStopTimer.time(TimeUnit.MILLISECONDS) >= 650) {
                                     isTransferStopped = true;
                                     transferStopTimerPaused = true;
 
@@ -959,7 +1001,10 @@ public class RobotManager {
             }
 
             intakeSubsystem.setPowerLimits(1, 1);
-            shooterSubsystem.closeFinger();
+
+            if (shooterFingerTimeout.time(TimeUnit.MILLISECONDS) >= Parameters.SHOOTER_FINGER_TIMEOUT) {
+                shooterSubsystem.closeFinger();
+            }
         }
 
         if (printDebugEnabled) {
@@ -1152,17 +1197,5 @@ public class RobotManager {
 
     public boolean isFollowerBusy() {
         return !teleopDriveActive && follower.isBusy();
-    }
-
-    // The robot will stop waiting once the condition returns `true`
-    public void waitForCondition(Supplier<Boolean> condition) {
-        while (!condition.get() && opMode.opModeIsActive()) {
-            update();
-            follower.update();
-        }
-    }
-
-    public void waitForPathEnd() {
-        waitForCondition(() -> !follower.isBusy());
     }
 }

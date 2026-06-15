@@ -5,11 +5,10 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.teamcode.Base.Auto.RunSide;
 import org.firstinspires.ftc.teamcode.Base.Misc.AllianceSides;
 import org.firstinspires.ftc.teamcode.Base.Auto.AutoCommandRepository;
 import org.firstinspires.ftc.teamcode.Base.Auto.AutoProgram;
-import org.firstinspires.ftc.teamcode.Base.Auto.AutoStartSide;
-import org.firstinspires.ftc.teamcode.Base.Misc.OpModeState;
 import org.firstinspires.ftc.teamcode.Base.Misc.ShooterAimPolicy;
 import org.firstinspires.ftc.teamcode.Base.Misc.TurretBacklashPolicy;
 import org.firstinspires.ftc.teamcode.Base.Misc.TurretControlPolicy;
@@ -39,9 +38,9 @@ enum V3AutoDefault {
 public class AutoV3 extends LinearOpMode {
     private boolean useDefault = true;
     private boolean robotStartIsSet = false;
-    private V3AutoDefault defaultAuto = V3AutoDefault.EIGHTEEN_ARTIFACT;
+    private V3AutoDefault defaultAuto = V3AutoDefault.EIGHTEEN_ARTIFACT_ALLIANCE_FRIENDLY;
     private RobotManager robot;
-    private AutoStartSide startSide = AutoStartSide.CLOSE_ZONE;
+    private RunSide runSide = RunSide.CLOSE_ZONE;
     private AutoProgram internalProgram;
     private ArrayList<AutoCommandRepository.AutoCommand> commands = new ArrayList<>();
 
@@ -62,7 +61,7 @@ public class AutoV3 extends LinearOpMode {
                 commands.add(new AutoCommandRepository.IntakeCloseLine());
                 commands.add(new AutoCommandRepository.ScoreArtifactsAndPark());
 
-                startSide = AutoStartSide.CLOSE_ZONE;
+                runSide = RunSide.CLOSE_ZONE;
                 break;
             case EIGHTEEN_ARTIFACT_ALLIANCE_FRIENDLY:
                 commands.add(new AutoCommandRepository.ScoreArtifacts(true));
@@ -77,7 +76,7 @@ public class AutoV3 extends LinearOpMode {
                 commands.add(new AutoCommandRepository.IntakeCloseLine(false));
                 commands.add(new AutoCommandRepository.ScoreArtifactsAndPark());
 
-                startSide = AutoStartSide.CLOSE_ZONE;
+                runSide = RunSide.CLOSE_ZONE;
                 break;
             case EIGHTEEN_ARTIFACT_ALLIANCE_FRIENDLY_EXTRA_PUSH:
                 commands.add(new AutoCommandRepository.ScoreArtifacts(true));
@@ -93,7 +92,7 @@ public class AutoV3 extends LinearOpMode {
                 commands.add(new AutoCommandRepository.IntakeCloseLine(false));
                 commands.add(new AutoCommandRepository.ScoreArtifactsAndPark());
 
-                startSide = AutoStartSide.CLOSE_ZONE;
+                runSide = RunSide.CLOSE_ZONE;
                 break;
             case TWENTY_ONE_ARTIFACT_ALLIANCE_FRIENDLY:
                 commands.add(new AutoCommandRepository.ScoreArtifacts(true));
@@ -110,7 +109,7 @@ public class AutoV3 extends LinearOpMode {
                 commands.add(new AutoCommandRepository.IntakeCloseLine(false));
                 commands.add(new AutoCommandRepository.ScoreArtifactsAndPark());
 
-                startSide = AutoStartSide.CLOSE_ZONE;
+                runSide = RunSide.CLOSE_ZONE;
             case FIFTEEN_ARTIFACT:
                 commands.add(new AutoCommandRepository.ScoreArtifacts(true));
                 commands.add(new AutoCommandRepository.IntakeFarLine());
@@ -124,7 +123,7 @@ public class AutoV3 extends LinearOpMode {
                 commands.add(new AutoCommandRepository.ScoreArtifacts(false));
                 commands.add(new AutoCommandRepository.Park());
 
-                startSide = AutoStartSide.CLOSE_ZONE;
+                runSide = RunSide.CLOSE_ZONE;
                 break;
             case FIFTEEN_ARTIFACT_GATE_INTAKE:
                 commands.add(new AutoCommandRepository.ScoreArtifacts(true));
@@ -137,7 +136,7 @@ public class AutoV3 extends LinearOpMode {
                 commands.add(new AutoCommandRepository.IntakeCloseLine());
                 commands.add(new AutoCommandRepository.ScoreArtifactsAndPark());
 
-                startSide = AutoStartSide.CLOSE_ZONE;
+                runSide = RunSide.CLOSE_ZONE;
                 break;
             case FIFTEEN_ARTIFACT_ALLIANCE_FRIENDLY:
                 commands.add(new AutoCommandRepository.ScoreArtifacts(true));
@@ -150,7 +149,7 @@ public class AutoV3 extends LinearOpMode {
                 commands.add(new AutoCommandRepository.IntakeCloseLine());
                 commands.add(new AutoCommandRepository.ScoreArtifactsAndPark());
 
-                startSide = AutoStartSide.CLOSE_ZONE;
+                runSide = RunSide.CLOSE_ZONE;
                 break;
             case TWELVE_ARTIFACT:
                 commands.add(new AutoCommandRepository.ScoreArtifacts(true));
@@ -162,7 +161,7 @@ public class AutoV3 extends LinearOpMode {
                 commands.add(new AutoCommandRepository.ScoreArtifacts(false));
                 commands.add(new AutoCommandRepository.Park());
 
-                startSide = AutoStartSide.CLOSE_ZONE;
+                runSide = RunSide.CLOSE_ZONE;
                 break;
             case TWELVE_ARTIFACT_ALLIANCE_FRIENDLY:
                 commands.add(new AutoCommandRepository.ScoreArtifacts(true));
@@ -174,14 +173,14 @@ public class AutoV3 extends LinearOpMode {
                 commands.add(new AutoCommandRepository.ScoreArtifacts(false));
                 commands.add(new AutoCommandRepository.Park());
 
-                startSide = AutoStartSide.CLOSE_ZONE;
+                runSide = RunSide.CLOSE_ZONE;
                 break;
             case FAR_ZONE_6_ARTIFACT_FROM_HP:
                 commands.add(new AutoCommandRepository.ScoreArtifacts(true));
                 commands.add(new AutoCommandRepository.IntakeHumanPlayer());
                 commands.add(new AutoCommandRepository.ScoreArtifacts(false));
 
-                startSide = AutoStartSide.FAR_ZONE;
+                runSide = RunSide.FAR_ZONE;
                 break;
             case FAR_ZONE_9_ARTIFACT_FROM_HP_SM:
                 commands.add(new AutoCommandRepository.ScoreArtifacts(true));
@@ -190,7 +189,7 @@ public class AutoV3 extends LinearOpMode {
                 commands.add(new AutoCommandRepository.IntakeHumanPlayer());
                 commands.add(new AutoCommandRepository.ScoreArtifacts(false));
 
-                startSide = AutoStartSide.FAR_ZONE;
+                runSide = RunSide.FAR_ZONE;
                 break;
             case FAR_ZONE_9_ARTIFACT_FROM_HP:
                 commands.add(new AutoCommandRepository.ScoreArtifacts(true));
@@ -199,7 +198,7 @@ public class AutoV3 extends LinearOpMode {
                 commands.add(new AutoCommandRepository.IntakeHumanPlayer(true));
                 commands.add(new AutoCommandRepository.ScoreArtifacts(false));
 
-                startSide = AutoStartSide.FAR_ZONE;
+                runSide = RunSide.FAR_ZONE;
                 break;
         }
     }
@@ -296,7 +295,7 @@ public class AutoV3 extends LinearOpMode {
             telemetry.addData("Robot Heading: ", robot.getPose().getHeading());
             telemetry.addLine();
             telemetry.addLine("Auto Program:");
-            telemetry.addData("Starting Side: ", startSide);
+            telemetry.addData("Starting Side: ", runSide);
 
             for(AutoCommandRepository.AutoCommand command : commands) {
                 telemetry.addData("Command", command.getUserLabel());
@@ -322,7 +321,9 @@ public class AutoV3 extends LinearOpMode {
             setupFromDefault();
 
         internalProgram.setCommands(commands);
-        internalProgram.execute(startSide, getStartPose());
+        internalProgram.execute(runSide, getStartPose());
+
+        robot.safeSleep(1000);
     }
 
     private void updateRobotStart() {
@@ -339,9 +340,9 @@ public class AutoV3 extends LinearOpMode {
     private Pose getStartPose() {
         Pose startPose = new Pose();
 
-        if (startSide == AutoStartSide.CLOSE_ZONE) {
+        if (runSide == RunSide.CLOSE_ZONE) {
             startPose = robot.getAllianceSide() == AllianceSides.RED ? Parameters.RED_CLOSE_START : Parameters.BLUE_CLOSE_START;
-        } else if (startSide == AutoStartSide.FAR_ZONE) {
+        } else if (runSide == RunSide.FAR_ZONE) {
             startPose = robot.getAllianceSide() == AllianceSides.RED ? Parameters.RED_FAR_START : Parameters.BLUE_FAR_START;
         }
 

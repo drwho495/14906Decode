@@ -1,6 +1,5 @@
 package org.firstinspires.ftc.teamcode.OpModes;
 
-import com.pedropathing.geometry.BezierCurve;
 import com.pedropathing.geometry.Pose;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -8,6 +7,9 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.teamcode.Base.Auto.AutoCommandRepository;
+import org.firstinspires.ftc.teamcode.Base.Auto.RunSide;
+import org.firstinspires.ftc.teamcode.Base.Auto.PathingMethods;
 import org.firstinspires.ftc.teamcode.Base.Misc.AllianceSides;
 import org.firstinspires.ftc.teamcode.Base.Misc.HeadingLockControlPolicy;
 import org.firstinspires.ftc.teamcode.Base.Misc.OpModeState;
@@ -72,6 +74,12 @@ public class MainTeleop extends LinearOpMode {
         robot.setTurretControlPolicy(TurretControlPolicy.AIM_AT_GOAL);
         robot.setShooterAimPolicy(ShooterAimPolicy.TURRET);
         robot.setDriverOffset(robot.getAllianceSide() == AllianceSides.BLUE ? 180 : 0);
+
+        robot.registerAutoCallback(() -> {
+            if (Math.abs(gamepad1.left_stick_x) > .1 || Math.abs(gamepad1.left_stick_y) > .1 || Math.abs(gamepad1.right_stick_x) > .1) {
+                robot.cancelAutoPathing();
+            }
+        });
 
         if (robot.getShooterAimPolicy() == ShooterAimPolicy.TURRET) {
             robot.enableTurret();
@@ -265,25 +273,22 @@ public class MainTeleop extends LinearOpMode {
                         gateIntakeStateIsAutoScoring = true;
                         gateIntakeStateIsGateIntaking = false;
 
-                        robot.setMaxFollowerPower(1);
-                        robot.breakFollowing();
-                        robot.stopScoringCycle();
-                        robot.runPassthrough(
-                                robot.pathBuilder()
-                                        .addPath(
-                                                new BezierCurve(
-                                                        robotPose,
-                                                        robot.getFixedPose(-10, -55),
-                                                        robot.getFixedPose(gateIntakeLocalScorePose)
-                                                )
-                                        )
-                                        .setLinearHeadingInterpolation(robotPose.getHeading(), robot.getFixedHeading(gateIntakeLocalScoreHeading), .5)
-                                        .setTValueConstraint(1)
-                                        .setVelocityConstraint(1000)
-                                        .addTemporalCallback(.1, () -> {
-                                            robot.setIntakePower(0);
-                                            robot.startScoringCycle(true);
-                                        })
+//                        PathingMethods.scoreArtifacts(
+//                                robot,
+//                                RunSide.CLOSE_ZONE,
+//                                new Pose(),
+//                                true,
+//                                false,
+//                                false,
+//                                .1,
+//                                false,
+//                                -45,
+//                                .2
+//                        );
+
+                        robot.runSingleAutoCommand(
+                                new AutoCommandRepository.ScoreArtifacts(false),
+                                RunSide.CLOSE_ZONE
                         );
                     }
 
@@ -293,22 +298,16 @@ public class MainTeleop extends LinearOpMode {
                         gateIntakeStateIsAutoScoring = false;
                         gateIntakeStateIsGateIntaking = true;
 
-                        robot.setMaxFollowerPower(1);
-                        robot.breakFollowing();
-                        robot.powerIntakeOn();
-                        robot.stopScoringCycle();
-                        robot.runPassthrough(
-                                robot.pathBuilder()
-                                        .addPath(
-                                                new BezierCurve(
-                                                        robotPose,
-                                                        robot.getFixedPose(-15, -70),
-                                                        robot.getFixedPose(gateIntakeLocalGatePose)
-                                                )
-                                        )
-                                        .setLinearHeadingInterpolation(robotPose.getHeading(), robot.getFixedHeading(gateIntakeLocalGateHeading), .2)
-                                        .setTValueConstraint(1)
-                                        .setVelocityConstraint(1000)
+//                        PathingMethods.intakeGate(
+//                                robot,
+//                                RunSide.CLOSE_ZONE,
+//                                false,
+//                                false
+//                        );
+
+                        robot.runSingleAutoCommand(
+                                new AutoCommandRepository.IntakeGate(false),
+                                RunSide.CLOSE_ZONE
                         );
                     }
 
@@ -318,7 +317,7 @@ public class MainTeleop extends LinearOpMode {
                         gateIntakeStateCanShootArtifacts = true;
                     }
 
-                    if (!canDrive && (Math.abs(gamepad1.left_stick_x) > .1 || Math.abs(gamepad1.left_stick_y) > .1 || Math.abs(gamepad1.right_stick_x) > .1)) {
+                    if (!canDrive && !robot.isFollowerBusy()) {
                         enableManualGatePosition = true;
                         canDrive = true;
                         gateIntakeStateIsAutoScoring = false;
