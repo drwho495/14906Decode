@@ -11,7 +11,6 @@ import org.firstinspires.ftc.teamcode.Base.Auto.AutoCommandRepository;
 import org.firstinspires.ftc.teamcode.Base.Auto.AutoProgram;
 import org.firstinspires.ftc.teamcode.Base.Misc.ShooterAimPolicy;
 import org.firstinspires.ftc.teamcode.Base.Misc.TurretBacklashPolicy;
-import org.firstinspires.ftc.teamcode.Base.Misc.TurretControlPolicy;
 import org.firstinspires.ftc.teamcode.Base.Parameters;
 import org.firstinspires.ftc.teamcode.Base.RobotManager;
 import org.firstinspires.ftc.teamcode.Base.Misc.ShooterControlPolicy;
@@ -30,7 +29,7 @@ enum V3AutoDefault {
     TWELVE_ARTIFACT,
     TWELVE_ARTIFACT_ALLIANCE_FRIENDLY,
     FAR_ZONE_6_ARTIFACT_FROM_HP,
-    FAR_ZONE_9_ARTIFACT_FROM_HP_SM,
+    FAR_ZONE_15_ARTIFACT_FROM_HP_SM,
     FAR_ZONE_9_ARTIFACT_FROM_HP
 }
 
@@ -44,7 +43,7 @@ public class AutoV3 extends LinearOpMode {
     private AutoProgram internalProgram;
     private ArrayList<AutoCommandRepository.AutoCommand> commands = new ArrayList<>();
 
-    private void setupFromDefault() {
+    private void populateCommandsFromDefault() {
         commands.clear();
 
         switch (defaultAuto) {
@@ -182,12 +181,17 @@ public class AutoV3 extends LinearOpMode {
 
                 runSide = RunSide.FAR_ZONE;
                 break;
-            case FAR_ZONE_9_ARTIFACT_FROM_HP_SM:
+            case FAR_ZONE_15_ARTIFACT_FROM_HP_SM:
                 commands.add(new AutoCommandRepository.ScoreArtifacts(true));
                 commands.add(new AutoCommandRepository.IntakeFarLine());
                 commands.add(new AutoCommandRepository.ScoreArtifacts(false));
                 commands.add(new AutoCommandRepository.IntakeHumanPlayer());
                 commands.add(new AutoCommandRepository.ScoreArtifacts(false));
+                commands.add(new AutoCommandRepository.IntakeHumanPlayer());
+                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
+                commands.add(new AutoCommandRepository.IntakeHumanPlayer());
+                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
+                commands.add(new AutoCommandRepository.Park());
 
                 runSide = RunSide.FAR_ZONE;
                 break;
@@ -225,8 +229,8 @@ public class AutoV3 extends LinearOpMode {
                 return "Close Zone: 12 Artifact Alliance Friendly Auto";
             case FAR_ZONE_9_ARTIFACT_FROM_HP:
                 return "Far Zone: 9 Artifact (all from human player station)";
-            case FAR_ZONE_9_ARTIFACT_FROM_HP_SM:
-                return "Far Zone: 9 Artifact (from far spike mark and human player station)";
+            case FAR_ZONE_15_ARTIFACT_FROM_HP_SM:
+                return "Far Zone: 15 Artifact (from far spike mark and human player station)";
             case FAR_ZONE_6_ARTIFACT_FROM_HP:
                 return "Far Zone: 6 Artifact (all from human player station)";
         }
@@ -255,10 +259,11 @@ public class AutoV3 extends LinearOpMode {
         int defaultSelection = defaultAuto.ordinal();
         boolean defaultUpdated = true;
 
-        robot.setTurretControlPolicy(TurretControlPolicy.CONSTANT);
         robot.enableTurretRelativeControl();
         robot.enableTurret();
         robot.setConstantTurretHeadingGoal(180, AngleUnit.DEGREES);
+
+        Parameters.SHOOTER_GOAL_CLOSE_BLUE_AIM = new Pose(-100, 10);
 
         while (opModeInInit()) {
             if (gamepad1.yWasPressed())
@@ -284,7 +289,7 @@ public class AutoV3 extends LinearOpMode {
 
                 defaultAuto = V3AutoDefault.values()[defaultSelection];
 
-                setupFromDefault();
+                populateCommandsFromDefault();
 
                 defaultUpdated = false;
                 useDefault = true;
@@ -311,14 +316,13 @@ public class AutoV3 extends LinearOpMode {
         updateRobotStart();
 
         robot.disableTurretRelativeControl();
-        robot.setTurretControlPolicy(TurretControlPolicy.AIM_AT_GOAL);
         robot.startAimingAtGoal();
         robot.setTurretBacklashPolicy(TurretBacklashPolicy.MITIGATE_ALWAYS);
 
         internalProgram = new AutoProgram(robot);
 
         if (useDefault)
-            setupFromDefault();
+            populateCommandsFromDefault();
 
         internalProgram.setCommands(commands);
         internalProgram.execute(runSide, getStartPose());

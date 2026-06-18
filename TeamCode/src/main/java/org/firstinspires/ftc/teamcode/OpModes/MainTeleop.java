@@ -60,6 +60,8 @@ public class MainTeleop extends LinearOpMode {
 
         waitForStart();
 
+        Parameters.SHOOTER_GOAL_CLOSE_BLUE_AIM = new Pose(-110, 10);
+
         robot.setTransferSpeed(1);
         robot.enableAutoTransferStop();
         robot.disableHoodCompensation();
@@ -71,7 +73,6 @@ public class MainTeleop extends LinearOpMode {
         robot.powerShooterOff();
         robot.disableHeadingLock();
         robot.setState(OpModeState.GENERAL_CYCLE);
-        robot.setTurretControlPolicy(TurretControlPolicy.AIM_AT_GOAL);
         robot.setShooterAimPolicy(ShooterAimPolicy.TURRET);
         robot.setDriverOffset(robot.getAllianceSide() == AllianceSides.BLUE ? 180 : 0);
 
@@ -82,7 +83,6 @@ public class MainTeleop extends LinearOpMode {
         });
 
         if (robot.getShooterAimPolicy() == ShooterAimPolicy.TURRET) {
-            robot.enableTurret();
             robot.startAimingAtGoal();
         }
 
@@ -119,13 +119,15 @@ public class MainTeleop extends LinearOpMode {
                 robot.setState(OpModeState.GENERAL_CYCLE);
             }
 
-            if (gamepad2.xWasPressed()) {
+            if (gamepad2.yWasPressed()) {
                 if (manualTurretActive) {
                     robot.startAimingAtGoal();
+                    robot.enableTurretEcoMode();
 
                     manualTurretActive = false;
                 } else {
                     robot.stopAimingAtGoal();
+                    robot.disableTurretEcoMode();
 
                     manualTurretActive = true;
                 }
@@ -137,11 +139,14 @@ public class MainTeleop extends LinearOpMode {
                 }
 
                 if (!manualTurretPositionLocked) {
+                    double allianceOffset = 0;
+
+                    if (robot.getAllianceSide() == AllianceSides.RED) {
+                        allianceOffset = Math.PI;
+                    }
+
                     robot.setConstantTurretHeadingGoal(
-                            robot.getFixedHeading(
-                                    Math.atan2(gamepad2.right_stick_y, gamepad2.right_stick_x) - ((3 * Math.PI) / 2),
-                                    AngleUnit.RADIANS
-                            ),
+                            Math.atan2(gamepad2.right_stick_y, -gamepad2.right_stick_x) - ((1 * Math.PI) / 2) + allianceOffset,
                             AngleUnit.RADIANS
                     );
                 }
@@ -273,19 +278,6 @@ public class MainTeleop extends LinearOpMode {
                         gateIntakeStateIsAutoScoring = true;
                         gateIntakeStateIsGateIntaking = false;
 
-//                        PathingMethods.scoreArtifacts(
-//                                robot,
-//                                RunSide.CLOSE_ZONE,
-//                                new Pose(),
-//                                true,
-//                                false,
-//                                false,
-//                                .1,
-//                                false,
-//                                -45,
-//                                .2
-//                        );
-
                         robot.runSingleAutoCommand(
                                 new AutoCommandRepository.ScoreArtifacts(false),
                                 RunSide.CLOSE_ZONE
@@ -297,13 +289,6 @@ public class MainTeleop extends LinearOpMode {
                         gateIntakeStateCanShootArtifacts = false;
                         gateIntakeStateIsAutoScoring = false;
                         gateIntakeStateIsGateIntaking = true;
-
-//                        PathingMethods.intakeGate(
-//                                robot,
-//                                RunSide.CLOSE_ZONE,
-//                                false,
-//                                false
-//                        );
 
                         robot.runSingleAutoCommand(
                                 new AutoCommandRepository.IntakeGate(false),
@@ -344,8 +329,6 @@ public class MainTeleop extends LinearOpMode {
                 robot.setDriverOffset(robot.getAllianceSide() == AllianceSides.BLUE ? 180 : 0);
             }
 
-            Double[] shooterRPMs = robot.getCurrentShooterVelocities();
-
             telemetry.addData("Distance To Goal: ", robot.getDistanceToGoal());
             telemetry.addData("Robot Alliance: ", robot.getAllianceSide() == AllianceSides.BLUE ? "Blue Side" : "Red Side");
             telemetry.addData("Heading Lock Goal Offset: ", robot.getGoalOffset());
@@ -355,8 +338,7 @@ public class MainTeleop extends LinearOpMode {
             if (showDebugInfo) {
                 telemetry.addLine("! DEBUG !");
                 telemetry.addData("Target RPM: ", robot.getShooterTargetVelocity());
-                telemetry.addData("Actual RPM 1: ", shooterRPMs[0]);
-                telemetry.addData("Actual RPM 2: ", shooterRPMs[1]);
+                telemetry.addData("Shooter Velocity: ", robot.getShooterVelocity());
                 telemetry.addData("Hood Angle: ", robot.getHoodAngle());
                 telemetry.addData("Is Shooting: ", robot.scoringCycleActive());
                 telemetry.addData("Angular Velocity: ", robot.getFollower().getAngularVelocity());

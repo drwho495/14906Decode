@@ -17,33 +17,33 @@ import org.firstinspires.ftc.teamcode.bedroBathing.util.CustomPIDFCoefficients;
 @Configurable
 public class Parameters {
     public static long SHOOTER_FINGER_TIMEOUT = 500;
-    public static double TRANSFER_STOP_CURRENT = 3;
+    public static double TRANSFER_STOP_CURRENT = 4.5;
     public static double AUTO_SCORE_MAX_VEL = -1;
     public static double AUTO_SCORE_ERROR = 10;
     public static double AUTO_SCORE_WAIT_TIME = 550;
     public static double CENTRIPETAL_VELOCITY_COMPENSATION_MULTIPLIER = 0.11;
     public static double VELOCITY_CORRECTION_MULTIPLIER = 0.6;
-    public static double SHOOTER_READY_TOLERANCE = 60;
+    public static double SHOOTER_READY_TOLERANCE = 120;
     public static double SHOOTER_DEFAULT_RPM = 4500;
-    public static double MIN_SHOOT_DISTANCE = 40;
+    public static double MIN_SHOOT_DISTANCE = 45;
     public static double FAR_ZONE_DISTANCE = 120;
-    public static double FAR_ZONE_TRANSFER_SPEED = .6;
+    public static double FAR_ZONE_TRANSFER_SPEED = .4;
     public static double SHOOTER_VOLTAGE_TARGET = 11.7;
 
     public static AllianceSides LAST_ALLIANCE_SIDE = AllianceSides.RED;
     public static Pose RED_CLOSE_START = new Pose(0, 0, Math.toRadians(220));
-    public static Pose RED_FAR_START = new Pose(-29.66, -120.83, Math.toRadians(-90));
+    public static Pose RED_FAR_START = new Pose(-25, -130, Math.toRadians(90));
+    public static Pose BLUE_CLOSE_START = new Pose(-92.7, 0, PedroUtils.getMirroredPose(RED_CLOSE_START).getHeading());
+    public static Pose BLUE_FAR_START = PedroUtils.getMirroredPose(RED_FAR_START);
     //    public static Pose RED_SHOOTER_GOAL = new Pose(20, 0);
     public static Pose SHOOTER_GOAL_CLOSE_RED_AIM = new Pose(15, 0);
-    public static Pose SHOOTER_GOAL_FAR_RED_AIM = new Pose(10, 4);
+    public static Pose SHOOTER_GOAL_FAR_RED_AIM = new Pose(20, 4);
     public static Pose SHOOTER_GOAL_CLOSE_BLUE_AIM = new Pose(-100, 10);
     public static Pose SHOOTER_GOAL_FAR_BLUE_AIM = new Pose(-95, 7.5);
     public static Pose SHOOTER_GOAL_CLOSE_RED = new Pose(18, 8);
     public static Pose SHOOTER_GOAL_FAR_RED = new Pose(10, 4);
     public static Pose SHOOTER_GOAL_CLOSE_BLUE = new Pose(-110, 10);
     public static Pose SHOOTER_GOAL_FAR_BLUE = new Pose(-102, 7.5);
-    public static Pose BLUE_CLOSE_START = new Pose(-92.7, 0, PedroUtils.getMirroredPose(RED_CLOSE_START).getHeading());
-    public static Pose BLUE_FAR_START = PedroUtils.getMirroredPose(RED_FAR_START);
     public static CustomPIDFCoefficients preciseTurnCoeffs = new CustomPIDFCoefficients(
             2,
             0,
@@ -72,7 +72,7 @@ public class Parameters {
     public static Pose TELEOP_AUTO_GATE_POSE = new Pose(11, -76);
     public static double TELEOP_AUTO_GATE_HEADING = 35;
 
-    public static double SHOOTER_FAR_ZONE_VELOCITY = 5200;
+    public static double SHOOTER_FAR_ZONE_VELOCITY = 4700;
     public static double SHOOTER_FAR_ZONE_HOOD_ANGLE = 150;
     public static ShooterCurve CLOSE_ZONE_CURVE = new ShooterCurve();
     public static ShooterCurve FAR_ZONE_CURVE = new ShooterCurve();

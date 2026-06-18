@@ -31,8 +31,11 @@ public class ShooterTuner extends LinearOpMode {
         robot.disableVelocityCompensation();
         robot.disableOnlyShootInZone();
         robot.disableWaitForVelocityToShoot();
+        robot.disableTurretEcoMode();
 
         robot.startAimingAtGoal();
+
+        double powerIncrementLevel = 0;
 
         while (opModeIsActive()) {
             if (gamepad1.psWasPressed()) robot.setPose(Parameters.RED_CLOSE_START);
@@ -46,10 +49,16 @@ public class ShooterTuner extends LinearOpMode {
 
             robot.setIntakePower(gamepad1.right_trigger);
 
+            if (gamepad1.right_trigger > .1) {
+                powerIncrementLevel = 100;
+            } else {
+                powerIncrementLevel = 10;
+            }
+
             if (gamepad1.dpadRightWasPressed()) {
-                robot.setShooterVelocity(robot.getShooterTargetVelocity() + 10);
+                robot.setShooterVelocity(robot.getShooterTargetVelocity() + powerIncrementLevel);
             } else if (gamepad1.dpadLeftWasPressed()) {
-                robot.setShooterVelocity(robot.getShooterTargetVelocity() - 10);
+                robot.setShooterVelocity(robot.getShooterTargetVelocity() - powerIncrementLevel);
             }
 
             if (gamepad1.dpadUpWasPressed()) {
@@ -58,10 +67,7 @@ public class ShooterTuner extends LinearOpMode {
                 robot.setHoodServoPos(robot.getHoodAngle() - 5);
             }
 
-            Double[] velocities = robot.getCurrentShooterVelocities();
-
-            telemetry.addData("Shooter 1 Motor Velocity: ", velocities[0]);
-            telemetry.addData("Shooter 2 Motor Velocity: ", velocities[1]);
+            telemetry.addData("Shooter Velocity: ", robot.getShooterVelocity());
             telemetry.addData("Shooter Ready: ", robot.shooterReady());
             telemetry.addData("Distance to Red Goal: ", robot.getDistanceToGoal());
             telemetry.addData("Shooter Velocity Target: ", robot.getShooterTargetVelocity());

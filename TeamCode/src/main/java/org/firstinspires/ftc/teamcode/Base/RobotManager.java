@@ -21,6 +21,9 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.teamcode.Base.Auto.AutoCommandRepository;
 import org.firstinspires.ftc.teamcode.Base.Auto.RunSide;
+import org.firstinspires.ftc.teamcode.Base.HardwareBases.ComplexMotor;
+import org.firstinspires.ftc.teamcode.Base.HardwareBases.ComplexServo;
+import org.firstinspires.ftc.teamcode.Base.HardwareBases.HardwareTable;
 import org.firstinspires.ftc.teamcode.Base.Helpers.PedroUtils;
 import org.firstinspires.ftc.teamcode.Base.Misc.AllianceSides;
 import org.firstinspires.ftc.teamcode.Base.Misc.HeadingLockControlPolicy;
@@ -37,6 +40,7 @@ import org.firstinspires.ftc.teamcode.pedroPathing.PedroConstants;
 
 import com.pedropathing.geometry.Pose;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -56,6 +60,7 @@ public class RobotManager {
     private boolean flagAutoPathingCancelled = false;
     private boolean autoRunBlockingEnabled = false;
     private Runnable autoCallback = null;
+    private HardwareTable hardwareTable = new HardwareTable();
 
     private final ElapsedTime autoTimer = new ElapsedTime();
     private final ElapsedTime timer = new ElapsedTime();
@@ -69,6 +74,7 @@ public class RobotManager {
     private ShooterControlPolicy shooterControlPolicy = ShooterControlPolicy.ROAMING;
     private ShooterAimPolicy shooterAimPolicy = ShooterAimPolicy.TURRET;
     private TurretControlPolicy turretControlPolicy = TurretControlPolicy.CONSTANT;
+    private boolean turretEcoMode = true; // defaults to on, just like this was programmed by Ford.
     private boolean scoringCycleActive = false;
     private boolean scoringCycleOverrideWaitConditions = false;
     private boolean waitForVelocityToShoot = true;
@@ -132,6 +138,14 @@ public class RobotManager {
 
     public void setShooterControlPolicy(ShooterControlPolicy newControlPolicy) {
         shooterControlPolicy = newControlPolicy;
+    }
+
+    public void enableTurretEcoMode() {
+        turretEcoMode = true;
+    }
+
+    public void disableTurretEcoMode() {
+        turretEcoMode = false;
     }
 
     public ShooterControlPolicy getShooterControlPolicy() {
@@ -211,8 +225,8 @@ public class RobotManager {
     }
 
     public void initialise() {
-        shooterSubsystem.initialiseHardware();
-        intakeSubsystem.initialiseHardware();
+        shooterSubsystem.initialiseHardware(hardwareTable);
+        intakeSubsystem.initialiseHardware(hardwareTable);
 
         resetFollower();
 
@@ -356,7 +370,11 @@ public class RobotManager {
     }
 
     public void enableTurret() {
-        turretEnabled = true;
+        if (!turretEnabled) {
+            turretEnabled = true;
+
+            shooterSubsystem.enableTurret();
+        }
     }
 
     public Follower getFollower() {
@@ -370,8 +388,10 @@ public class RobotManager {
     }
 
     public void disableTurret() {
-        if (!shooterAimAtGoalActive || shooterAimPolicy == ShooterAimPolicy.DRIVETRAIN) {
+        if (turretEnabled) {
             turretEnabled = false;
+
+            shooterSubsystem.enableTurret();
         }
     }
 
@@ -386,8 +406,7 @@ public class RobotManager {
     }
 
     public void setHeadingLockControlPolicy(HeadingLockControlPolicy headingLockControlPolicy) {
-        if (headingLockControlPolicy == HeadingLockControlPolicy.AIM_AT_GOAL || !shooterAimAtGoalActive)
-            this.headingLockControlPolicy = headingLockControlPolicy;
+        this.headingLockControlPolicy = headingLockControlPolicy;
     }
 
     public void setConstantHeadingLockGoal(double goal) {
@@ -395,14 +414,9 @@ public class RobotManager {
         headingLockGoal = goal;
     }
 
-    public void setTurretControlPolicy(TurretControlPolicy turretControlPolicy) {
-        if (turretControlPolicy == TurretControlPolicy.AIM_AT_GOAL || !shooterAimAtGoalActive)
-            this.turretControlPolicy = turretControlPolicy;
-    }
-
     public void setConstantTurretHeadingGoal(double goal, AngleUnit angleUnit) {
-        if (getTurretControlPolicy() != TurretControlPolicy.CONSTANT) {
-            setTurretControlPolicy(TurretControlPolicy.CONSTANT);
+        if (turretControlPolicy != TurretControlPolicy.CONSTANT) {
+            turretControlPolicy = TurretControlPolicy.CONSTANT;
         }
 
         turretTargetPosition = goal;
@@ -431,7 +445,7 @@ public class RobotManager {
 
     public void enableTurretRelativeControl() {
         if (getTurretControlPolicy() != TurretControlPolicy.CONSTANT) {
-            setTurretControlPolicy(TurretControlPolicy.CONSTANT);
+            turretControlPolicy = TurretControlPolicy.CONSTANT;
         }
 
         turretRelativeControl = true;
@@ -535,10 +549,8 @@ public class RobotManager {
     }
 
     public void startAimingAtGoal() {
-        shooterAimAtGoalActive = true;
-
         if (shooterAimPolicy == ShooterAimPolicy.TURRET) {
-            setTurretControlPolicy(TurretControlPolicy.AIM_AT_GOAL);
+            turretControlPolicy = TurretControlPolicy.AIM_AT_GOAL;
             enableTurret();
         } else if (shooterAimPolicy == ShooterAimPolicy.DRIVETRAIN) {
             setHeadingLockControlPolicy(HeadingLockControlPolicy.AIM_AT_GOAL);
@@ -550,7 +562,7 @@ public class RobotManager {
         shooterAimAtGoalActive = false;
 
         if (shooterAimPolicy == ShooterAimPolicy.TURRET) {
-            setTurretControlPolicy(TurretControlPolicy.CONSTANT);
+            turretControlPolicy = TurretControlPolicy.CONSTANT;
         } else if (shooterAimPolicy == ShooterAimPolicy.DRIVETRAIN) {
             disableHeadingLock();
         }
@@ -853,25 +865,31 @@ public class RobotManager {
 
         double headingToGoal = getHeadingToGoal(velocityCompensationEnabled ? getVelocityCorrectedPose(robotPose, poseTracker.getVelocity()) : robotPose);
 
-        if (headingLockControlPolicy == HeadingLockControlPolicy.CONSTANT) {
+        if (headingLockControlPolicy == HeadingLockControlPolicy.AIM_AT_GOAL) {
             headingLockGoal = headingToGoal;
         }
 
-        if (turretControlPolicy == TurretControlPolicy.AIM_AT_GOAL) {
-            turretTargetPosition = headingToGoal - Math.PI;
-        }
+        if (!turretEcoMode || (shooterSubsystem.isPoweredOn() || scoringCycleActive)) {
+            if (turretEnabled) {
+                if (turretControlPolicy == TurretControlPolicy.AIM_AT_GOAL) {
+                    turretTargetPosition = headingToGoal - Math.PI;
+                }
 
-        double turretPositionCorrected = turretTargetPosition;
+                double turretPositionCorrected = turretTargetPosition;
 
-        if (!turretRelativeControl) {
-            turretPositionCorrected -= robotPose.getHeading();
+                if (!turretRelativeControl) {
+                    turretPositionCorrected -= robotPose.getHeading();
 
-            if (centripetalVelocityCompensationEnabled) {
-                turretPositionCorrected -= (poseTracker.getAngularVelocity() * Parameters.CENTRIPETAL_VELOCITY_COMPENSATION_MULTIPLIER);
+                    if (centripetalVelocityCompensationEnabled) {
+                        turretPositionCorrected -= (poseTracker.getAngularVelocity() * Parameters.CENTRIPETAL_VELOCITY_COMPENSATION_MULTIPLIER);
+                    }
+                }
+
+                shooterSubsystem.setTurretPosition(turretPositionCorrected);
             }
+        } else {
+            shooterSubsystem.disableTurret();
         }
-
-        shooterSubsystem.setTurretPosition(turretPositionCorrected);
 
         if (shooterControlPolicy == ShooterControlPolicy.ROAMING) {
             updateShooterParameters(getDistanceToGoal());
@@ -917,7 +935,7 @@ public class RobotManager {
 
                 if (intakeSubsystem.getIntakePower() >= .1) {
                     canShootOveride = true;
-                    double distanceToGoal = getDistanceToGoal();
+                    double distanceToGoal = getDistanceToGoal(robotPose); // ignore velocity correction
 
                     if (distanceToGoal >= Parameters.MIN_SHOOT_DISTANCE) {
                         if (distanceToGoal < Parameters.FAR_ZONE_DISTANCE) {
@@ -977,7 +995,7 @@ public class RobotManager {
                                     transferStopTimerPaused = false;
                                 }
 
-                                if (transferStopTimer.time(TimeUnit.MILLISECONDS) >= 650) {
+                                if (transferStopTimer.time(TimeUnit.MILLISECONDS) >= 400) {
                                     isTransferStopped = true;
                                     transferStopTimerPaused = true;
 
@@ -1062,8 +1080,8 @@ public class RobotManager {
         }
     }
 
-    public Double[] getCurrentShooterVelocities() {
-        return shooterSubsystem.getVelocities();
+    public Double getShooterVelocity() {
+        return shooterSubsystem.getVelocity();
     }
 
     public double getShooterTargetVelocity() {
@@ -1197,5 +1215,13 @@ public class RobotManager {
 
     public boolean isFollowerBusy() {
         return !teleopDriveActive && follower.isBusy();
+    }
+
+    public ArrayList<ComplexServo> getServos() {
+        return hardwareTable.getServos();
+    }
+
+    public ArrayList<ComplexMotor> getMotors() {
+        return hardwareTable.getMotors();
     }
 }

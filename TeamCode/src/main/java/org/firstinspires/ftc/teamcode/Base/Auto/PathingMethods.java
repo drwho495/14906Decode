@@ -14,7 +14,7 @@ public class PathingMethods {
     // 0 is the line furthest from the goal
     public static void intakeLine(RobotManager robot, RunSide runSide, double number, boolean clearGateWhileDriving) {
         robot.stopScoringCycle();
-        robot.setIntakePower(1);
+        robot.powerIntakeOn();
         robot.setMaxFollowerPower(1);
         robot.update();
 
@@ -137,7 +137,6 @@ public class PathingMethods {
                                 ))
                                 .setLinearHeadingInterpolation(robotPose.getHeading(), robot.getFixedHeading(0), .4)
                                 .setTValueConstraint(.99)
-//                                .setNoDeceleration()
                                 .setVelocityConstraint(1000)
                         , true);
 
@@ -250,8 +249,8 @@ public class PathingMethods {
             }
 
             robot.setMaxFollowerPower(1);
-            robot.setIntakePower(1);
             robot.addPathTimeout(1750);
+            robot.powerIntakeOn();
             robot.runBlocking(
                     robot.pathBuilder()
                             .addPath(new Path(
@@ -263,6 +262,8 @@ public class PathingMethods {
                             ))
                             .setLinearHeadingInterpolation(robotPose.getHeading(), robot.getFixedHeading(gateHeading), .3)
                             .setTValueConstraint(.9)
+                            .addParametricCallback(.05, robot::powerIntakeOff)
+                            .addParametricCallback(.5, robot::powerIntakeOn)
                             .setHeadingConstraint(Math.PI)
                             .setVelocityConstraint(1000)
                             .setBrakingStrength(5)
@@ -290,7 +291,7 @@ public class PathingMethods {
                             .setTValueConstraint(1)
             );
 
-            robot.safeSleep(initialCycle ? 1000 : 1350);
+            robot.safeSleep(initialCycle ? 1000 : 1950);
             robot.breakFollowing(false);
             robot.clearPathTimeout();
         }
@@ -356,7 +357,7 @@ public class PathingMethods {
         if (runSide == RunSide.CLOSE_ZONE) {
             wallY = -124;
         } else {
-            wallY = -130;
+            wallY = -135;
         }
 
 
@@ -386,7 +387,7 @@ public class PathingMethods {
                             .addPath(new Path(
                                     new BezierCurve(
                                             robotPose,
-                                            robot.getFixedPose(-10, -90),
+                                            robot.getFixedPose(-20, -110),
                                             robot.getFixedPose(wallX, wallY)
                                     )
                             ))
@@ -525,9 +526,11 @@ public class PathingMethods {
             robot.stopScoringCycle();
             robot.waitForPathEnd();
         } else if (runSide == RunSide.FAR_ZONE) {
-            shootingPosition = robot.getFixedPose(-30, -115, 0);
+            shootingPosition = robot.getFixedPose(-28, -122, 0);
 
-            robot.runPassthrough(robot.pathBuilder()
+            robot.updateShooterParameters(shootingPosition);
+
+            robot.runBlocking(robot.pathBuilder()
                             .addPath(new Path(
                                     new BezierLine(
                                             robotPose,
@@ -537,7 +540,15 @@ public class PathingMethods {
                             .setLinearHeadingInterpolation(robotPose.getHeading(), robot.getFixedHeading(robotChassisHeading), robotChassisHeadingEndT)
                             .setTValueConstraint(.97)
                             .setVelocityConstraint(100)
-            );
+            , false);
+
+            robot.waitForShooter(2000);
+            robot.startScoringCycle(true);
+            robot.safeSleep(50);
+            robot.powerIntakeOn();
+            robot.safeSleep(1000);
+            robot.stopScoringCycle();
+            robot.powerIntakeOff();
         }
     }
 
@@ -545,6 +556,7 @@ public class PathingMethods {
         Pose robotPose = robot.getPose();
 
         robot.stopScoringCycle();
+        robot.powerIntakeOff();
         robot.runBlocking(robot.pathBuilder()
                         .addPath(new Path(
                                 new BezierLine(

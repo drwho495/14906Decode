@@ -2,6 +2,8 @@ package org.firstinspires.ftc.teamcode.Base.HardwareBases;
 
 import static java.lang.Math.abs;
 
+import androidx.annotation.Nullable;
+
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -45,6 +47,16 @@ public class ComplexMotor {
         this.motorInterface = this.opMode.hardwareMap.get(DcMotorEx.class, hwName);
         this.encoderMotor = this;
         this.motorInterface.setMotorEnable();
+    }
+
+    @Override
+    public boolean equals(@Nullable Object obj) {
+        if (obj instanceof ComplexMotor) {
+            ComplexMotor objComplexMotor = (ComplexMotor) obj;
+
+            return objComplexMotor.motorInterface == motorInterface;
+        }
+        return false;
     }
 
     public void enableBrake() {

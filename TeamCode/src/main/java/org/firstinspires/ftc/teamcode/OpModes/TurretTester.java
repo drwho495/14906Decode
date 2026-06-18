@@ -16,9 +16,7 @@ public class TurretTester extends LinearOpMode {
     public void runOpMode() throws InterruptedException {
         robot = new RobotManager(this);
         robot.initialise();
-//        robot.enableTurretRelativeControl();
         robot.enableTurret();
-        robot.setTurretControlPolicy(TurretControlPolicy.CONSTANT);
 
         waitForStart();
 
@@ -26,9 +24,9 @@ public class TurretTester extends LinearOpMode {
             robot.setConstantTurretHeadingGoal(Parameters.TURRET_TEST_ANGLE, AngleUnit.RADIANS);
 
             if (gamepad1.aWasPressed()) {
-                robot.enableTurretRelativeControl();
-            } else if (gamepad1.aWasReleased()) {
                 robot.disableTurretRelativeControl();
+            } else if (gamepad1.aWasReleased()) {
+                robot.enableTurretRelativeControl();
             }
 
             robot.update();

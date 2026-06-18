@@ -2,17 +2,12 @@ package org.firstinspires.ftc.teamcode.Base.Subsystems;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.teamcode.Base.HardwareBases.ColorRangefinder;
 import org.firstinspires.ftc.teamcode.Base.HardwareBases.ComplexMotor;
 import org.firstinspires.ftc.teamcode.Base.HardwareBases.ComplexMotorModes;
-import org.firstinspires.ftc.teamcode.Base.Parameters;
-
-import java.util.concurrent.TimeUnit;
+import org.firstinspires.ftc.teamcode.Base.HardwareBases.HardwareTable;
 
 public class IntakeSubsystem extends Subsystem {
     private LinearOpMode thisOpMode = null;
@@ -33,7 +28,7 @@ public class IntakeSubsystem extends Subsystem {
      * doing this should immediately launch the ball.
      */
     @Override
-    public void initialiseHardware() {
+    public void initialiseHardware(HardwareTable hardwareTable) {
         intakeMotor1 = new ComplexMotor("intakeMotor1", thisOpMode);
         intakeMotor1.setMode(ComplexMotorModes.RAW_POWER);
         intakeMotor1.setMotorRunMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -46,6 +41,9 @@ public class IntakeSubsystem extends Subsystem {
         intakeMotor2.setReversed(true);
         intakeMotor2.enableBrake();
         intakeMotor2.setPower(0);
+
+        hardwareTable.registerHardwareInterface(intakeMotor1);
+        hardwareTable.registerHardwareInterface(intakeMotor2);
     }
 
     public double getIntakePower() {

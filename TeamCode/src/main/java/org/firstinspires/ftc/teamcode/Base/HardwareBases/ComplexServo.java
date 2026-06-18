@@ -6,6 +6,8 @@
 package org.firstinspires.ftc.teamcode.Base.HardwareBases;
 
 //import com.arcrobotics.ftclib.hardware.ServoEx;
+import androidx.annotation.Nullable;
+
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo.Direction;
 import com.qualcomm.robotcore.hardware.ServoImplEx;
@@ -14,6 +16,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
 public class ComplexServo {
     private ServoImplEx servo;
+    private String deviceName = "";
     private double maxAngle;
     private double minAngle;
     private double maxPosition;
@@ -25,9 +28,20 @@ public class ComplexServo {
     public ComplexServo(HardwareMap hw, String servoName, double minAngle, double maxAngle, AngleUnit angleUnit) {
         this.maxPosition = 1.0;
         this.minPosition = 0.0;
-        this.servo = (ServoImplEx)hw.get(ServoImplEx.class, servoName);
+        this.servo = hw.get(ServoImplEx.class, servoName);
         this.minAngle = this.toRadians(minAngle, angleUnit);
         this.maxAngle = this.toRadians(maxAngle, angleUnit);
+        this.deviceName = servoName;
+    }
+
+    @Override
+    public boolean equals(@Nullable Object obj) {
+        if (obj instanceof ComplexServo) {
+            ComplexServo objComplexServo = (ComplexServo) obj;
+
+            return objComplexServo.servo == servo;
+        }
+        return false;
     }
 
     public ComplexServo(HardwareMap hw, String servoName, double minDegree, double maxDegree) {
@@ -127,6 +141,10 @@ public class ComplexServo {
         this.servo.setPwmDisable();
     }
 
+    public void enable() {
+        this.servo.setPwmEnable();
+    }
+
     public String getDeviceType() {
         String port = Integer.toString(this.servo.getPortNumber());
         String controller = this.servo.getController().toString();
@@ -144,5 +162,9 @@ public class ComplexServo {
     private double calculateAngleToServoRawPosition(double fromAngle, AngleUnit angleUnit) {
         double angleRadians = Range.clip(this.toRadians(fromAngle, angleUnit), this.minAngle, this.maxAngle);
         return (angleRadians - this.minAngle) / this.getAngleRange(AngleUnit.RADIANS);
+    }
+
+    public String getDeviceName() {
+        return deviceName;
     }
 }

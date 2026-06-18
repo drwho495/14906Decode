@@ -12,6 +12,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.Base.HardwareBases.ComplexMotor;
 import org.firstinspires.ftc.teamcode.Base.HardwareBases.ComplexMotorModes;
 import org.firstinspires.ftc.teamcode.Base.HardwareBases.ComplexServo;
+import org.firstinspires.ftc.teamcode.Base.HardwareBases.HardwareTable;
 import org.firstinspires.ftc.teamcode.Base.Parameters;
 import org.firstinspires.ftc.teamcode.Base.Misc.ShooterPFState;
 
@@ -29,6 +30,7 @@ public class ShooterSubsystem extends Subsystem {
 
     private boolean hoodCompensationEnabled = false;
     private boolean poweredOff = true;
+    private boolean turretEnabled = true;
     private double motorVelo = Parameters.SHOOTER_DEFAULT_RPM;
     private double fingerServoPos = Parameters.FINGER_SERVO_OPEN;
     private double hoodServoPos = Parameters.HOOD_SERVO_DOWN;
@@ -64,8 +66,8 @@ public class ShooterSubsystem extends Subsystem {
         wanderingShooterF = 0.003;
         transferringShooterP = wanderingShooterP;
         transferringShooterF = wanderingShooterF;
-        fastTransferringShooterP = wanderingShooterP;
-        fastTransferringShooterF = wanderingShooterF;
+        fastTransferringShooterP = 0.04;
+        fastTransferringShooterF = 0.004;
     }
 
     private void updatePF() {
@@ -79,7 +81,7 @@ public class ShooterSubsystem extends Subsystem {
     }
 
     @Override
-    public void initialiseHardware() {
+    public void initialiseHardware(HardwareTable hardwareTable) {
         vSensor = thisOpMode.hardwareMap.voltageSensor.iterator().next();
 
         shooterMotor1 = new ComplexMotor(
@@ -105,6 +107,7 @@ public class ShooterSubsystem extends Subsystem {
         shooterMotor2.setReversed(true);
 
         shooterMotor1.useCustomVeloPIDLoop(true);
+        shooterMotor1.setEncoderMotor(shooterMotor1);
         shooterMotor1.setLinkedMotor(shooterMotor2);
 
         updatePF();
@@ -149,14 +152,21 @@ public class ShooterSubsystem extends Subsystem {
         turretServoRight.setPositionMultiplier(1);
         turretServoRight.setPositionOffset(Parameters.TURRET_SERVO_RIGHT_ZERO_OFFSET, AngleUnit.RADIANS);
         turretServoRight.setInverted(false);
+
+        hardwareTable.registerHardwareInterface(shooterMotor1);
+        hardwareTable.registerHardwareInterface(shooterMotor2);
+        hardwareTable.registerHardwareInterface(fingerServo);
+        hardwareTable.registerHardwareInterface(hoodServo);
+        hardwareTable.registerHardwareInterface(turretServoLeft);
+        hardwareTable.registerHardwareInterface(turretServoRight);
     }
 
     public boolean ready() {
         return !poweredOff && shooterMotor1.atVelocity(Parameters.SHOOTER_READY_TOLERANCE * velocityMultiplier);
     }
 
-    public Double[] getVelocities() {
-        return new Double[]{shooterMotor1.getVelocity() / velocityMultiplier, shooterMotor2.getVelocity() / velocityMultiplier};
+    public double getVelocity() {
+        return shooterMotor1.getVelocity() / velocityMultiplier;
     }
 
     public void setTurretBacklashOffset(double offset) {
@@ -282,6 +292,24 @@ public class ShooterSubsystem extends Subsystem {
         shooterMotor1.update();
         shooterMotor2.update();
 
-        lastVelocity = getVelocities()[0];
+        lastVelocity = getVelocity();
+    }
+
+    public void enableTurret() {
+        if (!turretEnabled) {
+            turretServoRight.enable();
+            turretServoLeft.enable();
+
+            turretEnabled = true;
+        }
+    }
+
+    public void disableTurret() {
+        if (turretEnabled) {
+            turretServoRight.disable();
+            turretServoLeft.disable();
+
+            turretEnabled = false;
+        }
     }
 }
