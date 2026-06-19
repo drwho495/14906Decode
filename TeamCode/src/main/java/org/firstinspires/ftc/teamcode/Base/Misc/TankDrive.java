@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.Base;
+package org.firstinspires.ftc.teamcode.Base.Misc;
 
 import androidx.annotation.NonNull;
 
@@ -46,8 +46,6 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 
-import org.firstinspires.ftc.teamcode.Base.Misc.Drawing;
-import org.firstinspires.ftc.teamcode.Base.Misc.Localizer;
 import org.firstinspires.ftc.teamcode.messages.DriveCommandMessage;
 import org.firstinspires.ftc.teamcode.messages.PoseMessage;
 import org.firstinspires.ftc.teamcode.messages.TankCommandMessage;

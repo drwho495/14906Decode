@@ -11,8 +11,8 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 
 import org.firstinspires.ftc.teamcode.Base.Misc.Drawing;
-import org.firstinspires.ftc.teamcode.Base.MecanumDrive;
-import org.firstinspires.ftc.teamcode.Base.TankDrive;
+import org.firstinspires.ftc.teamcode.Base.Misc.MecanumDrive;
+import org.firstinspires.ftc.teamcode.Base.Misc.TankDrive;
 
 @TeleOp(name = "localization test", group = "Debug")
 public class LocalizationTest extends LinearOpMode {

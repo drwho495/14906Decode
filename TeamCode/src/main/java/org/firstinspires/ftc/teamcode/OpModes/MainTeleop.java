@@ -64,7 +64,7 @@ public class MainTeleop extends LinearOpMode {
 
         robot.setTransferSpeed(1);
         robot.enableAutoTransferStop();
-        robot.disableHoodCompensation();
+        robot.enableHoodCompensation();
         robot.enableWaitForVelocityToShoot();
         robot.disableOnlyShootInZone();
         robot.enableVelocityCompensation();

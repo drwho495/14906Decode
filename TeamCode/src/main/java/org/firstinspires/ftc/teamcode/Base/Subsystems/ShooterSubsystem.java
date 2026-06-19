@@ -28,14 +28,13 @@ public class ShooterSubsystem extends Subsystem {
     private ComplexServo turretServoRight;
     private VoltageSensor vSensor;
 
-    private boolean hoodCompensationEnabled = false;
     private boolean poweredOff = true;
     private boolean turretEnabled = true;
     private double motorVelo = Parameters.SHOOTER_DEFAULT_RPM;
     private double fingerServoPos = Parameters.FINGER_SERVO_OPEN;
     private double hoodServoPos = Parameters.HOOD_SERVO_DOWN;
-    private double shooter1Current = 0;
-    private double shooter2Current = 0;
+    private double shooter1Current = -1;
+    private double shooter2Current = -1;
     private double hoodCompensationMultiplier = 9;
     private double lastVelocity = 0;
     private double turretTargetPosition = 0;
@@ -78,6 +77,15 @@ public class ShooterSubsystem extends Subsystem {
         } else if (pfState == ShooterPFState.FAST_TRANSFER_LOOP) {
             shooterMotor1.setVelocityPIDFCoefficients(fastTransferringShooterP, 0, 0, fastTransferringShooterF);
         }
+    }
+
+    public double getShooterCurrent() {
+        if (shooter1Current == -1) {
+            shooter1Current = shooterMotor1.getCurrent();
+            shooter2Current = shooterMotor2.getCurrent();
+        }
+
+        return (shooter1Current + shooter2Current) / 2;
     }
 
     @Override
@@ -214,14 +222,6 @@ public class ShooterSubsystem extends Subsystem {
         poweredOff = !poweredOff;
     }
 
-    public void enableHoodCompensation() {
-        hoodCompensationEnabled = true;
-    }
-
-    public void disableHoodCompensation() {
-        hoodCompensationEnabled = false;
-    }
-
     public void setHoodCompensationMultiplier(double newMult) {
         hoodCompensationMultiplier = newMult;
     }
@@ -258,16 +258,6 @@ public class ShooterSubsystem extends Subsystem {
     public void update() {
         updatePF();
 
-        double hoodServoOffset = 0;
-
-        if (hoodCompensationEnabled) {
-            shooter1Current = shooterMotor1.getCurrent();
-
-            if (shooter1Current > 1) {
-                hoodServoOffset = Range.clip((shooter1Current) * hoodCompensationMultiplier, 0, 1000);
-            }
-        }
-
         if (poweredOff) {
             shooterMotor1.setVelocity(0);
             shooterMotor2.setVelocity(0);
@@ -287,11 +277,12 @@ public class ShooterSubsystem extends Subsystem {
         turretServoLeft.turnToAngle(reachableTurretTargetPosition - backlashOffsetCorrected, AngleUnit.RADIANS, true);
 
         fingerServo.turnToAngle(fingerServoPos);
-        hoodServo.turnToAngle(Range.clip(hoodServoPos - hoodServoOffset, Parameters.HOOD_SERVO_DOWN, Parameters.HOOD_SERVO_UP), AngleUnit.DEGREES, true);
+        hoodServo.turnToAngle(Range.clip(hoodServoPos, Parameters.HOOD_SERVO_DOWN, Parameters.HOOD_SERVO_UP), AngleUnit.DEGREES, true);
 
         shooterMotor1.update();
         shooterMotor2.update();
 
+        shooter1Current = -1;
         lastVelocity = getVelocity();
     }
 

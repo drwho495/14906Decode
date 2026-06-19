@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.Base;
+package org.firstinspires.ftc.teamcode.Base.Misc;
 
 import androidx.annotation.NonNull;
 
@@ -40,8 +40,6 @@ import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.teamcode.Base.Misc.Drawing;
-import org.firstinspires.ftc.teamcode.Base.Misc.Localizer;
 import org.firstinspires.ftc.teamcode.messages.MecanumLocalizerInputsMessage;
 import org.firstinspires.ftc.teamcode.messages.DriveCommandMessage;
 import org.firstinspires.ftc.teamcode.messages.MecanumCommandMessage;

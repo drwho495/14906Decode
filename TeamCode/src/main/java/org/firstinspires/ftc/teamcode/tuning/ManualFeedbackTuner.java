@@ -6,10 +6,10 @@ import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
-import org.firstinspires.ftc.teamcode.Base.MecanumDrive;
-import org.firstinspires.ftc.teamcode.Base.TankDrive;
-import org.firstinspires.ftc.teamcode.Base.ThreeDeadWheelLocalizer;
-import org.firstinspires.ftc.teamcode.Base.TwoDeadWheelLocalizer;
+import org.firstinspires.ftc.teamcode.Base.Misc.MecanumDrive;
+import org.firstinspires.ftc.teamcode.Base.Misc.TankDrive;
+import org.firstinspires.ftc.teamcode.Base.Misc.ThreeDeadWheelLocalizer;
+import org.firstinspires.ftc.teamcode.Base.Misc.TwoDeadWheelLocalizer;
 
 public final class ManualFeedbackTuner extends LinearOpMode {
     public static double DISTANCE = 64;

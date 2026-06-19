@@ -27,6 +27,7 @@ import org.firstinspires.ftc.teamcode.Base.HardwareBases.HardwareTable;
 import org.firstinspires.ftc.teamcode.Base.Helpers.PedroUtils;
 import org.firstinspires.ftc.teamcode.Base.Misc.AllianceSides;
 import org.firstinspires.ftc.teamcode.Base.Misc.HeadingLockControlPolicy;
+import org.firstinspires.ftc.teamcode.Base.Misc.HoodCompensationMethod;
 import org.firstinspires.ftc.teamcode.Base.Misc.OpModeState;
 import org.firstinspires.ftc.teamcode.Base.Misc.ShooterAimPolicy;
 import org.firstinspires.ftc.teamcode.Base.Misc.ShooterControlPolicy;
@@ -81,8 +82,10 @@ public class RobotManager {
     private boolean onlyShootInZone = false;
     private boolean shooterAimAtGoalActive = false;
     private boolean turretEnabled = false;
-    private double turretTargetPosition = Math.PI;
     private boolean turretRelativeControl = false;
+    private double turretTargetPosition = Math.PI;
+    private double hoodTargetPosition = 0;
+    private double hoodTargetPositionOffset = 0;
     private TurretBacklashPolicy turretBacklashPolicy = TurretBacklashPolicy.MITIGATE_WHILE_SHOOTING;
 
     private double headingLockGoal = 0;
@@ -101,6 +104,8 @@ public class RobotManager {
 
     private HeadingLockControlPolicy headingLockControlPolicy = HeadingLockControlPolicy.AIM_AT_GOAL;
     private boolean hoodCompensationEnabled = false;
+    private HoodCompensationMethod hoodCompensationMethod = HoodCompensationMethod.CURRENT;
+    private double hoodCompensationBaseCurrent = 0;
     private boolean velocityCompensationEnabled = true;
     private boolean centripetalVelocityCompensationEnabled = true;
     private boolean stateStart = true;
@@ -492,7 +497,11 @@ public class RobotManager {
         canShootOveride = false;
         scoringCycleActive = true;
         scoringCycleOverrideWaitConditions = overrideWaitConditions;
-        shooterFingerTimeout.reset();;
+        shooterFingerTimeout.reset();
+
+        if (hoodCompensationEnabled && hoodCompensationMethod == HoodCompensationMethod.CURRENT) {
+            hoodCompensationBaseCurrent = shooterSubsystem.getShooterCurrent();
+        }
     }
 
     public void startScoringCycle() {
@@ -529,8 +538,9 @@ public class RobotManager {
     }
 
     public void setHoodServoPos(double newPos) {
-        if (shooterControlPolicy == ShooterControlPolicy.MANUAL)
-            shooterSubsystem.setHoodPos(newPos);
+        if (shooterControlPolicy == ShooterControlPolicy.MANUAL) {
+            hoodTargetPosition = newPos;
+        }
     }
 
     public Pose getPose() {
@@ -798,10 +808,10 @@ public class RobotManager {
     public void updateShooterParameters(double distanceToGoalInput) {
         if (distanceToGoalInput <= Parameters.FAR_ZONE_DISTANCE) {
             shooterSubsystem.setVelocity(Parameters.CLOSE_ZONE_CURVE.getRPMCurveOutput(distanceToGoalInput));
-            shooterSubsystem.setHoodPos(Parameters.CLOSE_ZONE_CURVE.getHoodCurveOutput(distanceToGoalInput));
+            hoodTargetPosition = Parameters.CLOSE_ZONE_CURVE.getHoodCurveOutput(distanceToGoalInput);
         } else {
             shooterSubsystem.setVelocity(Parameters.SHOOTER_FAR_ZONE_VELOCITY);
-            shooterSubsystem.setHoodPos(Parameters.SHOOTER_FAR_ZONE_HOOD_ANGLE);
+            hoodTargetPosition = Parameters.SHOOTER_FAR_ZONE_HOOD_ANGLE;
         }
     }
 
@@ -846,6 +856,10 @@ public class RobotManager {
 
     public void clearAutoCallback() {
         this.autoCallback = null;
+    }
+
+    public void setHoodCompensationMethod(HoodCompensationMethod method) {
+        this.hoodCompensationMethod = method;
     }
 
     public void update() {
@@ -907,6 +921,16 @@ public class RobotManager {
             isTransferStopped = false;
             transferStopTimerPaused = true;
 
+            if (hoodCompensationEnabled) {
+                if (hoodCompensationMethod == HoodCompensationMethod.CURRENT) {
+                    hoodTargetPosition = shooterSubsystem.getShooterCurrent() - hoodCompensationBaseCurrent * Parameters.HOOD_COMPENSATION_CURRENT_MULTIPLIER;
+                } else if (hoodCompensationMethod == HoodCompensationMethod.VELOCITY) {
+                    hoodTargetPosition = (shooterSubsystem.getTargetVelocity() - shooterSubsystem.getVelocity()) * Parameters.HOOD_COMPENSATION_VELOCITY_MULTIPLIER;
+                }
+
+                hoodTargetPosition = Range.clip(hoodTargetPosition, 0, Parameters.HOOD_COMPENSATION_MAX_OFFSET);
+            }
+
             if (waitForVelocityToShoot) {
                 if (!shooterSubsystem.ready() && !canShootOveride) {
                     needsToWait = true;
@@ -920,12 +944,6 @@ public class RobotManager {
             activeHoldingLastBall = false;
 
             intakeSubsystem.setIntakePower(intakePower);
-
-            if (hoodCompensationEnabled) {
-                shooterSubsystem.enableHoodCompensation();
-            } else {
-                shooterSubsystem.disableHoodCompensation();
-            }
 
             if (!needsToWait || scoringCycleOverrideWaitConditions) {
                 if (!canShoot) {
@@ -966,7 +984,6 @@ public class RobotManager {
             }
         } else {
             shooterSubsystem.setPFState(ShooterPFState.WANDERING_LOOP);
-            shooterSubsystem.disableHoodCompensation();
 
             if (intakePower == 0 && activeHoldLastBallEnabled && lastIntakePower > 0) {
                 if (!activeHoldingLastBall) {
@@ -1035,6 +1052,8 @@ public class RobotManager {
         if (!teleopDriveActive) {
             follower.update();
         }
+
+        shooterSubsystem.setHoodPos(hoodTargetPosition - hoodTargetPositionOffset);
 
         shooterSubsystem.update();
         intakeSubsystem.update();

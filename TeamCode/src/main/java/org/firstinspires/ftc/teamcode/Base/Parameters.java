@@ -16,6 +16,9 @@ import org.firstinspires.ftc.teamcode.bedroBathing.util.CustomPIDFCoefficients;
 @Config
 @Configurable
 public class Parameters {
+    public static final double HOOD_COMPENSATION_CURRENT_MULTIPLIER = .1;
+    public static final double HOOD_COMPENSATION_VELOCITY_MULTIPLIER = .1;
+    public static double HOOD_COMPENSATION_MAX_OFFSET = 50;
     public static long SHOOTER_FINGER_TIMEOUT = 500;
     public static double TRANSFER_STOP_CURRENT = 4.5;
     public static double AUTO_SCORE_MAX_VEL = -1;
