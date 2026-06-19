@@ -38,7 +38,7 @@ public class MainTeleop extends LinearOpMode {
     private Pose gateIntakeLocalGatePose = Parameters.TELEOP_AUTO_GATE_POSE;
     private double gateIntakeLocalGateHeading = Parameters.TELEOP_AUTO_GATE_HEADING;
     private boolean showDebugInfo = true;
-    private boolean autoStartShooterEnabled = true;
+    private boolean autoStartShooterEnabled = false;
     private boolean autoStartShooter = false;
     private boolean autoStartShootingStarted = false;
     private boolean autoStartShootingStopTimed = false;
@@ -84,6 +84,10 @@ public class MainTeleop extends LinearOpMode {
 
         if (robot.getShooterAimPolicy() == ShooterAimPolicy.TURRET) {
             robot.startAimingAtGoal();
+        }
+
+        if (!autoStartShooterEnabled) {
+            robot.powerShooterOn();
         }
 
         while (opModeIsActive() && !isStopRequested()) {
@@ -192,7 +196,7 @@ public class MainTeleop extends LinearOpMode {
                         robot.disableHeadingLock();
                     }
 
-                    if (gamepad1.right_trigger > .1 || gamepad1.a) {
+                    if (gamepad2.left_trigger < .1 && (gamepad1.right_trigger > .1 || gamepad1.a)) {
                         robot.setIntakePower(1);
                     } else if (gamepad2.right_trigger > .1 && !robot.scoringCycleActive()) {
                         robot.setIntakePower(gamepad2.right_trigger);

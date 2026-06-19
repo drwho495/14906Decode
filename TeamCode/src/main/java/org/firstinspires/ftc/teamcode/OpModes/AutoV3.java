@@ -263,7 +263,7 @@ public class AutoV3 extends LinearOpMode {
         robot.enableTurret();
         robot.setConstantTurretHeadingGoal(180, AngleUnit.DEGREES);
 
-        Parameters.SHOOTER_GOAL_CLOSE_BLUE_AIM = new Pose(-100, 10);
+        Parameters.SHOOTER_GOAL_CLOSE_BLUE_AIM = new Pose(-110, 10);
 
         while (opModeInInit()) {
             if (gamepad1.yWasPressed())

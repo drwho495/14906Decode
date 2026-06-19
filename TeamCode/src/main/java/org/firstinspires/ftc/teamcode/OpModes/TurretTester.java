@@ -17,6 +17,7 @@ public class TurretTester extends LinearOpMode {
         robot = new RobotManager(this);
         robot.initialise();
         robot.enableTurret();
+        robot.disableTurretEcoMode();
 
         waitForStart();
 

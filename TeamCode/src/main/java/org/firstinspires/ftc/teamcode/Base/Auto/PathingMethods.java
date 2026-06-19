@@ -245,7 +245,7 @@ public class PathingMethods {
                 gateY = -76;
             } else {
                 gateX = 11;
-                gateY = -74;
+                gateY = -73.5;
             }
 
             robot.setMaxFollowerPower(1);

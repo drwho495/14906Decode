@@ -27,7 +27,7 @@ public class Parameters {
     public static double SHOOTER_DEFAULT_RPM = 4500;
     public static double MIN_SHOOT_DISTANCE = 45;
     public static double FAR_ZONE_DISTANCE = 120;
-    public static double FAR_ZONE_TRANSFER_SPEED = .4;
+    public static double FAR_ZONE_TRANSFER_SPEED = .35;
     public static double SHOOTER_VOLTAGE_TARGET = 11.7;
 
     public static AllianceSides LAST_ALLIANCE_SIDE = AllianceSides.RED;
@@ -38,7 +38,7 @@ public class Parameters {
     //    public static Pose RED_SHOOTER_GOAL = new Pose(20, 0);
     public static Pose SHOOTER_GOAL_CLOSE_RED_AIM = new Pose(15, 0);
     public static Pose SHOOTER_GOAL_FAR_RED_AIM = new Pose(20, 4);
-    public static Pose SHOOTER_GOAL_CLOSE_BLUE_AIM = new Pose(-100, 10);
+    public static Pose SHOOTER_GOAL_CLOSE_BLUE_AIM = new Pose(-105, 10);
     public static Pose SHOOTER_GOAL_FAR_BLUE_AIM = new Pose(-95, 7.5);
     public static Pose SHOOTER_GOAL_CLOSE_RED = new Pose(18, 8);
     public static Pose SHOOTER_GOAL_FAR_RED = new Pose(10, 4);
@@ -65,7 +65,7 @@ public class Parameters {
     public static double TURRET_SERVO_LEFT_ZERO_OFFSET = Math.toRadians(10);
     public static double TURRET_SERVO_RIGHT_ZERO_OFFSET = Math.toRadians(6);
     public static double TURRET_BACKLASH = Math.toRadians(14);
-    public static double TURRET_TEST_ANGLE = Math.toRadians(90);
+    public static double TURRET_TEST_ANGLE = Math.toRadians(180);
 
     public static Pose TELEOP_AUTO_SCORE_POSE = new Pose(-36, -50);
     public static double TELEOP_AUTO_SCORE_HEADING = 15;
@@ -73,7 +73,7 @@ public class Parameters {
     public static double TELEOP_AUTO_GATE_HEADING = 35;
 
     public static double SHOOTER_FAR_ZONE_VELOCITY = 4700;
-    public static double SHOOTER_FAR_ZONE_HOOD_ANGLE = 150;
+    public static double SHOOTER_FAR_ZONE_HOOD_ANGLE = 160;
     public static ShooterCurve CLOSE_ZONE_CURVE = new ShooterCurve();
     public static ShooterCurve FAR_ZONE_CURVE = new ShooterCurve();
 }
