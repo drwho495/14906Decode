@@ -8,17 +8,16 @@ import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.Base.Auto.AutoCommandRepository;
-import org.firstinspires.ftc.teamcode.Base.Auto.RunSide;
-import org.firstinspires.ftc.teamcode.Base.Auto.PathingMethods;
+import org.firstinspires.ftc.teamcode.Base.Auto.Misc.RunSide;
 import org.firstinspires.ftc.teamcode.Base.Misc.AllianceSides;
 import org.firstinspires.ftc.teamcode.Base.Misc.HeadingLockControlPolicy;
 import org.firstinspires.ftc.teamcode.Base.Misc.OpModeState;
 import org.firstinspires.ftc.teamcode.Base.Misc.ShooterControlPolicy;
+import org.firstinspires.ftc.teamcode.Base.Misc.TurretBacklashPolicy;
 import org.firstinspires.ftc.teamcode.Base.Parameters;
 import org.firstinspires.ftc.teamcode.Base.RobotManager;
 import org.firstinspires.ftc.teamcode.Base.Misc.ShootingStyle;
 import org.firstinspires.ftc.teamcode.Base.Misc.ShooterAimPolicy;
-import org.firstinspires.ftc.teamcode.Base.Misc.TurretControlPolicy;
 
 import java.util.concurrent.TimeUnit;
 
@@ -61,6 +60,7 @@ public class MainTeleop extends LinearOpMode {
         waitForStart();
 
         Parameters.SHOOTER_GOAL_CLOSE_BLUE_AIM = new Pose(-110, 10);
+        Parameters.SHOOTER_GOAL_CLOSE_RED_AIM = new Pose(10, 0);
 
         robot.setTransferSpeed(1);
         robot.enableAutoTransferStop();
@@ -74,6 +74,7 @@ public class MainTeleop extends LinearOpMode {
         robot.disableHeadingLock();
         robot.setState(OpModeState.GENERAL_CYCLE);
         robot.setShooterAimPolicy(ShooterAimPolicy.TURRET);
+        robot.setTurretBacklashPolicy(TurretBacklashPolicy.MITIGATE_WHILE_SHOOTING);
         robot.setDriverOffset(robot.getAllianceSide() == AllianceSides.BLUE ? 180 : 0);
 
         robot.registerAutoCallback(() -> {
@@ -117,11 +118,11 @@ public class MainTeleop extends LinearOpMode {
                 showDebugInfo = !showDebugInfo;
             }
 
-            if (gamepad1.dpadRightWasPressed()) {
-                robot.setState(OpModeState.SPECIALIZED_GATE_CYCLE);
-            } else if (gamepad1.dpadLeftWasPressed()) {
-                robot.setState(OpModeState.GENERAL_CYCLE);
-            }
+//            if (gamepad1.dpadRightWasPressed()) {
+//                robot.setState(OpModeState.SPECIALIZED_GATE_CYCLE);
+//            } else if (gamepad1.dpadLeftWasPressed()) {
+//                robot.setState(OpModeState.GENERAL_CYCLE);
+//            }
 
             if (gamepad2.yWasPressed()) {
                 if (manualTurretActive) {

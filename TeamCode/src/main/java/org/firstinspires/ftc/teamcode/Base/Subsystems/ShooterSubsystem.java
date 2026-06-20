@@ -40,6 +40,7 @@ public class ShooterSubsystem extends Subsystem {
     private double lastVelocity = 0;
     private double turretTargetPosition = 0;
     private double servoTargetBacklashOffset = 0;
+    private int usedMotorForEncoder = 0;
 
     private ShooterPFState pfState = ShooterPFState.WANDERING_LOOP;
     public static double wanderingShooterP;
@@ -110,6 +111,7 @@ public class ShooterSubsystem extends Subsystem {
         shooterMotor1.setEncoderMotor(shooterMotor1);
         shooterMotor1.setLinkedMotor(shooterMotor2);
 
+        setMotorEncoder(0);
         updatePF();
 
         fingerServo = new ComplexServo(
@@ -254,11 +256,29 @@ public class ShooterSubsystem extends Subsystem {
         return angleInTurretRange(turretTargetPosition);
     }
 
+    private void setMotorEncoder(int motor) {
+        if (motor == 0) {
+            shooterMotor1.setEncoderMotor(shooterMotor1);
+        } else if (motor == 1) {
+            shooterMotor1.setEncoderMotor(shooterMotor2);
+        }
+
+        usedMotorForEncoder = motor;
+    }
+
     @Override
     public void update() {
         updatePF();
 
         double hoodServoOffset = 0;
+
+        if (shooterMotor1.isEnconderUnresponsive()) {
+            if (usedMotorForEncoder == 0) {
+                setMotorEncoder(1);
+            } else if (usedMotorForEncoder == 1) {
+                setMotorEncoder(0);
+            }
+        }
 
         if (hoodCompensationEnabled) {
             shooter1Current = shooterMotor1.getCurrent();

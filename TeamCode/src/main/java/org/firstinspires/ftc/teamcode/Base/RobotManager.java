@@ -20,7 +20,7 @@ import org.firstinspires.ftc.robotcore.external.Supplier;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.teamcode.Base.Auto.AutoCommandRepository;
-import org.firstinspires.ftc.teamcode.Base.Auto.RunSide;
+import org.firstinspires.ftc.teamcode.Base.Auto.Misc.RunSide;
 import org.firstinspires.ftc.teamcode.Base.HardwareBases.ComplexMotor;
 import org.firstinspires.ftc.teamcode.Base.HardwareBases.ComplexServo;
 import org.firstinspires.ftc.teamcode.Base.HardwareBases.HardwareTable;
@@ -83,6 +83,11 @@ public class RobotManager {
     private boolean turretEnabled = false;
     private double turretTargetPosition = Math.PI;
     private boolean turretRelativeControl = false;
+    private double currentAngularAcceleration = 0;
+    private double currentAngularVelocity = 0;
+    private double previousAngularVelocity = 0;
+    private long previousAngularVelocityTime = 0;
+    private boolean resetCurrentAngularAcceleration = true;
     private TurretBacklashPolicy turretBacklashPolicy = TurretBacklashPolicy.MITIGATE_WHILE_SHOOTING;
 
     private double headingLockGoal = 0;
@@ -728,6 +733,15 @@ public class RobotManager {
         return (Math.atan2(targetPose.getY() - robotPose.getY(), targetPose.getX() - robotPose.getX()) + Math.PI);
     }
 
+    public double getAngularAcceleration() {
+        if (resetCurrentAngularAcceleration) {
+            currentAngularAcceleration = (getAngularVelocity() - previousAngularVelocity) / (timer.time(TimeUnit.MILLISECONDS) - previousAngularVelocityTime);
+            resetCurrentAngularAcceleration = false;
+        }
+
+        return currentAngularAcceleration;
+    }
+
     public void stopAndAim() {
         breakFollowing(false);
 
@@ -881,7 +895,7 @@ public class RobotManager {
                     turretPositionCorrected -= robotPose.getHeading();
 
                     if (centripetalVelocityCompensationEnabled) {
-                        turretPositionCorrected -= (poseTracker.getAngularVelocity() * Parameters.CENTRIPETAL_VELOCITY_COMPENSATION_MULTIPLIER);
+                        turretPositionCorrected -= (getAngularVelocity() * Parameters.CENTRIPETAL_VELOCITY_COMPENSATION_MULTIPLIER);
                     }
                 }
 
@@ -1035,6 +1049,11 @@ public class RobotManager {
         if (!teleopDriveActive) {
             follower.update();
         }
+
+        resetCurrentAngularAcceleration = true;
+        previousAngularVelocity = currentAngularVelocity;
+        currentAngularVelocity = poseTracker.getAngularVelocity();
+        previousAngularVelocityTime = timer.time(TimeUnit.MILLISECONDS);
 
         shooterSubsystem.update();
         intakeSubsystem.update();
@@ -1223,5 +1242,9 @@ public class RobotManager {
 
     public ArrayList<ComplexMotor> getMotors() {
         return hardwareTable.getMotors();
+    }
+
+    public double getAngularVelocity() {
+        return currentAngularVelocity;
     }
 }

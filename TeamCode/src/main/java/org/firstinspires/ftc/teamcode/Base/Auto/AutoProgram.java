@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.Base.Auto;
 
 import com.pedropathing.geometry.Pose;
 
+import org.firstinspires.ftc.teamcode.Base.Auto.Misc.RunSide;
 import org.firstinspires.ftc.teamcode.Base.RobotManager;
 
 import java.util.ArrayList;

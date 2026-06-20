@@ -16,12 +16,13 @@ import org.firstinspires.ftc.teamcode.bedroBathing.util.CustomPIDFCoefficients;
 @Config
 @Configurable
 public class Parameters {
+    public static long MOTOR_ENCODER_TIMEOUT = 100;
     public static long SHOOTER_FINGER_TIMEOUT = 500;
     public static double TRANSFER_STOP_CURRENT = 4.5;
     public static double AUTO_SCORE_MAX_VEL = -1;
     public static double AUTO_SCORE_ERROR = 10;
     public static double AUTO_SCORE_WAIT_TIME = 550;
-    public static double CENTRIPETAL_VELOCITY_COMPENSATION_MULTIPLIER = 0.11;
+    public static double CENTRIPETAL_VELOCITY_COMPENSATION_MULTIPLIER = 0.09;
     public static double VELOCITY_CORRECTION_MULTIPLIER = 0.6;
     public static double SHOOTER_READY_TOLERANCE = 120;
     public static double SHOOTER_DEFAULT_RPM = 4500;
@@ -36,8 +37,8 @@ public class Parameters {
     public static Pose BLUE_CLOSE_START = new Pose(-92.7, 0, PedroUtils.getMirroredPose(RED_CLOSE_START).getHeading());
     public static Pose BLUE_FAR_START = PedroUtils.getMirroredPose(RED_FAR_START);
     //    public static Pose RED_SHOOTER_GOAL = new Pose(20, 0);
-    public static Pose SHOOTER_GOAL_CLOSE_RED_AIM = new Pose(15, 0);
-    public static Pose SHOOTER_GOAL_FAR_RED_AIM = new Pose(20, 4);
+    public static Pose SHOOTER_GOAL_CLOSE_RED_AIM = new Pose(10, 0);
+    public static Pose SHOOTER_GOAL_FAR_RED_AIM = new Pose(10  , 4);
     public static Pose SHOOTER_GOAL_CLOSE_BLUE_AIM = new Pose(-105, 10);
     public static Pose SHOOTER_GOAL_FAR_BLUE_AIM = new Pose(-95, 7.5);
     public static Pose SHOOTER_GOAL_CLOSE_RED = new Pose(18, 8);

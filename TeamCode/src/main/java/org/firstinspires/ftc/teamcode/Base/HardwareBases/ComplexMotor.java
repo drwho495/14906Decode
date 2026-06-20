@@ -10,11 +10,14 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.teamcode.Base.Helpers.PIDFController;
 import org.firstinspires.ftc.teamcode.Base.Parameters;
+
+import java.util.concurrent.TimeUnit;
 
 public class ComplexMotor {
     private LinearOpMode opMode;
@@ -26,6 +29,10 @@ public class ComplexMotor {
     private double lastMotorVelocity = 0;
     private double motorVelocity = 0;
     private double currentVelocity;
+    private double motorCurrentVelocity;
+    private boolean encoderUnresponsive = false;
+    private boolean encoderUnresponsiveChecking = false;
+    private ElapsedTime encoderResponseTimer = new ElapsedTime();
     private double voltageTarget = 12.0;
     private final PIDFController velocityController = new PIDFController(0, 0, 0, 0);
     private boolean useCustomVelocity = true;
@@ -133,9 +140,29 @@ public class ComplexMotor {
         motorInterface.setDirection(reversed ? DcMotorSimple.Direction.REVERSE : DcMotorSimple.Direction.FORWARD);
     }
 
+    public boolean isEnconderUnresponsive() {
+        return encoderUnresponsive;
+    }
+
     public void update() {
         if (encoderMotor != null) {
             currentVelocity = encoderMotor.motorInterface.getVelocity(AngleUnit.DEGREES);
+
+            if (currentVelocity < 5) {
+                if (!encoderUnresponsiveChecking) {
+                    encoderUnresponsiveChecking = true;
+                    encoderResponseTimer.reset();
+                }
+            } else {
+                encoderUnresponsiveChecking = false;
+            }
+
+            if (encoderUnresponsiveChecking && voltageTarget >= 10 && encoderResponseTimer.time(TimeUnit.MILLISECONDS) >= Parameters.MOTOR_ENCODER_TIMEOUT) {
+                encoderUnresponsive = true;
+                encoderUnresponsiveChecking = false;
+            } else {
+                encoderUnresponsive = false;
+            }
         } else {
             currentVelocity = 0;
         }

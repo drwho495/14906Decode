@@ -6,6 +6,7 @@ import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.Path;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.teamcode.Base.Auto.Misc.RunSide;
 import org.firstinspires.ftc.teamcode.Base.Misc.AllianceSides;
 import org.firstinspires.ftc.teamcode.Base.Parameters;
 import org.firstinspires.ftc.teamcode.Base.RobotManager;
@@ -245,7 +246,7 @@ public class PathingMethods {
                 gateY = -76;
             } else {
                 gateX = 11;
-                gateY = -73.5;
+                gateY = -73.7;
             }
 
             robot.setMaxFollowerPower(1);
@@ -449,6 +450,7 @@ public class PathingMethods {
         if (runSide == RunSide.CLOSE_ZONE) {
             if (initialCycle) {
                 shootingPosition = robot.getFixedPose(-30, -40);
+                Parameters.SHOOTER_GOAL_CLOSE_RED_AIM = new Pose(10, 0);
 
                 robot.updateShooterParameters(shootingPosition);
                 robot.addPathTimeout(2000);
@@ -459,10 +461,11 @@ public class PathingMethods {
                                                 shootingPosition
                                         )
                                 ))
-                                .setLinearHeadingInterpolation(robot.getFixedHeading(220), robot.getFixedHeading(robotChassisHeading))
+                                .setLinearHeadingInterpolation(robot.getFixedHeading(220), robot.getFixedHeading(robotChassisHeading), robotChassisHeadingEndT)
                                 .setTValueConstraint(.9)
                                 .setVelocityConstraint(5)
                 );
+                Parameters.SHOOTER_GOAL_CLOSE_RED_AIM = new Pose(0, 0);
             } else {
                 if (shootOffTape) {
                     shootingPosition = robot.getFixedPose(-36, -20);

@@ -4,6 +4,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.teamcode.Base.Misc.TurretBacklashPolicy;
 import org.firstinspires.ftc.teamcode.Base.Parameters;
 import org.firstinspires.ftc.teamcode.Base.RobotManager;
 import org.firstinspires.ftc.teamcode.Base.Misc.TurretControlPolicy;
@@ -29,6 +30,9 @@ public class TurretTester extends LinearOpMode {
             } else if (gamepad1.aWasReleased()) {
                 robot.enableTurretRelativeControl();
             }
+
+            telemetry.addData("Angular Acceleration: ", robot.getAngularAcceleration());
+            telemetry.addData("Angular Velocity: ", robot.getAngularVelocity());
 
             robot.update();
             telemetry.update();

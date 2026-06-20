@@ -1,6 +1,8 @@
 package org.firstinspires.ftc.teamcode.Base.Auto;
 
 import com.pedropathing.geometry.Pose;
+
+import org.firstinspires.ftc.teamcode.Base.Auto.Misc.RunSide;
 import org.firstinspires.ftc.teamcode.Base.RobotManager;
 
 public class AutoCommandRepository {
@@ -165,6 +167,7 @@ public class AutoCommandRepository {
                         chassisHeadingEndT = .6;
                     } else if (type == AutoCommandTypes.INTAKE_CLOSE_LINE) {
                         chassisHeading = 0;
+                        chassisHeadingEndT = .3;
                     }
                 }
             } else if (runSide == RunSide.FAR_ZONE) {
@@ -194,7 +197,7 @@ public class AutoCommandRepository {
 
         @Override
         public void execute(RobotManager robot, Pose startPose, RunSide runSide, AutoCommand lastCommand, AutoCommand nextCommand) {
-            double intakeEndT = .15;
+            double intakeEndT = .4;
 
             if (lastCommand != null && lastCommand.getType() == AutoCommandTypes.INTAKE_HUMAN_PLAYER) {
                 intakeEndT = .5;

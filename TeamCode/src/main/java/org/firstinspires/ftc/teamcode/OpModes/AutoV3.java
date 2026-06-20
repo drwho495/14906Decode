@@ -5,7 +5,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.teamcode.Base.Auto.RunSide;
+import org.firstinspires.ftc.teamcode.Base.Auto.Misc.RunSide;
 import org.firstinspires.ftc.teamcode.Base.Misc.AllianceSides;
 import org.firstinspires.ftc.teamcode.Base.Auto.AutoCommandRepository;
 import org.firstinspires.ftc.teamcode.Base.Auto.AutoProgram;
@@ -263,7 +263,8 @@ public class AutoV3 extends LinearOpMode {
         robot.enableTurret();
         robot.setConstantTurretHeadingGoal(180, AngleUnit.DEGREES);
 
-        Parameters.SHOOTER_GOAL_CLOSE_BLUE_AIM = new Pose(-110, 10);
+        Parameters.SHOOTER_GOAL_CLOSE_BLUE_AIM = new Pose(-105, 10);
+        Parameters.SHOOTER_GOAL_CLOSE_RED_AIM = new Pose(0, 0);
 
         while (opModeInInit()) {
             if (gamepad1.yWasPressed())
