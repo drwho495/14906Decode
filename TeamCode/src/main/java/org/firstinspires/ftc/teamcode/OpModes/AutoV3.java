@@ -21,6 +21,7 @@ import java.util.ArrayList;
 enum V3AutoDefault {
     EIGHTEEN_ARTIFACT,
     EIGHTEEN_ARTIFACT_ALLIANCE_FRIENDLY,
+    F1B_EIGHTEEN_ARTIFACT_ALLIANCE_FRIENDLY,
     EIGHTEEN_ARTIFACT_ALLIANCE_FRIENDLY_EXTRA_PUSH,
     TWENTY_ONE_ARTIFACT_ALLIANCE_FRIENDLY,
     FIFTEEN_ARTIFACT,
@@ -71,6 +72,23 @@ public class AutoV3 extends LinearOpMode {
                 commands.add(new AutoCommandRepository.IntakeGate(false));
                 commands.add(new AutoCommandRepository.ScoreArtifacts(false));
                 commands.add(new AutoCommandRepository.IntakeGate(false));
+                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
+                commands.add(new AutoCommandRepository.IntakeCloseLine(false));
+                commands.add(new AutoCommandRepository.ScoreArtifactsAndPark());
+
+                runSide = RunSide.CLOSE_ZONE;
+                break;
+            case F1B_EIGHTEEN_ARTIFACT_ALLIANCE_FRIENDLY:
+                double offset = .3;
+
+                commands.add(new AutoCommandRepository.ScoreArtifacts(true));
+                commands.add(new AutoCommandRepository.IntakeMidLine());
+                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
+                commands.add(new AutoCommandRepository.IntakeGate(true, offset));
+                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
+                commands.add(new AutoCommandRepository.IntakeGate(false, offset));
+                commands.add(new AutoCommandRepository.ScoreArtifacts(false));
+                commands.add(new AutoCommandRepository.IntakeGate(false, offset));
                 commands.add(new AutoCommandRepository.ScoreArtifacts(false));
                 commands.add(new AutoCommandRepository.IntakeCloseLine(false));
                 commands.add(new AutoCommandRepository.ScoreArtifactsAndPark());
@@ -213,6 +231,8 @@ public class AutoV3 extends LinearOpMode {
                 return "Close Zone: 18 Artifact Auto";
             case EIGHTEEN_ARTIFACT_ALLIANCE_FRIENDLY:
                 return "Close Zone: 18 Artifact Alliance Friendly Auto";
+            case F1B_EIGHTEEN_ARTIFACT_ALLIANCE_FRIENDLY:
+                return "(Field 1 Blue) Close Zone: 18 Artifact Alliance Friendly Auto";
             case EIGHTEEN_ARTIFACT_ALLIANCE_FRIENDLY_EXTRA_PUSH:
                 return "Close Zone: 18 Artifact Alliance Friendly Auto with an Extra Gate Push";
             case TWENTY_ONE_ARTIFACT_ALLIANCE_FRIENDLY:

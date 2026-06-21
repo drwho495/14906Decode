@@ -153,7 +153,7 @@ public class PathingMethods {
         intakeLine(robot, runSide, number, false);
     }
 
-    public static void intakeGate(RobotManager robot, RunSide runSide, boolean initialCycle, boolean safeCycle) {
+    public static void intakeGate(RobotManager robot, RunSide runSide, boolean initialCycle, boolean safeCycle, double gateYOffset) {
         Pose robotPose = robot.getPose();
 
         if (safeCycle) {
@@ -248,6 +248,8 @@ public class PathingMethods {
                 gateX = 11;
                 gateY = -73.7;
             }
+
+            gateY += gateYOffset;
 
             robot.setMaxFollowerPower(1);
             robot.addPathTimeout(1750);

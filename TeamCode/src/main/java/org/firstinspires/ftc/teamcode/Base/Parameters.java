@@ -36,20 +36,14 @@ public class Parameters {
     public static Pose RED_FAR_START = new Pose(-25, -130, Math.toRadians(90));
     public static Pose BLUE_CLOSE_START = new Pose(-92.7, 0, PedroUtils.getMirroredPose(RED_CLOSE_START).getHeading());
     public static Pose BLUE_FAR_START = PedroUtils.getMirroredPose(RED_FAR_START);
-    //    public static Pose RED_SHOOTER_GOAL = new Pose(20, 0);
     public static Pose SHOOTER_GOAL_CLOSE_RED_AIM = new Pose(10, 0);
     public static Pose SHOOTER_GOAL_FAR_RED_AIM = new Pose(10  , 4);
     public static Pose SHOOTER_GOAL_CLOSE_BLUE_AIM = new Pose(-105, 10);
-    public static Pose SHOOTER_GOAL_FAR_BLUE_AIM = new Pose(-95, 7.5);
+    public static Pose SHOOTER_GOAL_FAR_BLUE_AIM = new Pose(-115, 7.5);
     public static Pose SHOOTER_GOAL_CLOSE_RED = new Pose(18, 8);
     public static Pose SHOOTER_GOAL_FAR_RED = new Pose(10, 4);
     public static Pose SHOOTER_GOAL_CLOSE_BLUE = new Pose(-110, 10);
     public static Pose SHOOTER_GOAL_FAR_BLUE = new Pose(-102, 7.5);
-    public static CustomPIDFCoefficients preciseTurnCoeffs = new CustomPIDFCoefficients(
-            2,
-            0,
-            0.02,
-            0);
 
     public static double FINGER_SERVO_OPEN = 45;
     public static double FINGER_SERVO_CLOSED = 100;

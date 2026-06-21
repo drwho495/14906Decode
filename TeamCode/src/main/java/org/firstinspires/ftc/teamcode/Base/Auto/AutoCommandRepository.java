@@ -220,6 +220,7 @@ public class AutoCommandRepository {
 
     public static class IntakeGate extends AutoCommand {
         private boolean initialCycle;
+        private double gateYOffset = 0;
 
         @Override
         public AutoCommandTypes getType() {
@@ -230,13 +231,23 @@ public class AutoCommandRepository {
             this.initialCycle = initialCycle;
         }
 
+        public IntakeGate(boolean initialCycle, double gateYOffset) {
+            this.initialCycle = initialCycle;
+            this.gateYOffset = gateYOffset;
+        }
+
+        public void setGateYOffset(double gateYOffset) {
+            this.gateYOffset = gateYOffset;
+        }
+
         @Override
         public void execute(RobotManager robot, Pose startPose, RunSide runSide, AutoCommand lastCommand, AutoCommand nextCommand) {
             PathingMethods.intakeGate(
                     robot,
                     runSide,
                     initialCycle,
-                    false
+                    false,
+                    gateYOffset
             );
         }
     }

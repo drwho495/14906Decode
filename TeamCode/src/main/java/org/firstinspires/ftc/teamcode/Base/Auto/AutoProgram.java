@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.Base.Auto;
 
 import com.pedropathing.geometry.Pose;
 
+import org.firstinspires.ftc.teamcode.Base.Auto.Misc.AutoProgramProfile;
 import org.firstinspires.ftc.teamcode.Base.Auto.Misc.RunSide;
 import org.firstinspires.ftc.teamcode.Base.RobotManager;
 
@@ -11,15 +12,20 @@ import java.util.ArrayList;
 // This class stores a list of commands and executes them when needed.
 public class AutoProgram {
     // This is a list of default initialized commands that can be used in an OpMode.
+    private final RobotManager robot;
     private ArrayList<AutoCommandRepository.AutoCommand> commands = new ArrayList<>();
     private RunSide runSide = RunSide.CLOSE_ZONE;
-    private final RobotManager robot;
     private Pose startPose = new Pose();
     private String autoName = "Unnamed Autonomous Program";
+    private AutoProgramProfile programProfile = null;
 
     public AutoProgram(RobotManager robot, String autoName) {
         this.robot = robot;
         this.autoName = autoName;
+    }
+
+    public void setProgramProfile(AutoProgramProfile programProfile) {
+        this.programProfile = programProfile;
     }
 
     public AutoProgram(RobotManager robot) {
@@ -62,6 +68,10 @@ public class AutoProgram {
         AutoCommandRepository.AutoCommand nextCommand = null;
 
         robot.resetAutoPathingCancelFlag();
+
+        if (programProfile != null) {
+            programProfile.applyChanges(commands);
+        }
 
         for (int i = 0; i < commands.size(); i++) {
             currentCommand = commands.get(i);
