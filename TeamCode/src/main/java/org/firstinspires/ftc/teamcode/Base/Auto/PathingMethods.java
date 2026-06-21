@@ -452,6 +452,8 @@ public class PathingMethods {
                 shootingPosition = robot.getFixedPose(-30, -40);
                 Parameters.SHOOTER_GOAL_CLOSE_RED_AIM = new Pose(10, 0);
 
+                robot.enableTurretRelativeControl();
+                robot.setConstantTurretHeadingGoal(robot.getCorrectedTurretPosition(robotPose.getHeading(), robot.getHeadingToGoal(robotPose)));
                 robot.updateShooterParameters(shootingPosition);
                 robot.addPathTimeout(2000);
                 robot.runPassthrough(robot.pathBuilder()
@@ -528,6 +530,11 @@ public class PathingMethods {
 
             robot.stopScoringCycle();
             robot.waitForPathEnd();
+
+            if (initialCycle) {
+                robot.disableTurretRelativeControl();
+                robot.startAimingAtGoal();
+            }
         } else if (runSide == RunSide.FAR_ZONE) {
             shootingPosition = robot.getFixedPose(-28, -122, 0);
 

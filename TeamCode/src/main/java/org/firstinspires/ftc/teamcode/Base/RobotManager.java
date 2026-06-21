@@ -892,7 +892,7 @@ public class RobotManager {
                 double turretPositionCorrected = turretTargetPosition;
 
                 if (!turretRelativeControl) {
-                    turretPositionCorrected -= robotPose.getHeading();
+                    turretPositionCorrected = getCorrectedTurretPosition(robotPose.getHeading(), turretTargetPosition);
 
                     if (centripetalVelocityCompensationEnabled) {
                         turretPositionCorrected -= (getAngularVelocity() * Parameters.CENTRIPETAL_VELOCITY_COMPENSATION_MULTIPLIER);
@@ -1057,6 +1057,10 @@ public class RobotManager {
 
         shooterSubsystem.update();
         intakeSubsystem.update();
+    }
+
+    public double getCorrectedTurretPosition(double heading, double turretTargetPosition) {
+        return turretTargetPosition - heading;
     }
 
     /**
